@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="cz" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Aplikace</title>
+    <link rel="stylesheet" href="../css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script><script type="text/javascript" src="https://blockchain.info/Resources/js/pay-now-button.js"></script>
+
+
+     <script>
+     var tipButton = document.querySelector('.tip-button')
+     tipButton.addEventListener('click', function() {
+  if (typeof web3 === 'undefined') {
+    return alert('You need to install MetaMask to use this feature.')
+  }
+  var user_address = web3.eth.accounts[0];
+  if (typeof user_address === 'undefined') {
+    return alert('You need to log in MetaMask to use this feature.')
+  }
+  web3.eth.sendTransaction({
+    to: "0x74DF6E6d1381667Da07d1B3E7e441Cce7360035e",
+    from: user_address,
+    value: web3.toWei('0.005', 'ether'),
+  }, function (err, transactionHash) {
+    if (err) return alert('Thanks for trying out!');
+    alert('Thanks for the generosity!!');
+  })
+})
+</script>
+
+
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+
+            <li class="cz"><a href="../index.html">Domů</a></li>
+            <li class="cz"><a href="../about.html">O mně</a></li>
+            <li class="cz "><a href="../sources.html">Zdroje</a></li>
+            <li class="cz"><a href="../services.html">Služby</a></li>
+            <li class="cz"><a href="../articles.html">Články</a></li>
+            <li class="cz current"><a href="../applications.html">Aplikace</a></li>
+            <li class="cz language"><a href="appTipEng.html"><img src="../img/gb.png" alt="Switch into english" width="58" height="42"></a> </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="cz page-title">Blockchainové spropitné</h1>
+
+            <p><b>Myšlenka</b>: Umožnit co nejjednodušší způsob odměňování v online světě - zasílání malých částek například umělcům, autorům článků nebo ochotným diskutujícím na fórech, kteří vždy každému poradí. </p>
+            <p><b>Fungování</b>: Jde v podstatě jen o zveřejnění adresy, na kterou může být příspěvek zaslán. V případě Bitcoinu jde například o QR kód, v případě Etherea může stačit tlačítko, které v Metamasku vygeneruje transakci na danou adresu. </p>
+            <p><b>Výhody</b>: Pro přijímání i posílání těchto příspěvků není potřeba žádná registrace. Příspěvek je zaslaný za pár sekund a na pár kliknutí. </p>
+            <p><b>Nevýhody</b>: Pro případného hackera může být proveditelná záměna původně zamýšlené adresy za svoji, čímž by prostředky přesměroval k sobě. </p>
+            <p>------------------------------------------------------------------------------------------------------------------------------</p>
+            <br>
+
+            <h2>Přispění pomocí Bitcoinu</h2>
+            <p>Můžete bez obav kliknout na obrázek, nic zlého se nestane, slibuju :)</p>
+            <div style="font-size:16px;margin:0 auto;width:300px" class="blockchain-btn"
+       data-address="1NpspxDMdTSGCuzkVCqN8kg6SSaasDhZud"
+       data-shared="false">
+      <div class="blockchain stage-begin">
+          <img src="https://blockchain.info/Resources/buttons/donate_64.png"/>
+      </div>
+      <div class="blockchain stage-loading" style="text-align:center">
+          <img src="https://blockchain.info/Resources/loading-large.gif"/>
+      </div>
+      <div class="blockchain stage-ready">
+           <p align="center">Přispějte BTC na adresu: <b>[[address]]</b></p>
+           <p align="center" class="qr-code"></p>
+           <p>Jestliže se ale nyní chcete zbavit načítacího gifu, pomůže jedině klávesa F5 nebo přispění Bitcoinů na danou adresu :) </p>
+
+      </div>
+      <div class="blockchain stage-paid">
+           Donation of <b>[[value]] BTC</b> Received. Thank You.
+      </div>
+      <div class="blockchain stage-error">
+          <font color="red">[[error]]</font>
+      </div>
+    </div>
+    <br>
+
+      <h2>Přispění pomocí Etherea</h2>
+
+      <div class="tip-button"></div>
+
+          </article>
+
+                    <aside id="sidebar">
+                      <div class="dark">
+
+                        <h3 class="cz">Příklady konkrétních aplikací</h3>
+                          <div class="">
+
+                          </div>
+
+
+                            <h3 class="cz orange"><a href="./appContent.html" style="color:#e8491d">Blockchainové zpřístupňování obsahu</a></h3>
+
+                            <h3 class="cz orange"><a href="./appCrowdfunding.html" style="color:#e8491d">Blockchainové financování projektů</a></h3>
+
+                            <h3 class="cz orange"><a href="./appAuction.html" style="color:#e8491d">Blockchainová aukce</a></h3>
+
+                            <h3 class="cz orange"><a href="./appRoulette.html" style="color:#e8491d">Blockchainová ruleta</a></h3>
+
+                            <h3 class="cz orange"><a href="./appPocket.html" style="color:#e8491d">Blockchainové kapesné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appTip.html" style="color:#ffffff">Blockchainové spropitné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appReceivingCC.html" style="color:#e8491d">Blockchainové přijímání plateb</a></h3>
+
+                            <h3 class="cz orange"><a href="./appSwap.html" style="color:#e8491d">Blockchainová směnárna</a></h3>
+
+                            <h3 class="cz orange"><a href="./appDigitalSignatures.html" style="color:#e8491d">Blockchainová autentikace a autorizace</a></h3>
+
+                            <h3 class="cz orange"><a href="./appMultisignature.html" style="color:#e8491d">Blockchainové smlouvy</a></h3>
+
+                            <h3 class="cz orange"><a href="./appElections.html" style="color:#e8491d">Blockchainové volby</a></h3>
+
+                          </div>
+
+                      </div>
+                    </aside>
+                </div>
+
+
+    </section>
+
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

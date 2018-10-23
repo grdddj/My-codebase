@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="cz" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Aplikace</title>
+    <link rel="stylesheet" href="../css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script src="script.js"></script>
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+
+            <li class="cz"><a href="../index.html">Domů</a></li>
+            <li class="cz"><a href="../about.html">O mně</a></li>
+            <li class="cz "><a href="../sources.html">Zdroje</a></li>
+            <li class="cz"><a href="../services.html">Služby</a></li>
+            <li class="cz"><a href="../articles.html">Články</a></li>
+            <li class="cz current"><a href="../applications.html">Aplikace</a></li>
+            <li class="cz language"><a href="appAuctionEng.html"><img src="../img/gb.png" alt="Switch into english" width="58" height="42"></a> </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="cz page-title">Blockchainová aukce</h1>
+
+            <p><b>Myšlenka</b>: Zjednodušit přístup k jednoduchým aukčním mechanismům, které jsou navíc naprosto transparentní. </p>
+            <p><b>Fungování</b>: Po založení aukce mohou uživatelé posílat své nabídky, a po jejím konci bude zveřejněna nejvyšší nabídka a všem ostatním vráceny peníze. </p>
+            <p><b>Výhody</b>: Nabídka v aukci je závazná, protože peníze, které v aukci uživatelé nabízí, jsou součástí nabídky ve formě zaslané kryptoměny. Je možné vytvořit jak transparentní, tak slepou aukci, kdy jsou cenové nabídky skryty.  </p>
+            <p><b>Nevýhody</b>: Nutnost vlastnit dostatek prostředků na jedné adrese. Naprostá transparentnost může být někdy nežádoucí, existují ale i mechanismy, jak docílit skrytí nabídek před závěrečným zveřejněním.  </p>
+            <p>------------------------------------------------------------------------------------------------------------------------------</p>
+            <br>
+
+             <h2 >Moje ETH adresa: <span id="address"></span></h2>
+
+
+              <p>Název aukce: <input type="text" id="name" placeholder="Název aukce..."/> </p>
+              <p>Vyvolávací cena v ETH: <input type="number" id="amount" placeholder="Vyvolávací cena [ETH]..."/></p>
+              <p>Doba trvání aukce v hodinách: <input type="number" id="duration" placeholder="Doba trvání [h]..."/></p>
+              <button id="register">Založit aukci!</button>
+
+              <br>
+              <br>
+              <br>
+              <p>Vyberte aukci, které se chcete zúčastnit:
+              <select name="cars">
+                <option value="one">Aukce 1</option>
+                <option value="two">Aukce 2</option>
+                <option value="three">Aukce 3</option>
+                <option value="four">Aukce 4</option>
+              </select>
+              </p>
+              <p>Kolik ETH chcete nabídnout: <input type="number" id="amount" placeholder="Váš příspěvek [ETH]..."/></p>
+              <button id="donate">Nabídněte!</button>
+
+
+
+          </article>
+
+                    <aside id="sidebar">
+                      <div class="dark">
+
+                        <h3 class="cz">Příklady konkrétních aplikací</h3>
+                          <div class="">
+
+                          </div>
+
+
+                            <h3 class="cz orange"><a href="./appContent.html" style="color:#e8491d">Blockchainové zpřístupňování obsahu</a></h3>
+
+                            <h3 class="cz orange"><a href="./appCrowdfunding.html" style="color:#e8491d">Blockchainové financování projektů</a></h3>
+
+                            <h3 class="cz orange"><a href="./appAuction.html" style="color:#ffffff">Blockchainová aukce</a></h3>
+
+                            <h3 class="cz orange"><a href="./appRoulette.html" style="color:#e8491d">Blockchainová ruleta</a></h3>
+
+                            <h3 class="cz orange"><a href="./appPocket.html" style="color:#e8491d">Blockchainové kapesné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appTip.html" style="color:#e8491d">Blockchainové spropitné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appReceivingCC.html" style="color:#e8491d">Blockchainové přijímání plateb</a></h3>
+
+                            <h3 class="cz orange"><a href="./appSwap.html" style="color:#e8491d">Blockchainová směnárna</a></h3>
+
+                            <h3 class="cz orange"><a href="./appDigitalSignatures.html" style="color:#e8491d">Blockchainová autentikace a autorizace</a></h3>
+
+                            <h3 class="cz orange"><a href="./appMultisignature.html" style="color:#e8491d">Blockchainové smlouvy</a></h3>
+
+                            <h3 class="cz orange"><a href="./appElections.html" style="color:#e8491d">Blockchainové volby</a></h3>
+
+                          </div>
+
+                      </div>
+                    </aside>
+                </div>
+
+    </section>
+
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

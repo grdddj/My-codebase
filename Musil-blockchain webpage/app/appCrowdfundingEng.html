@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Applications</title>
+    <link rel="stylesheet" href="../css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script src="script.js"></script>
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+            <li class="en "><a href="../indexEng.html">Home</a></li>
+            <li class="en"><a href="../aboutEng.html">About</a></li>
+            <li class="en"><a href="../sourcesEng.html">Sources</a></li>
+            <li class="en"><a href="../servicesEng.html">Services</a></li>
+              <li class="en"><a href="../articlesEng.html">Articles</a></li>
+            <li class="en current"><a href="../applicationsEng.html">Applications</a></li>
+            <li class="en language"><a href="appCrowdfunding.html"><img src="../img/cz.png" alt="Přejít do češtiny" width="58" height="42"></a> </li>
+
+
+
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="en page-title">Blockchain crowdfunding</h1>
+
+            <p><b>Idea</b>: To make crowdfunding of small or big projects easier, in the style of Kickstarter. Same solution can be used also in various fund-raising or charity campaigns. </p>
+            <p><b>Functioning</b>: Everybody can create new project and determine the amount of money and the final date. Other people can send money to support these projects, and when they gather the needed amount before the final date, all the funds will be sent to the project. Otherwise they will be returned to users. </p>
+            <p><b>Advantages</b>: Thanks to the absence of middleman, the project will receive all the funds gathered, without any fees for the platform. </p>
+            <p><b>Disadvantages</b>: Nowadays the high volatility of cryptocurrencies can be a problem - however already some stable cryptocurrencies exist, pegged for example to USD. </p>
+            <p>------------------------------------------------------------------------------------------------------------------------------</p>
+            <br>
+
+            <h2 >My ETH address: <span id="address"></span></h2>
+
+              <p>Name of the project: <input type="text" id="name" placeholder="Project name..."/> </p>
+              <p>Desired amount of ETH: <input type="number" id="amount" placeholder="Desired amount [ETH]..."/></p>
+              <p>Duration in hours: <input type="number" id="duration" placeholder="Duration [h]..."/></p>
+              <button id="register">Start financing the project!</button>
+
+              <br>
+              <br>
+              <br>
+              <p>Choose the project you want to support:
+              <select name="projects">
+                <option value="one">Project 1</option>
+                <option value="two">Project 2</option>
+                <option value="three">Project 3</option>
+                <option value="four">Project 4</option>
+              </select>
+              </p>
+              <p>How much ETH you want to donate: <input type="number" id="amount" placeholder="Your donation [ETH]..."/></p>
+              <button id="donate">Donate!</button>
+
+
+          </article>
+          <aside id="sidebar">
+            <div class="dark">
+
+              <h3 class="cz">Specific blockchain use-cases</h3>
+                <div class="">
+
+                </div>
+
+
+                  <h3 class="cz orange"><a href="./appContentEng.html" style="color:#e8491d">Blockchain content accessing</a></h3>
+
+                  <h3 class="cz orange"><a href="./appCrowdfundingEng.html" style="color:#ffffff">Blockchain crowdfunding</a></h3>
+
+                  <h3 class="cz orange"><a href="./appAuctionEng.html" style="color:#e8491d">Blockchain auction</a></h3>
+
+                  <h3 class="cz orange"><a href="./appRouletteEng.html" style="color:#e8491d">Blockchain roulette</a></h3>
+
+                  <h3 class="cz orange"><a href="./appPocketEng.html" style="color:#e8491d">Blockchain pocket-money</a></h3>
+
+                  <h3 class="cz orange"><a href="./appTipEng.html" style="color:#e8491d">Blockchain tipping</a></h3>
+
+                  <h3 class="cz orange"><a href="./appReceivingCCEng.html" style="color:#e8491d">Blockchain payment accepting</a></h3>
+
+                  <h3 class="cz orange"><a href="./appSwapEng.html" style="color:#e8491d">Blockchain exchange</a></h3>
+
+                  <h3 class="cz orange"><a href="./appDigitalSignaturesEng.html" style="color:#e8491d">Blockchain autentication and authorization</a></h3>
+
+                  <h3 class="cz orange"><a href="./appMultisignatureEng.html" style="color:#e8491d">Blockchain contracts</a></h3>
+
+                  <h3 class="cz orange"><a href="./appElectionsEng.html" style="color:#e8491d">Blockchain elections</a></h3>
+
+                </div>
+
+            </div>
+          </aside>
+        </div>
+
+    </section>
+
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

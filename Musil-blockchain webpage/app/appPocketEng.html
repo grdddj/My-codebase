@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Applications</title>
+    <link rel="stylesheet" href="../css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script src="script.js"></script>
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+            <li class="en "><a href="../indexEng.html">Home</a></li>
+            <li class="en"><a href="../aboutEng.html">About</a></li>
+            <li class="en"><a href="../sourcesEng.html">Sources</a></li>
+            <li class="en"><a href="../servicesEng.html">Services</a></li>
+              <li class="en"><a href="../articlesEng.html">Articles</a></li>
+            <li class="en current"><a href="../applicationsEng.html">Applications</a></li>
+            <li class="en language"><a href="appPocket.html"><img src="../img/cz.png" alt="Přejít do češtiny" width="58" height="42"></a> </li>
+
+
+
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="en page-title">Blockchain pocket money</h1>
+
+            <p><b>Idea</b>: Create a simple mechanism for regular payments, for example sending pocket money to children every month. The "cryptocurrency direct debit" would have the same form. </p>
+            <p><b>Functioning</b>: Parent will set an amount, a time-period and an Ethereum address of the child and send enough money to the contract address. Afterwards the child is allowed to withdraw this set amount of money in regular intervals. Not more and not more frequently.  </p>
+            <p><b>Advantages</b>: Parent can change all the conditions anytime, as well as add new children or everyone else, that will be allowed to withdraw money from his "account." In the case of direct debit it would get rid of a middleman (the bank), which is making the transactions more expensive. </p>
+            <p><b>Disadvantages</b>: After withdrawing all the initially sent money the parent has to send more money, so that children have something to withdraw from. (It is unbelievable, but even blockchain cannot create perpetuum mobile for money*.)  </p>
+            <p>------------------------------------------------------------------------------------------------------------------------------</p>
+            <br>
+            <h2 >My ETH address: <span id="address"></span></h2>
+
+            <p>Child's ETH address: <input type="text" id="name" placeholder="Child's ETH address..."/> </p>
+            <p>Pocket money in ETH: <input type="number" id="amount" placeholder="Pocket money [ETH]..."/></p>
+            <p>Time-span of pocket money in hours: <input type="number" id="duration" placeholder="Time span [h]..."/></p>
+            <p>How much ETH do I want to load: <input type="number" id="amount" placeholder="Load [ETH]..."/></p>
+            <button id="create">Make child happy!</button>
+
+              <br>
+
+
+            <p>Child's ETH address: <input type="text" id="name" placeholder="Child's ETH address..."/> </p>
+            <button id="stop">Stop the pocket-money and withdraw money from contract!</button>
+
+            <br>
+            <br>
+            <br>
+
+            <button id="withdraw">Withdraw button for children.</button>
+
+            <br>
+            <br>
+            <br>
+
+
+          </article>
+          <aside id="sidebar">
+            <div class="dark">
+
+              <h3 class="cz">Specific blockchain use-cases</h3>
+                <div class="">
+
+                </div>
+
+
+                  <h3 class="cz orange"><a href="./appContentEng.html" style="color:#e8491d">Blockchain content accessing</a></h3>
+
+                  <h3 class="cz orange"><a href="./appCrowdfundingEng.html" style="color:#e8491d">Blockchain crowdfunding</a></h3>
+
+                  <h3 class="cz orange"><a href="./appAuctionEng.html" style="color:#e8491d">Blockchain auction</a></h3>
+
+                  <h3 class="cz orange"><a href="./appRouletteEng.html" style="color:#e8491d">Blockchain roulette</a></h3>
+
+                  <h3 class="cz orange"><a href="./appPocketEng.html" style="color:#ffffff">Blockchain pocket-money</a></h3>
+
+                  <h3 class="cz orange"><a href="./appTipEng.html" style="color:#e8491d">Blockchain tipping</a></h3>
+
+                  <h3 class="cz orange"><a href="./appReceivingCCEng.html" style="color:#e8491d">Blockchain payment accepting</a></h3>
+
+                  <h3 class="cz orange"><a href="./appSwapEng.html" style="color:#e8491d">Blockchain exchange</a></h3>
+
+                  <h3 class="cz orange"><a href="./appDigitalSignaturesEng.html" style="color:#e8491d">Blockchain autentication and authorization</a></h3>
+
+                  <h3 class="cz orange"><a href="./appMultisignatureEng.html" style="color:#e8491d">Blockchain contracts</a></h3>
+
+                  <h3 class="cz orange"><a href="./appElectionsEng.html" style="color:#e8491d">Blockchain elections</a></h3>
+
+                </div>
+
+            </div>
+          </aside>
+        </div>
+    </section>
+<p>*Technically it can, but this money would have little or no value :)</p>
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

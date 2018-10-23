@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Applications</title>
+    <link rel="stylesheet" href="../css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script><script type="text/javascript" src="https://blockchain.info/Resources/js/pay-now-button.js"></script>
+
+<style media="screen">
+.tip-button {
+  width: 304px;
+  height: 89px;
+  background-size: 100%;
+  background-image: url('../img/3_pay_mm_over.png');
+  cursor: pointer;
+}
+
+.tip-button:hover {
+  background-image: url('../img/6_pay_mm_over.png');
+}
+</style>
+
+     <script>
+     var tipButton = document.querySelector('.tip-button')
+     tipButton.addEventListener('click', function() {
+  if (typeof web3 === 'undefined') {
+    return alert('You need to install MetaMask to use this feature.')
+  }
+  var user_address = web3.eth.accounts[0];
+  if (typeof user_address === 'undefined') {
+    return alert('You need to log in MetaMask to use this feature.')
+  }
+  web3.eth.sendTransaction({
+    to: "0x74DF6E6d1381667Da07d1B3E7e441Cce7360035e",
+    from: user_address,
+    value: web3.toWei('0.005', 'ether'),
+  }, function (err, transactionHash) {
+    if (err) return alert('Thanks for trying out!');
+    alert('Thanks for the generosity!!');
+  })
+})
+</script>
+
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+            <li class="en "><a href="../indexEng.html">Home</a></li>
+            <li class="en"><a href="../aboutEng.html">About</a></li>
+            <li class="en"><a href="../sourcesEng.html">Sources</a></li>
+            <li class="en"><a href="../servicesEng.html">Services</a></li>
+            <li class="en"><a href="../articlesEng.html">Articles</a></li>
+            <li class="en current"><a href="../applicationsEng.html">Applications</a></li>
+            <li class="en language"><a href="appTip.html"><img src="../img/cz.png" alt="Přejít do češtiny" width="58" height="42"></a> </li>
+
+
+
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="en page-title">Blockchain tipping</h1>
+
+            <p><b>Idea</b>: Allow for an easy way to send donations in online world - sending small tips to artists, journalists or some random guys that are always helpful on forums. </p>
+            <p><b>Functioning</b>: All it does is simply showing an address that the donation can be sent to. In the case of Bitcoin it can be done through QR code, in Ethereum one button is enough that will generate a transaction in Metamask to be sent on specific address. </p>
+            <p><b>Advantages</b>: There is no need for any registration for both sending and receiving donations. Donation is sent in seconds and in couple clicks. </p>
+            <p><b>Disadvantages</b>: There could be a way for a hacker to replace the address for his own, essentially redirecting the money to himself. </p>
+            <p>------------------------------------------------------------------------------------------------------------------------------</p>
+            <br>
+
+            <h2>Bitcoin donating</h2>
+            <p>You can click on the picture, nothing bad happens, I promise :)</p>
+            <div style="font-size:16px;margin:0 auto;width:300px" class="blockchain-btn"
+       data-address="1NpspxDMdTSGCuzkVCqN8kg6SSaasDhZud"
+       data-shared="false">
+      <div class="blockchain stage-begin">
+          <img src="https://blockchain.info/Resources/buttons/donate_64.png"/>
+      </div>
+      <div class="blockchain stage-loading" style="text-align:center">
+          <img src="https://blockchain.info/Resources/loading-large.gif"/>
+      </div>
+      <div class="blockchain stage-ready">
+           <p align="center">Please Donate To Bitcoin Address: <b>[[address]]</b></p>
+           <p align="center" class="qr-code"></p>
+           <p>However, if you want to get rid of the loading gif, only F5 button or donating BTC to this address will help :) </p>
+      </div>
+      <div class="blockchain stage-paid">
+           Donation of <b>[[value]] BTC</b> Received. Thank You.
+      </div>
+      <div class="blockchain stage-error">
+          <font color="red">[[error]]</font>
+      </div>
+    </div>
+
+      <h2>Ethereum donating</h2>
+
+      <div class="tip-button"></div>
+
+          </article>
+          <aside id="sidebar">
+            <div class="dark">
+
+              <h3 class="cz">Specific blockchain use-cases</h3>
+                <div class="">
+
+                </div>
+
+
+                  <h3 class="cz orange"><a href="./appContentEng.html" style="color:#e8491d">Blockchain content accessing</a></h3>
+
+                  <h3 class="cz orange"><a href="./appCrowdfundingEng.html" style="color:#e8491d">Blockchain crowdfunding</a></h3>
+
+                  <h3 class="cz orange"><a href="./appAuctionEng.html" style="color:#e8491d">Blockchain auction</a></h3>
+
+                  <h3 class="cz orange"><a href="./appRouletteEng.html" style="color:#e8491d">Blockchain roulette</a></h3>
+
+                  <h3 class="cz orange"><a href="./appPocketEng.html" style="color:#e8491d">Blockchain pocket-money</a></h3>
+
+                  <h3 class="cz orange"><a href="./appTipEng.html" style="color:#ffffff">Blockchain tipping</a></h3>
+
+                  <h3 class="cz orange"><a href="./appReceivingCCEng.html" style="color:#e8491d">Blockchain payment accepting</a></h3>
+
+                  <h3 class="cz orange"><a href="./appSwapEng.html" style="color:#e8491d">Blockchain exchange</a></h3>
+
+                  <h3 class="cz orange"><a href="./appDigitalSignaturesEng.html" style="color:#e8491d">Blockchain autentication and authorization</a></h3>
+
+                  <h3 class="cz orange"><a href="./appMultisignatureEng.html" style="color:#e8491d">Blockchain contracts</a></h3>
+
+                  <h3 class="cz orange"><a href="./appElectionsEng.html" style="color:#e8491d">Blockchain elections</a></h3>
+
+                </div>
+
+            </div>
+          </aside>
+        </div>
+    </section>
+
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

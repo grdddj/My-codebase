@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="cz" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum, remix, superblocks, truffle">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Aplikace</title>
+    <link rel="stylesheet" href="./css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script src="script.js"></script>
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+
+            <li class="cz"><a href="index.html">Domů</a></li>
+            <li class="cz"><a href="about.html">O mně</a></li>
+            <li class="cz "><a href="sources.html">Zdroje</a></li>
+            <li class="cz"><a href="services.html">Služby</a></li>
+            <li class="cz"><a href="articles.html">Články</a></li>
+            <li class="cz current"><a href="applications.html">Aplikace</a></li>
+            <li class="cz language"><a href="applicationsEng.html"><img src="./img/gb.png" alt="Switch into english" width="58" height="42"></a> </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="cz page-title">Blockchainové aplikace</h1>
+
+            <p>Blockchainové aplikace se navenek příliš neliší od klasických webových aplikací. Jediná, ale zato zásadní odlišnost se nachází ve způsobu, jakým jsou v těchto aplikacích <b>ukládána data</b> a informace.  </p>
+            <p>Zatímco v klasických webových aplikacích jsou veškerá uživatelská data uložená na centrálním serveru, v případě blockchainových aplikací jsou tyto data ukládána v <b>distribuované síti</b> tisíců počítačů. Všechna data jsou tím pádem řádové tisíckrát zálohována, a je téměř nemožné s nimi neoprávněně manipulovat nebo je měnit.   </p>
+            <p>Právě tato možnost spolehnout se, že "<i>co už bylo jednou uloženo, nebude nikdy vymazáno</i>," spolu s naprosto svobodným přístupem k těmto datům a volností s nimi interagovat, dává možnost vzniknout aplikacím, které by na "klasickém" internetu <b>vzniknout nemohly</b>. </p>
+            <p>První, a stále ještě nejrozšířenější blockchainovou aplikací jsou <b>kryptoměny</b>. V nich přidaná hodnota blockchainu spočívá v tom, že díky distribuovanému ukládání informací, kdo vlastní kolik dané kryptoměny ("stavů konta"), je z měny jako takové odstraněn jeden centralizovaný prvek, který nad ní má výsadní kontrolu a je potřeba mu důvěřovat. </p>
+            <p>Kryptoměny ale nejsou jedinou aplikací, jsou pouze tou první. V současné době se raketovým tempem rozvíjí koncept blockchainových platforem pro <b>decentralizované aplikace</b>. Decentralizované aplikace se vyznačují tím, že si po svém spuštění žijí vlastním životem, protože nejsou nikým vlastněny. Tyto platformy disponují vlastním programovacím jazykem, a umožňují tedy takřka neomezené možnosti využití technologie blockchainu jako distribuovaného úložiště dat. </p>
+            <p>Nejrozšířenější blockchainovou platformou je v současnosti <b>Ethereum</b>, které svým jednoduchým programovacím jazykem Solidity umožňuje tvorbu nových aplikací téměř komukoliv. Právě na ethereové platformě jsou vytvořené všechny zde prezentované aplikace. </p>
+            <br>
+            <h1>Interakce s blockchainovými aplikacemi</h1>
+            <p>Aplikace využívající ke svému chodu blockchainové úložiště dat jsou teprve na svém začátku, dnes je setkání s nimi spíše výjimkou než pravidlem. Proto není jejich používání a interagování s nimi pro průměrného uživatele vůbec snadné. Internetové prohlížeče v současnosti většinou nepodporují přímou komunikaci s blockchainem, ta je tedy možná až po stažení <b>prohlížečových rozšíření</b>.   </p>
+            <p>Prohlížečovým rozšířením komunikujícím s ethereovým blockchainem je například <b>MetaMask</b>. Ten v současnosti podporuje prohlížeče Chrome, Firefox a Opera. Rozšíření je volně ke stažení na stránkách <a href="https://metamask.io/", target="_blank">metamask.io</a>, kde se nezapomeňte pokochat oranžovou liškou. Jelikož pro interakci se všemi zde umístěnými aplikacemi je nezbytné mít MetaMask nainstalovaný a správně nastavený, věnuji tomu i krátké video:    </p>
+            <p><iframe width="560" height="315" src="https://www.youtube.com/embed/LrrtzYE5OGY" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe></p>
+            <br>
+            <h1>Vývojová prostředí a knihovny</h1>
+            <p>Již v takto rané fázi vývoje ethereové platformy je k dispozici několik open-source <b>vývojových prostředí</b>, které velmi zjednodušují tvorbu aplikací. Nejzákladnější z nich je <a href="https://remix.ethereum.org/", target="_blank">Remix</a>, který nabízí možnost psaní kódu ve formě smart kontraktů a následnou interakci s těmito kontrakty. Vývojové prostředí <a href="https://lab.superblocks.com/", target="
+              ">Superblocks</a> je velmi užitečné pro tvorbu kompletních aplikací, kromě smart kontraktů je zde možné vytvářet i uživatelské prostředí, které bude s danou blockchainovou aplikací komunikovat. Většina zde umístěných aplikací byla vytvořena právě s využitím Superblocks. Pro opravdu seriózní vývoj je možné doporučit prostředí <a href="https://truffleframework.com/" target="_blank">Truffle</a>, které disponuje řadou pokročilých funkcí, včetně automatického testování kontraktů. </p>
+              <p>Podobně jako v jiných programovacích jazycích, i v Solidity již byly vytvořeny <b>knihovny</b> pro specifické účely a obsahující komunitou prověřený kód. V oblasti smart kontraktů je používání takových knihoven obzvláště užitečné, protože jednou zveřejněný kontrakt už nelze měnit, každá chyba tedy může být velmi drahá. Nejobsáhlejší a nejpoužívanější knihovnou pro programování na ethereové platformě je  <a href="https://github.com/OpenZeppelin/openzeppelin-solidity" target="_blank">OpenZeppelin</a>, s jehož pomocí je napsání bezpečného smart kontraktu o mnoho jednodušší. </p>
+
+              <br>
+              <h1>Nevýhody blockchainových řešení</h1>
+              <p>Pohled na věc nikdy není úplný a nestranný, pokud se spolu s výhodami nezmiňují i nevýhody. Blockchainové aplikace jsou v současné době zužovány <b>řadou problémů</b>, o kterých je třeba diskutovat, aby mohly být co nejdříve a co nejlépe vyřešeny.  </p>
+              <p>V první řadě je třeba zmínit, že za současného stavu technologie je použití blockchainu výhodné pouze pro velmi úzkou skupinu aplikací, ve většině ostatních nedává žádný ekonomický ani praktický smysl. Je tomu například proto, že blockchain jako úložiště dat je <b>velmi drahé a velmi pomalé</b> řešení, ve srovnání s databázovými službami například od Googlu nebo Amazonu. Každé zapisování dat na blockchain je spojeno s nenulovým poplatkem, a rychlost zápisu se i u nejrychlejších platforem pohybuje v řádu sekund, což má k ideálnímu uživatelskému zážitku daleko.</p>
+              <p>Velkou překážkou pro větší rozšíření je i <b>nedostatečné seznámení veřejnosti</b> s touto technologií, což spolu s nedostatečnou infrastrukturou a složitými uživatelskými prostředími znamená, že široká veřejnost nemá o takové služby zájem. V budoucnu budou tedy stejně jako vývojáři aplikací potřeba i popularizátoři této technologie. Tento web se snaží o obojí. </p>
+          </article>
+
+
+          <aside id="sidebar">
+            <div class="dark">
+
+              <h3 class="cz">Příklady konkrétních aplikací</h3>
+                <div class="">
+
+                </div>
+
+
+                  <h3 class="cz orange"><a href="./app/appContent.html" style="color:#e8491d">Blockchainové zpřístupňování obsahu</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appCrowdfunding.html" style="color:#e8491d">Blockchainové financování projektů</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appAuction.html" style="color:#e8491d">Blockchainová aukce</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appRoulette.html" style="color:#e8491d">Blockchainová ruleta</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appPocket.html" style="color:#e8491d">Blockchainové kapesné</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appTip.html" style="color:#e8491d">Blockchainové spropitné</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appReceivingCC.html" style="color:#e8491d">Blockchainové přijímání plateb</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appSwap.html" style="color:#e8491d">Blockchainová směnárna</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appDigitalSignatures.html" style="color:#e8491d">Blockchainová autentikace a autorizace</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appMultisignature.html" style="color:#e8491d">Blockchainové smlouvy</a></h3>
+
+                  <h3 class="cz orange"><a href="./app/appElections.html" style="color:#e8491d">Blockchainové volby</a></h3>
+
+                </div>
+
+            </div>
+          </aside>
+      </div>
+
+    </section>
+
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

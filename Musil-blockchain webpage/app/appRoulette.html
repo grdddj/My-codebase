@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="cz" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Aplikace</title>
+    <link rel="stylesheet" href="../css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script src="script.js"></script>
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+
+            <li class="cz"><a href="../index.html">Domů</a></li>
+            <li class="cz"><a href="../about.html">O mně</a></li>
+            <li class="cz "><a href="../sources.html">Zdroje</a></li>
+            <li class="cz"><a href="../services.html">Služby</a></li>
+            <li class="cz"><a href="../articles.html">Články</a></li>
+            <li class="cz current"><a href="../applications.html">Aplikace</a></li>
+            <li class="cz language"><a href="appRouletteEng.html"><img src="../img/gb.png" alt="Switch into english" width="58" height="42"></a> </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="cz page-title">Blockchainová ruleta</h1>
+
+            <p><b>Myšlenka</b>: Vytvořit mechanismus pro transparentní hazardní hru s jasně definovanými šancemi na výhru. </p>
+            <p><b>Fungování</b>: Po vyplnění všech náležitostí se vygeneruje transakce a zašle vsazenou částku na adresu konkraktu. Případná výhra je poté automaticky zaslána uživateli. </p>
+            <p><b>Výhody</b>: Zdrojový kód algoritmu pro zajišťování náhody je veřejný a hráči jej mohou kolektivně prozkoumat.  </p>
+            <p><b>Nevýhody</b>: Každá sázka ve hře tvoří transakci, je třeba za ni platit transakční poplatky. Jednoduchý přístup k hazardu může vést k závislostem*. </p>
+            <p>------------------------------------------------------------------------------------------------------------------------------</p>
+            <br>
+            <h2 >Moje ETH adresa: <span id="address"></span></h2>
+            <p>Zvolte procentní šanci výhry: <input type="number" id="percentage" placeholder="Šance výhry [%]..."/></p>
+            <p>Zvolte velikost sázky v ETH: <input type="number" id="bet" placeholder="Velikost sázky [ETH]..."/></p>
+            <p>Vaše případná výhra je: 0 ETH </p>
+            <p><button id="play">Zkusit štěstí!</button></p>
+
+
+          </article>
+
+                    <aside id="sidebar">
+                      <div class="dark">
+
+                        <h3 class="cz">Příklady konkrétních aplikací</h3>
+                          <div class="">
+
+                          </div>
+
+
+                            <h3 class="cz orange"><a href="./appContent.html" style="color:#e8491d">Blockchainové zpřístupňování obsahu</a></h3>
+
+                            <h3 class="cz orange"><a href="./appCrowdfunding.html" style="color:#e8491d">Blockchainové financování projektů</a></h3>
+
+                            <h3 class="cz orange"><a href="./appAuction.html" style="color:#e8491d">Blockchainová aukce</a></h3>
+
+                            <h3 class="cz orange"><a href="./appRoulette.html" style="color:#ffffff">Blockchainová ruleta</a></h3>
+
+                            <h3 class="cz orange"><a href="./appPocket.html" style="color:#e8491d">Blockchainové kapesné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appTip.html" style="color:#e8491d">Blockchainové spropitné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appReceivingCC.html" style="color:#e8491d">Blockchainové přijímání plateb</a></h3>
+
+                            <h3 class="cz orange"><a href="./appSwap.html" style="color:#e8491d">Blockchainová směnárna</a></h3>
+
+                            <h3 class="cz orange"><a href="./appDigitalSignatures.html" style="color:#e8491d">Blockchainová autentikace a autorizace</a></h3>
+
+                            <h3 class="cz orange"><a href="./appMultisignature.html" style="color:#e8491d">Blockchainové smlouvy</a></h3>
+
+                            <h3 class="cz orange"><a href="./appElections.html" style="color:#e8491d">Blockchainové volby</a></h3>
+
+                          </div>
+
+                      </div>
+                    </aside>
+                </div>
+
+    </section>
+    <p>    * Hrajte zodpovědně!</p>
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

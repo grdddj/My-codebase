@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="cz" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Aplikace</title>
+    <link rel="stylesheet" href="../css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script src="script.js"></script>
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+
+            <li class="cz"><a href="../index.html">Domů</a></li>
+            <li class="cz"><a href="../about.html">O mně</a></li>
+            <li class="cz "><a href="../sources.html">Zdroje</a></li>
+            <li class="cz"><a href="../services.html">Služby</a></li>
+            <li class="cz"><a href="../articles.html">Články</a></li>
+            <li class="cz current"><a href="../applications.html">Aplikace</a></li>
+            <li class="cz language"><a href="appPocketEng.html"><img src="../img/gb.png" alt="Switch into english" width="58" height="42"></a> </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="cz page-title">Blockchainové kapesné</h1>
+
+
+
+            <p><b>Myšlenka</b>: Vytvořit jednoduchý mechanismus pro pravidelné platby, například zasílání kapesného dětem každý měsíc. Úplně stejnou podobu by mělo i takové "kryptoměnové inkaso." </p>
+            <p><b>Fungování</b>: Rodič určí libovolnou částku, časový interval, uvede ethereovou adresu svého dítěte a zašle na adresu kontraktu dostatečné prostředky. Poté si z něj bude moci dítě na svoji adresu vybírat danou částku v daných časových intervalech. Ne více a ne častěji. </p>
+            <p><b>Výhody</b>: Rodič může kdykoliv měnit všechny podmínky a přidávat další děti, nebo kohokoliv dalšího, kdo může čerpat z jeho "účtu". V případě inkasa je odstraněn zprostředkovatel (banka), který celou transakci prodražuje. </p>
+            <p><b>Nevýhody</b>: Po vyčerpání všech zaslaných prostředků je potřeba zaslat na adresu kontraktu prostředky nové, aby měly děti z čeho vybírat. (Je to k nevíře, ale ani blockchain nevytvoří perpetuum mobile na peníze*.) </p>
+            <p>------------------------------------------------------------------------------------------------------------------------------</p>
+            <br>
+             <h2 >Moje ETH adresa: <span id="address"></span></h2>
+
+            <p>ETH adresa dítěte: <input type="text" id="name" placeholder="ETH adresa dítěte..."/> </p>
+            <p>Kapesné v ETH: <input type="number" id="amount" placeholder="Kapesné [ETH]..."/></p>
+            <p>Interval kapesného v hodinách: <input type="number" id="duration" placeholder="Interval kapesného [h]..."/></p>
+            <p>Kolika ETH chci kontrakt nabít: <input type="number" id="amount" placeholder="Nabití [ETH]..."/></p>
+            <button id="create">Udělat dítěti radost!</button>
+
+            <br>
+            <br>
+
+
+            <p>ETH adresa dítěte: <input type="text" id="name" placeholder="ETH adresa dítěte..."/> </p>
+            <button id="stop">Zastavit vybírání kapesného a vybrat z kontraktu peníze!</button>
+
+            <br>
+            <br>
+            <br>
+
+            <button id="withdraw">Výběrové tlačítko pro dítě.</button>
+
+            <br>
+            <br>
+            <br>
+
+
+          </article>
+
+                    <aside id="sidebar">
+                      <div class="dark">
+
+                        <h3 class="cz">Příklady konkrétních aplikací</h3>
+                          <div class="">
+
+                          </div>
+
+
+                            <h3 class="cz orange"><a href="./appContent.html" style="color:#e8491d">Blockchainové zpřístupňování obsahu</a></h3>
+
+                            <h3 class="cz orange"><a href="./appCrowdfunding.html" style="color:#e8491d">Blockchainové financování projektů</a></h3>
+
+                            <h3 class="cz orange"><a href="./appAuction.html" style="color:#e8491d">Blockchainová aukce</a></h3>
+
+                            <h3 class="cz orange"><a href="./appRoulette.html" style="color:#e8491d">Blockchainová ruleta</a></h3>
+
+                            <h3 class="cz orange"><a href="./appPocket.html" style="color:#ffffff">Blockchainové kapesné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appTip.html" style="color:#e8491d">Blockchainové spropitné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appReceivingCC.html" style="color:#e8491d">Blockchainové přijímání plateb</a></h3>
+
+                            <h3 class="cz orange"><a href="./appSwap.html" style="color:#e8491d">Blockchainová směnárna</a></h3>
+
+                            <h3 class="cz orange"><a href="./appDigitalSignatures.html" style="color:#e8491d">Blockchainová autentikace a autorizace</a></h3>
+
+                            <h3 class="cz orange"><a href="./appMultisignature.html" style="color:#e8491d">Blockchainové smlouvy</a></h3>
+
+                            <h3 class="cz orange"><a href="./appElections.html" style="color:#e8491d">Blockchainové volby</a></h3>
+
+                          </div>
+
+                      </div>
+                    </aside>
+                </div>
+
+    </section>
+<p>*Technicky to možné je, takové peníze by potom ale byly takřka bezcenné :)</p>
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

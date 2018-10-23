@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Applications</title>
+    <link rel="stylesheet" href="../css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script src="script.js"></script>
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+            <li class="en "><a href="../indexEng.html">Home</a></li>
+            <li class="en"><a href="../aboutEng.html">About</a></li>
+            <li class="en"><a href="../sourcesEng.html">Sources</a></li>
+            <li class="en"><a href="../servicesEng.html">Services</a></li>
+              <li class="en"><a href="../articlesEng.html">Articles</a></li>
+            <li class="en current"><a href="../applicationsEng.html">Applications</a></li>
+            <li class="en language"><a href="appAuction.html"><img src="../img/cz.png" alt="Přejít do češtiny" width="58" height="42"></a> </li>
+
+
+
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="en page-title">Blockchain auction</h1>
+
+            <p><b>Idea</b>: Create an easy access to simple auction mechanisms that are completely transparent. </p>
+            <p><b>Functioning</b>: After creating an auction users can send their bids, and after the end of auction the highest bid will be shown and all other users will get their money returned. </p>
+            <p><b>Advantages</b>: Making a bid in auction is binding, because the offered money is part of the bid, in the form of sent cryptocurrency. Various forms of auctions, including blind auction can be created. </p>
+            <p><b>Disadvantages</b>: Need of having enough money on one address. Complete transparency can be undesired sometimes, however some mechanisms exist how to keep the bid amount secret. </p>
+            <p>------------------------------------------------------------------------------------------------------------------------------</p>
+            <br>
+             <h2 >My ETH address: <span id="address"></span></h2>
+
+              <p>Name of the auction: <input type="text" id="name" placeholder="Auction name..."/> </p>
+              <p>Starting price in ETH: <input type="number" id="amount" placeholder="Starting price [ETH]..."/></p>
+              <p>Duration in hours: <input type="number" id="duration" placeholder="Duration [h]..."/></p>
+              <button id="register">Create auction!</button>
+
+              <br>
+              <br>
+              <br>
+              <p>Choose the auction you want to participate:
+              <select name="cars">
+                <option value="one">Auction 1</option>
+                <option value="two">Auction 2</option>
+                <option value="three">Auction 3</option>
+                <option value="four">Auction 4</option>
+              </select>
+              </p>
+              <p>How much ETH you want to bid: <input type="number" id="amount" placeholder="Your bid [ETH]..."/></p>
+              <button id="donate">Bid!</button>
+
+          </article>
+
+          <aside id="sidebar">
+            <div class="dark">
+
+              <h3 class="cz">Specific blockchain use-cases</h3>
+                <div class="">
+
+                </div>
+
+
+                  <h3 class="cz orange"><a href="./appContentEng.html" style="color:#e8491d">Blockchain content accessing</a></h3>
+
+                  <h3 class="cz orange"><a href="./appCrowdfundingEng.html" style="color:#e8491d">Blockchain crowdfunding</a></h3>
+
+                  <h3 class="cz orange"><a href="./appAuctionEng.html" style="color:#ffffff">Blockchain auction</a></h3>
+
+                  <h3 class="cz orange"><a href="./appRouletteEng.html" style="color:#e8491d">Blockchain roulette</a></h3>
+
+                  <h3 class="cz orange"><a href="./appPocketEng.html" style="color:#e8491d">Blockchain pocket-money</a></h3>
+
+                  <h3 class="cz orange"><a href="./appTipEng.html" style="color:#e8491d">Blockchain tipping</a></h3>
+
+                  <h3 class="cz orange"><a href="./appReceivingCCEng.html" style="color:#e8491d">Blockchain payment accepting</a></h3>
+
+                  <h3 class="cz orange"><a href="./appSwapEng.html" style="color:#e8491d">Blockchain exchange</a></h3>
+
+                  <h3 class="cz orange"><a href="./appDigitalSignaturesEng.html" style="color:#e8491d">Blockchain autentication and authorization</a></h3>
+
+                  <h3 class="cz orange"><a href="./appMultisignatureEng.html" style="color:#e8491d">Blockchain contracts</a></h3>
+
+                  <h3 class="cz orange"><a href="./appElectionsEng.html" style="color:#e8491d">Blockchain elections</a></h3>
+
+                </div>
+
+            </div>
+          </aside>
+        </div>
+
+    </section>
+
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

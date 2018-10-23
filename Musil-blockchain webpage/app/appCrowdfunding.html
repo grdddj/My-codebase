@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html class="language_chosen" lang="cz" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Web page about blockchain technology">
+    <meta name="keywords" content="blockchain, ethereum">
+    <meta name="author" content="Jiří Musil">
+    <title>Musil Blockchain | Aplikace</title>
+    <link rel="stylesheet" href="../css/style3.css"> <!-- connecting it with a CSS stylesheet -->
+
+     <script type="text/javascript" src="https://unpkg.com/jquery@3.3.1/dist/jquery.js"></script>
+     <script src="script.js"></script>
+  </head>
+  <body>
+
+    <header>
+      <div class="container">
+        <div id="branding">
+          <h1><span class="highlight">Musil Blockchain</span></h1>
+        </div>
+        <nav>
+          <ul>
+
+            <li class="cz"><a href="../index.html">Domů</a></li>
+            <li class="cz"><a href="../about.html">O mně</a></li>
+            <li class="cz "><a href="../sources.html">Zdroje</a></li>
+            <li class="cz"><a href="../services.html">Služby</a></li>
+            <li class="cz"><a href="../articles.html">Články</a></li>
+            <li class="cz current"><a href="../applications.html">Aplikace</a></li>
+            <li class="cz language"><a href="appCrowdfundingEng.html"><img src="../img/gb.png" alt="Switch into english" width="58" height="42"></a> </li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <section id="main">
+      <div class="container">
+          <article id="main-col">
+            <h1 class="cz page-title">Blockchainové financování projektů</h1>
+
+            <p><b>Myšlenka</b>: Zjednodušit crowdfunding menších i větších projektů ve stylu Kickstarteru. Stejně dobré využití lze najít například při sbírkách na dobročinné účely. </p>
+            <p><b>Fungování</b>: Kdokoliv může založit nový projekt, určit cílovou částku a datum, do kdy sbírka potrvá. Ostatní uživatelé potom mohou na libovolný z těchto projektů přispívat, a bude-li před konečným termínem vybrána cílová částka, odešle se na účet projektu. V opačném případě jsou peníze automaticky vráceny uživatelům. </p>
+            <p><b>Výhody</b>: Díky absenci zprostředkovatele obdrží projekt opravdu všechny vybrané peníze, bez jakýchkoliv poplatků platformě.   </p>
+            <p><b>Nevýhody</b>: V současné době může být problémem vyšší cenová volatilita kryptoměn - existují už ale i kryptoměny udržující stabilní hodnotu například vůči dolaru. </p>
+            <p>------------------------------------------------------------------------------------------------------------------------------</p>
+            <br>
+             <h2 >Moje ETH adresa: <span id="address"></span></h2>
+
+              <p>Název projektu: <input type="text" id="name" placeholder="Název projektu..."/> </p>
+              <p>Cílová částka v ETH: <input type="number" id="amount" placeholder="Cílová částka [ETH]..."/></p>
+              <p>Doba trvání sbírky v hodinách: <input type="number" id="duration" placeholder="Doba trvání [h]..."/></p>
+              <button id="register">Založit financování projektu!</button>
+
+              <br>
+              <br>
+              <br>
+              <p>Vyberte projekt, který chcete podpořit:
+              <select name="projects">
+                <option value="one">Projekt 1</option>
+                <option value="two">Projekt 2</option>
+                <option value="three">Projekt 3</option>
+                <option value="four">Projekt 4</option>
+              </select>
+              </p>
+              <p>Kolik ETH chcete přispět: <input type="number" id="amount" placeholder="Váš příspěvek [ETH]..."/></p>
+              <button id="donate">Přispějte!</button>
+
+
+
+
+
+          </article>
+
+                    <aside id="sidebar">
+                      <div class="dark">
+
+                        <h3 class="cz">Příklady konkrétních aplikací</h3>
+                          <div class="">
+
+                          </div>
+
+
+                            <h3 class="cz orange"><a href="./appContent.html" style="color:#e8491d">Blockchainové zpřístupňování obsahu</a></h3>
+
+                            <h3 class="cz orange"><a href="./appCrowdfunding.html" style="color:#ffffff">Blockchainové financování projektů</a></h3>
+
+                            <h3 class="cz orange"><a href="./appAuction.html" style="color:#e8491d">Blockchainová aukce</a></h3>
+
+                            <h3 class="cz orange"><a href="./appRoulette.html" style="color:#e8491d">Blockchainová ruleta</a></h3>
+
+                            <h3 class="cz orange"><a href="./appPocket.html" style="color:#e8491d">Blockchainové kapesné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appTip.html" style="color:#e8491d">Blockchainové spropitné</a></h3>
+
+                            <h3 class="cz orange"><a href="./appReceivingCC.html" style="color:#e8491d">Blockchainové přijímání plateb</a></h3>
+
+                            <h3 class="cz orange"><a href="./appSwap.html" style="color:#e8491d">Blockchainová směnárna</a></h3>
+
+                            <h3 class="cz orange"><a href="./appDigitalSignatures.html" style="color:#e8491d">Blockchainová autentikace a autorizace</a></h3>
+
+                            <h3 class="cz orange"><a href="./appMultisignature.html" style="color:#e8491d">Blockchainové smlouvy</a></h3>
+
+                            <h3 class="cz orange"><a href="./appElections.html" style="color:#e8491d">Blockchainové volby</a></h3>
+
+                          </div>
+
+                      </div>
+                    </aside>
+                </div>
+
+    </section>
+
+    <footer>
+      <p>Jiří Musil, Copyright &copy; 2018</p>
+    </footer>
+
+
+  </body>
+</html>

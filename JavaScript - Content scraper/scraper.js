@@ -11,12 +11,16 @@ var alphabetEng = "abcdefghijklmnopqrstuvwxyz"; // string, english alphabet
 // main function that is responsible for getting the data from url
 // it also calls other functions that are dependant on these data
 function getNewContent() {
+  var helper = "https://cors-anywhere.herokuapp.com/"; // string used to enable fetching content from the web with the use of third party server
   var url = $("#url").val(); // getting the url from user
+
+  if(url.includes("http") || url.includes("www")) {
+    url = helper + url;
+  }
 
     if (url != "") { // protects from clicking the button without filling url (which would scrap the scrap.html)
         $.ajax({url: url, success: function(result){
             text = extractTextContent(result); // creates a clean text without html tags
-            $("#text").html(text);
 
             extractWords(text); // creates an array of all separate words
             countWords(allWords); // creates a table of occurences of all unique words

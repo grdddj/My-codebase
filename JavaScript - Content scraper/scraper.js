@@ -22,6 +22,8 @@ function getNewContent() {
       $.ajax({url: url, success: function(result){
           text = extractTextContent(result); // creates a clean text without html tags
 
+          $("#text").html(text);
+
           extractWords(text); // creates an array of all separate words
           countWords(allWords); // creates a table of occurences of all unique words
           highestOcurrence(text); // finds out the most common letter
@@ -80,7 +82,7 @@ function countWords(allWords) {
         uniqueWords.push(allWords[i]);
         wordCount.push(1);
       }
-      isThere = false; 
+      isThere = false;
   }
 
   // loop to fill the table with all the unique words and their appropriate frequencies

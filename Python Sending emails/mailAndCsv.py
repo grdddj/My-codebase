@@ -18,6 +18,7 @@ class Player:
 		self.eloRapid = eloRapid
 		self.eloBlitz = eloBlitz
 
+	# Necessary to allow for printing a single object
 	def __str__(self):
 		return str(self.__class__) + ": " + str(self.__dict__)
 
@@ -45,10 +46,11 @@ for player in playersInfo:
 
 # Transforming the array structure into one string, that is convenient to display
 for player in playersInfo:
-		playersInfoToPrint += player.name + ", "
-		playersInfoToPrint += str(player.eloClassic) + ", "
-		playersInfoToPrint += str(player.eloRapid) + ", "
-		playersInfoToPrint += str(player.eloBlitz) + "\n"
+	row = []
+	for key, value in player.__dict__.items():
+		row.append(str(value))
+	playersInfoToPrint += ", ".join(row)
+	playersInfoToPrint += "\n"
 
 print(playersInfoToPrint)
 
@@ -59,13 +61,9 @@ with open("elo-" + date + ".csv", "w") as csv_file:
 	csv_writer.writerow(headers)
 
 	for player in playersInfo:
-		print(dir(player))
 		playerRow = []
-		playerRow.append(player.name)
-		playerRow.append(player.eloClassic)
-		playerRow.append(player.eloRapid)
-		playerRow.append(player.eloBlitz)
-
+		for key, value in player.__dict__.items():
+			playerRow.append(value)
 		csv_writer.writerow(playerRow)
 
 # Sending the output as an email

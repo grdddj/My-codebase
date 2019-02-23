@@ -10,7 +10,18 @@ eloNumbers = [339300, 306576, 345652]
 # Defining date, to include it into name of CSV file, to avoid overwriting
 date = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
 
-# Array to store all the player's name and ratings
+# Defining the player object
+class Player:
+	def __init__(self, name, eloClassic, eloRapid, eloBlitz):
+		self.name = name
+		self.eloClassic = eloClassic
+		self.eloRapid = eloRapid
+		self.eloBlitz = eloBlitz
+
+	def __str__(self):
+		return str(self.__class__) + ": " + str(self.__dict__)
+
+# Array to store all the player's objects
 playersInfo = []
 
 # String to allow for sending all the information in easy readable format
@@ -27,16 +38,18 @@ for number in eloNumbers:
 	eloRapid= int(soup.find(class_="contentpaneopen").find("table").find("table").find("table").findAll("td")[1].find("font").get_text())
 	eloBlitz = int(soup.find(class_="contentpaneopen").find("table").find("table").find("table").findAll("td")[2].find("font").get_text())
 
-	playersInfo.append([name.replace("\xa0", ""), eloClassic, eloRapid, eloBlitz])
+	playersInfo.append(Player(name.replace("\xa0", ""), eloClassic, eloRapid, eloBlitz))
 	
-print(playersInfo)
+for player in playersInfo:
+	print(vars(player))
 
 # Transforming the array structure into one string, that is convenient to display
 for player in playersInfo:
-		for info in player:
-			playersInfoToPrint = playersInfoToPrint + str(info) + " "
-		playersInfoToPrint = playersInfoToPrint + "\n"
-	
+		playersInfoToPrint += player.name + ", "
+		playersInfoToPrint += str(player.eloClassic) + ", "
+		playersInfoToPrint += str(player.eloRapid) + ", "
+		playersInfoToPrint += str(player.eloBlitz) + "\n"
+
 print(playersInfoToPrint)
 
 # Saving the output as an CSV file
@@ -46,9 +59,13 @@ with open("elo-" + date + ".csv", "w") as csv_file:
 	csv_writer.writerow(headers)
 
 	for player in playersInfo:
+		print(dir(player))
 		playerRow = []
-		for info in player:
-			playerRow.append(info)
+		playerRow.append(player.name)
+		playerRow.append(player.eloClassic)
+		playerRow.append(player.eloRapid)
+		playerRow.append(player.eloBlitz)
+
 		csv_writer.writerow(playerRow)
 
 # Sending the output as an email

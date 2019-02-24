@@ -1,0 +1,1 @@
+This folder contains multiple beginner's Java projects

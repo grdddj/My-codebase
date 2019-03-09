@@ -1,1 +1,2 @@
-This folder contains multiple beginner's Java projects
+# Java
+This folder contains multiple Java projects from the very beginning of my programming journey

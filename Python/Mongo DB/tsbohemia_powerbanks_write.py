@@ -8,11 +8,11 @@ import math
 
 # Connection to the DB
 myclient = pymongo.MongoClient("mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true")
-mydb = myclient["Mall"]
+mydb = myclient["TsBohemia"]
 mycol = mydb["Powerbanks"]
 
-domain = "https://www.mall.cz"
-eshop_suffix = " - Mall.cz";
+domain = "https://www.tsbohemia.cz/"
+eshop_suffix = " - TsBohemia.cz";
 
 today = datetime.now().strftime('%d-%m-%Y')
 
@@ -24,34 +24,34 @@ number_of_pages = 0
 # Try it 5 times as it can sometimes fail with no reason
 for x in range(5):
     try:
-        page = "https://www.mall.cz/power-bank?page=1"
+        page = "https://www.tsbohemia.cz/mobily-a-tablety-powerbanky_c15509.html?whisperstrword=powerbank&page=1#prodlistanchor"
         response = requests.get(page)
         soup = BeautifulSoup(response.text, "html.parser")
-        count_alltogether = int(soup.find("div", {"class": "number-of-products"}))
-        count_one_page = len(soup.find("section", {"class": "product-list"}).findAll("article"))
+
+        count_alltogether = int(soup.find("", {"class": "reccount"}).get_text())
+        count_one_page = len(soup.findAll("div", {"class": "prodbox"}))
         number_of_pages = math.ceil(count_alltogether / count_one_page)
         message = """There is {} elements alltogether, {} on each page, therefore we will explore {} pages
                     """.format(str(count_alltogether), str(count_one_page), str(number_of_pages))
         print(message)
         break
-    except Exception as e:
-        print(e)
+    except:
         print("Something went wrong with the initialisation ({})".format(x))
 
 # Loop through the general supply pages
-for page_number in range(2, 1 + number_of_pages):
+for page_number in range(1, 1 + number_of_pages):
     # Extracting the page with all the goods
     # Try it 5 times as it can sometimes fail with no reason
     for x in range(5):
         try:
             # Link to the page with a lot of goods
-            page = "https://www.mall.cz/power-bank?page=" + str(page_number)
+            page = "https://www.tsbohemia.cz/mobily-a-tablety-powerbanky_c15509.html?whisperstrword=powerbank&page=" + str(page_number) + "#prodlistanchor"
 
             response = requests.get(page)
             soup = BeautifulSoup(response.text, "html.parser")
 
             # Getting the array of single items in the page
-            all_goods = soup.find("section", {"class": "product-list"}).findAll("article")
+            all_goods = soup.findAll("div", {"class": "prodbox"})
             break
         except:
             print("Something went wrong with the initialisation ({})".format(x))
@@ -60,7 +60,6 @@ for page_number in range(2, 1 + number_of_pages):
 
     # Looping through all the items and retrieving information about each one
     for goods in all_goods:
-
         try:
             link = domain + goods.find("a")["href"]
             response = requests.get(link)
@@ -68,48 +67,52 @@ for page_number in range(2, 1 + number_of_pages):
         except:
             continue
 
-        name = price = capacity = price_10000_mAh = ""
+        name = price = capacity =weight = price_10000_mAh = ""
         usb_c = False
 
         try:
-            name = soup.find("h1", {"itemprop": "name"}).get_text().strip()
-            price = soup.find("b", {"class": "pro-price"}).get_text().strip()
+            name = soup.find("h1").get_text().strip()
+            price = soup.find("td", {"class": "price"}).get_text().strip()
         except:
             pass
 
-        # Getting all the text descriptions, to extract information from that
+        # Getting the parameters, to extract information from that
         try:
-            parameters = soup.find("", {"id": "product-detail-parameters"})
-            description = soup.find("", {"id": "product-detail-description"})
-            short_description = soup.find("", {"class": "pro-description--short"})
-        except:
+            parameters = soup.find("", {"class": "parsets"}).findAll("div", {"class": "paramname"})
+            values = soup.find("", {"class": "parsets"}).findAll("div", {"class": "paramvalue"})
+            for entry in parameters:
+                if entry.get_text().startswith("Kapacita"):
+                    capacity = values[parameters.index(entry)].get_text().strip()
+                if entry.get_text().startswith("Hmotnost"):
+                    weight = values[parameters.index(entry)].get_text().strip()
+        except Exception as e:
+            print(e)
             pass
 
         # Finding out whether USB-C is supported
         try:
-            text = parameters.get_text().strip() + description.get_text().strip() + short_description.get_text().strip()
-            if re.search("USB(| |-| Typ- )C", text) is not None:
+            description = soup.find("", {"class": "sticomm"}).get_text().strip()
+            if re.search("(USB-C|Type-C)", description) is not None:
                 usb_c = True
         except:
             pass
 
-        # Finding the capacity
-        for parameter in parameters.findAll("tr"):
-            try:
-                if parameter.find("th").get_text().strip().startswith("Kapacita"):
-                    capacity = parameter.find("td").get_text().strip()
-            except:
-                pass
-
         # Transforming the fields
         try:
-            capacity = int(capacity[0:capacity.index("mAh")].replace('\xa0',' ').replace(" ", ""))
+            capacity = int(capacity)
         except Exception as e:
             print(e)
 
         try:
-            price = int(price[0:price.index("K")].replace('\xa0',' ').replace(" ", ""))
+            price = int(price[0:price.index(",")].replace('Â','').replace("\xa0", "").replace(" ", ""))
         except Exception as e:
+            print (price)
+            print(e)
+
+        try:
+            weight = int(weight)
+        except Exception as e:
+            print (weight)
             print(e)
 
         # Calculating the price of 10000 mAh
@@ -125,13 +128,13 @@ for page_number in range(2, 1 + number_of_pages):
                 "price": price,
                 "capacity": capacity,
                 "usb_c": usb_c,
+                "weight": weight,
                 "link": link,
                 "last_update": today,
                 "price_10000_mAh": price_10000_mAh
             }
         except Exception as e:
             print(e)
-
 
         # Saving everything to the DB
         try:

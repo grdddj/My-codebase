@@ -13,7 +13,7 @@ mycol = mydb["Powerbanks2"]
 domain = "https://www.alza.cz"
 eshop_suffix = " - Alza.cz";
 
-today = datetime.now().strftime('%Y-%m-%d')
+today = datetime.now().strftime('%d-%m-%Y')
 
 count_alltogether = 0
 count_one_page = 0
@@ -86,12 +86,6 @@ for number in range(1, 1 + number_of_pages):
             try:
                 if detail.find(class_="typeName").get_text().strip().startswith("Kapacita"):
                     capacity = detail.find(class_="value").get_text().strip()
-                if detail.find(class_="typeName").get_text().strip().startswith("Šířka"):
-                    width = detail.find(class_="value").get_text().strip()
-                if detail.find(class_="typeName").get_text().strip().startswith("Výška"):
-                    length = detail.find(class_="value").get_text().strip()
-                if detail.find(class_="typeName").get_text().strip().startswith("Hloubka"):
-                    depth = detail.find(class_="value").get_text().strip()
                 if detail.find(class_="typeName").get_text().strip().startswith("Hmotnost"):
                     weight = detail.find(class_="value").get_text().strip()
                 if detail.find(class_="typeName").get_text().strip().startswith("Výstupy"):
@@ -118,21 +112,6 @@ for number in range(1, 1 + number_of_pages):
             print(e)
 
         try:
-            width = int(float(width[0:width.index("m")].replace('\xa0',' ').replace(" ", "").replace(",", ".")))
-        except Exception as e:
-            print(e)
-
-        try:
-            length = int(float(length[0:length.index("m")].replace('\xa0',' ').replace(" ", "").replace(",", ".")))
-        except Exception as e:
-            print(e)
-
-        try:
-            depth = int(float(depth[0:depth.index("m")].replace('\xa0',' ').replace(" ", "").replace(",", ".")))
-        except Exception as e:
-            print(e)
-
-        try:
             weight = int(float(weight[0:weight.index("g")].replace('\xa0',' ').replace(" ", "").replace(",", ".")))
         except Exception as e:
             print(e)
@@ -150,9 +129,6 @@ for number in range(1, 1 + number_of_pages):
                 "price": price,
                 "capacity": capacity,
                 "usb_c": usb_c,
-                "width": width,
-                "length": length,
-                "depth": depth,
                 "weight": weight,
                 "link": link,
                 "last_update": today,

@@ -13,7 +13,7 @@ mycol = mydb["Powerbanks2"]
 domain = "https://www.alza.cz"
 eshop_suffix = " - Alza.cz";
 
-today = datetime.now().strftime('%Y-%m-%d')
+today = datetime.now().strftime('%d-%m-%Y')
 
 count_alltogether = 0
 count_one_page = 0
@@ -60,7 +60,7 @@ for number in range(1, 1 + number_of_pages):
     # In the end saving the info to DB
     for goods in all_goods:
         # Initializting fields we want
-        link = name = price = capacity = width = depth = weight = price_10000_mAh = ""
+        link = name = price = discount = capacity = width = depth = weight = price_10000_mAh = ""
         usb_c = False
 
         try:
@@ -77,6 +77,12 @@ for number in range(1, 1 + number_of_pages):
             price = "unknown"
 
         try:
+            high_price = soup.find(class_="crossPrice").get_text().strip()
+            high_price = int(high_price[0:-2].replace('\xa0',' ').replace(" ", ""))
+        except:
+            discount = 0
+
+        try:
             goods_details = soup.findAll(class_="row")
         except:
             good_details = []
@@ -86,12 +92,6 @@ for number in range(1, 1 + number_of_pages):
             try:
                 if detail.find(class_="typeName").get_text().strip().startswith("Kapacita"):
                     capacity = detail.find(class_="value").get_text().strip()
-                if detail.find(class_="typeName").get_text().strip().startswith("Šířka"):
-                    width = detail.find(class_="value").get_text().strip()
-                if detail.find(class_="typeName").get_text().strip().startswith("Výška"):
-                    length = detail.find(class_="value").get_text().strip()
-                if detail.find(class_="typeName").get_text().strip().startswith("Hloubka"):
-                    depth = detail.find(class_="value").get_text().strip()
                 if detail.find(class_="typeName").get_text().strip().startswith("Hmotnost"):
                     weight = detail.find(class_="value").get_text().strip()
                 if detail.find(class_="typeName").get_text().strip().startswith("Výstupy"):
@@ -103,32 +103,12 @@ for number in range(1, 1 + number_of_pages):
         # Processing the info to have consistency (parsing values)
         # Every value is processed in sigle try-statement, not to influence other
         try:
-            name = name.replace("\u010dern\u00e1", "")
-        except Exception as e:
-            print(e)
-
-        try:
             capacity = int(capacity[0:capacity.index("mAh")].replace('\xa0',' ').replace(" ", ""))
         except Exception as e:
             print(e)
 
         try:
             price = int(price[0:-2].replace('\xa0',' ').replace(" ", ""))
-        except Exception as e:
-            print(e)
-
-        try:
-            width = int(float(width[0:width.index("m")].replace('\xa0',' ').replace(" ", "").replace(",", ".")))
-        except Exception as e:
-            print(e)
-
-        try:
-            length = int(float(length[0:length.index("m")].replace('\xa0',' ').replace(" ", "").replace(",", ".")))
-        except Exception as e:
-            print(e)
-
-        try:
-            depth = int(float(depth[0:depth.index("m")].replace('\xa0',' ').replace(" ", "").replace(",", ".")))
         except Exception as e:
             print(e)
 
@@ -143,16 +123,20 @@ for number in range(1, 1 + number_of_pages):
         except:
             pass
 
+        if discount != 0:
+            try:
+                discount = round(100*(high_price - price) / high_price)
+            except Exception as e:
+                print(e)
+
         try:
             newItem = {
                 "_id": name + eshop_suffix,
                 "name": name,
                 "price": price,
+                "discount": discount,
                 "capacity": capacity,
                 "usb_c": usb_c,
-                "width": width,
-                "length": length,
-                "depth": depth,
                 "weight": weight,
                 "link": link,
                 "last_update": today,
@@ -161,10 +145,12 @@ for number in range(1, 1 + number_of_pages):
         except:
             continue
 
+        print(json.dumps(newItem, indent=4))
+
         # Saving everything to the DB
-        try:
-            x = mycol.insert_one(newItem)
-            print("Added new document: ")
-            print(json.dumps(newItem, indent=4))
-        except Exception as e:
-            print(e)
+        # try:
+        #     x = mycol.insert_one(newItem)
+        #     print("Added new document: ")
+        #     print(json.dumps(newItem, indent=4))
+        # except Exception as e:
+        #     print(e)

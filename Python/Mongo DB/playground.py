@@ -1,5 +1,9 @@
-from datetime import datetime
+import requests
+from bs4 import BeautifulSoup
 
-# if you encounter a "year is out of range" error the timestamp
-# may be in milliseconds, try `ts /= 1000` in that case
-print(datetime.now().strftime('%Y-%m-%d'))
+page = "https://notebooky.heureka.cz/"
+
+response = requests.get(page)
+soup = BeautifulSoup(response.text, "html.parser")
+
+print(soup)

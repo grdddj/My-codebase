@@ -1,9 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
+import re
 
-page = "https://notebooky.heureka.cz/"
+categories = "gmetal gas"
 
-response = requests.get(page)
-soup = BeautifulSoup(response.text, "html.parser")
-
-print(soup)
+if re.search(r"\b(metal)\b", categories, flags=re.IGNORECASE) is None:
+    print("NOT FOUND")
+else:
+    print("found")

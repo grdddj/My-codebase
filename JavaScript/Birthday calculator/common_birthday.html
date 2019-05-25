@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <h1>Common birthday calculator</h1>
+
+    <p>Ever wondered how old are you together with your friends?</p>
+    <p>And what about finding out the date, when you will together have some jubileum?</p>
+    <p>There is no better excuse to have a party than common birthday! <i>Secret tip: The more friends you have, the more frequently you will be able to celebrate.</i></p>
+    <p>Just choose the jubileum you want to calculate (50, 60, 100), input the birthdays of you and your friends and receive the date of your common birthday!</p>
+
+    <br>
+    <div class="inputs">
+      Number of years to celebrate: <input type="number" name="birthday_value" value=""> <br> <br>
+
+      Person 1's birthday: <input type="date" name="birthday_date" value="1999-12-31"> <br>
+      Person 2's birthday: <input type="date" name="birthday_date" value="1999-12-31"> <br>
+    </div>
+
+    <button type="button" name="add_people_button">Add other person</button>
+
+    <br>
+    <br>
+    <button type="button" name="calculate_button">Calculate the date!</button>
+
+    <br>
+    <br>
+    Result: <span id="result"></span>
+
+    <script type="text/javascript">
+      function addInput() {
+        let numberOfInputs = document.querySelectorAll('input[name="birthday_date"]').length;
+        let inputs = document.querySelector(".inputs");
+        inputs.innerHTML += `Person ${numberOfInputs + 1}'s birthday:
+                            <input type="date" name="birthday_date" value="1999-12-31"> <br>`;
+      }
+
+      let addingButton = document.querySelector('button[name="add_people_button"]');
+      addingButton.addEventListener("click", function() {
+        addInput();
+      });
+
+      function calculateResult() {
+        let COMMON_BIRTHDAY = parseInt(document.querySelector('input[name="birthday_value"]').value)
+        if (isNaN(COMMON_BIRTHDAY)) {
+          alert("Please choose a jubileum!");
+          return
+        }
+
+        let birth_years_array = [];
+        let birth_months_array = [];
+        let birth_days_array = [];
+
+        let inputs = document.querySelectorAll('input[name="birthday_date"]');
+        let people_amount = inputs.length;
+        inputs.forEach(input => {
+          birth_years_array.push(parseInt(input.value.split("-")[0]));
+          birth_months_array.push(parseInt(input.value.split("-")[1]));
+          birth_days_array.push(parseInt(input.value.split("-")[2]));
+        });
+
+        birth_years_array.sort((a, b) => a - b);
+
+        let loop_current_year = birth_years_array[0];
+        let loop_combined_age = [0];
+        let loop_keep_going = true;
+
+        while (loop_keep_going) {
+          loop_current_year += 1;
+          let amount_of_alive_people = 0;
+
+          birth_years_array.forEach(birth_year => {
+            if (birth_year < loop_current_year) {
+              amount_of_alive_people += 1;
+            }
+          })
+
+          loop_combined_age.push(loop_combined_age[loop_combined_age.length - 1] + amount_of_alive_people);
+
+          if (loop_combined_age[loop_combined_age.length - 1] > COMMON_BIRTHDAY) {
+            loop_keep_going = false;
+          }
+        }
+
+        let birthday_year = loop_current_year - 1;
+
+        let extra_days = (COMMON_BIRTHDAY - loop_combined_age[loop_combined_age.length - 2]) * 365.25;
+
+        let count_of_months = 0
+        let count_of_days = 0
+
+        birth_months_array.forEach(month_count => {
+          count_of_months += (month_count - 1)
+        })
+
+        birth_days_array.forEach(day_count => {
+          count_of_days += day_count;
+        })
+
+        let days_altogether_from_bday = count_of_months * 30.5 + count_of_days;
+
+        let days_to_be_added = (days_altogether_from_bday + extra_days) / people_amount;
+
+        while (parseInt(days_to_be_added / 365.25) > 0) {
+          days_to_be_added -= 365.25;
+          birthday_year += 1;
+        }
+
+        let birthday_month = parseInt(days_to_be_added / 30.5) + 1;
+        let birthday_day = parseInt(days_to_be_added % 30.5);
+;
+        let result = `These ${people_amount} people have ${COMMON_BIRTHDAY} years together on the <b>${birthday_day}. ${birthday_month}. ${birthday_year}</b>. Happy birthday!`;
+
+        document.querySelector("#result").innerHTML = result;
+      }
+
+      let calculateButton = document.querySelector('button[name="calculate_button"]')
+      calculateButton.addEventListener("click", function() {
+        calculateResult();
+      });
+
+    </script>
+
+  </body>
+</html>

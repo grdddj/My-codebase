@@ -120,7 +120,7 @@ def main():
 
     # Parsing the resulting month and day
     birthday_month = int(days_to_be_added / 30.5) + 1
-    birthday_day = int(days_to_be_added % 30.5) + 1
+    birthday_day = int(days_to_be_added % 30.5)
 
     # Printing the result:
     print("These {} people have {} years together on the {}. {}. {}. Happy birthday!"

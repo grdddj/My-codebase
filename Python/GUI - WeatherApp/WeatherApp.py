@@ -42,7 +42,7 @@ canvas = tk.Canvas(root, height=HEIGHT, width=WIDTH)
 canvas.pack()
 
 # Setting the background image - if the image exists in the current dir
-# Having an if-statement not to be dependant on it it the case of .exe file
+# Having an if-statement not to be dependant on it in the case of .exe file
 if os.path.isfile('./background.png'):
     background_image = tk.PhotoImage(file="background.png")
     background_label = tk.Label(root, image=background_image)

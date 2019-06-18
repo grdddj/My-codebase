@@ -1,12 +1,24 @@
-conversation_id;timestamp;user_name;message
-1;123456798;George;Hello what's up?
-1;123456798;George;Hellosdfsd
-1;123456798;John;Helfsdshat's up?
-1;123456798;George;Hesdfwhfsd
-1;123456798;John;Hellsdft's up?
-1;123456798;John;Hello wsdfsdp?
-1;1560718830;George;jgh
-1;1560718832;George;iuluiluil
-1;1560718848;George;fgh
-1;1560718925;George;trello
-1;1560718931;George;bango
+conversation_id,timestamp,user_name,message
+1,123456798,George,Hello what's up?
+1,123456798,George,Hellosdfsd
+1,123456798,John,Helfsdshat's up?
+1,123456798,George,Hesdfwhfsd
+1,123456798,John,Hellsdft's up?
+1,123456798,John,Hello wsdfsdp?
+1,1560718830,George,jgh
+1,1560718832,George,iuluiluil
+1,1560718848,George,fgh
+1,1560718925,George,trello
+1,1560718931,George,bango
+1,1560879174,George,izui
+1,1560879180,George,��
+1,1560879279,George,ggf
+1,1560881400,George,TDER
+1,1560881403,George,TEDRT
+1,1560881489,George,ghj
+1,1560881491,George,zutz
+1,1560884580,George,gdfs
+1,1560885626,George,gfsdg
+1,1560885627,George,gdf
+1,1560885972,George,
+1,1560885973,George,gdfsg

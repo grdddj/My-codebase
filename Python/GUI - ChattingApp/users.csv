@@ -1,2 +1,3 @@
-name;motto;gender;last_time_online;date_of_registration;password
-George;I am the best;male;123456798;13245679;123
+name,mood,gender,last_time_online,date_of_registration,password
+George,fsdf,male,123456798,13245679,123
+gdfsg,new mood,new gender,123465,123465,aaa

@@ -1,4 +1,4 @@
-sender_user;other_user
-George;John
-George;Mary
-Tom;George
+sender_user,other_user
+George,John
+George,Mary
+Tom,George

@@ -19,6 +19,10 @@ USERNAME = ""
 
 # Filling the name
 def populate_name(name):
+    if name == False:
+        name_label['text'] = ""
+        return
+
     global USERNAME
     USERNAME = name
     name_label['text'] = name
@@ -36,10 +40,18 @@ def load_mood(user_name):
 
 # Filling the mood
 def populate_mood(mood):
+    if mood == False:
+        mood_label['text'] = ""
+        return
+
     mood_label['text'] = mood
 
 # Filling the list of contacts
-def populate_contacts():
+def populate_contacts(fill=True):
+    if fill == False:
+        contact_label['text'] = ""
+        return
+
     user_name = USERNAME
     contact_label['text'] = ""
     # contacts = ["Georgina", "Maty", "Paul"]
@@ -60,6 +72,12 @@ def populate_contacts():
 
 # Reading the content of a file and filling the appropriate text field
 def populate_messages(conversation_id):
+    if conversation_id == False:
+        messaging_label["state"] = "normal" # enabling to manipulate its content
+        messaging_label.delete("1.0", "end") # deleting the old content
+        messaging_label["state"] = "disabled" # disabling the content for user manipulation
+        return
+
     text_messages = ""
 
     with open('messages.csv', 'r') as messages_file:
@@ -111,14 +129,20 @@ def add_contacts():
 main_window = tk.Tk()
 main_window.title(TITLE)
 
-def handle_closing_login_windows(result):
+def handle_closing_login_windows(result, user_name):
     close_window(login_result_window)
     if result == "SUCCESS":
         close_window(login_window)
+
+        # Populating all the fields in the beginning
+        populate_name(user_name)
+        load_mood(user_name)
+        populate_messages(1)
+        populate_contacts()
     else:
         reset_login()
 
-def show_result_from_login(result):
+def show_result_from_login(result, user_name):
     global login_result_window
     login_result_window = tk.Toplevel(login_window)
     login_result_window.title("Login result")
@@ -134,7 +158,7 @@ def show_result_from_login(result):
     login_result_label = tk.Label(login_result_window, text=text, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
     login_result_label.place(relx=0.1, rely=0.1, relheight=0.5, relwidth=0.8)
 
-    login_result_button = tk.Button(login_result_window, text="Close", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4, command=lambda: handle_closing_login_windows(result))
+    login_result_button = tk.Button(login_result_window, text="Close", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4, command=lambda: handle_closing_login_windows(result, user_name))
     login_result_button.place(relx=0.4, rely=0.75, relheight=0.2, relwidth=0.2)
 
 
@@ -161,7 +185,7 @@ def login_into_application():
                 break
 
     print(message)
-    show_result_from_login(message)
+    show_result_from_login(message, user_name)
 
 
 def reset_login():
@@ -333,7 +357,16 @@ def save_new_mood(mood):
     populate_mood(mood)
     close_window(edit_mood_window)
 
-login_screen()
+def log_out_from_application():
+    global USERNAME
+    USERNAME=""
+    print("logging off")
+
+    populate_name(False)
+    populate_mood(False)
+    populate_contacts(False)
+    populate_messages(False)
+
 
 # Getting the initial screen-size
 canvas = tk.Canvas(main_window, height=HEIGHT, width=WIDTH)
@@ -364,6 +397,17 @@ mood_button = tk.Button(profile_area, text="Edit mood", bg="grey", fg="black", f
 mood_button.place(relx=0.75, rely=0.5, relheight=0.5, relwidth=0.25)
 
 
+# LOGIN/LOGOFF PART
+login_area = tk.Frame(main_window, bg="yellow", bd=5)
+login_area.place(relx=0.7, rely=0.05, relwidth=0.25, relheight=0.15)
+
+login_button = tk.Button(login_area, text="LOGIN", bg="green", fg="black", font=("Calibri", 10), justify="right", command=lambda: login_screen())
+login_button.place(relx=0.1, rely=0.1, relheight=0.5, relwidth=0.4)
+
+logout_button = tk.Button(login_area, text="LOGOUT", bg="red", fg="black", font=("Calibri", 10), justify="right", command=lambda: log_out_from_application())
+logout_button.place(relx=0.55, rely=0.1, relheight=0.5, relwidth=0.4)
+
+
 # MESSAGING PART
 messaging_area = tk.Frame(main_window, bg="#42b6f4", bd=10)
 messaging_area.place(relx=0.3, rely=0.3, relwidth=0.65, relheight=0.6)
@@ -387,18 +431,11 @@ messaging_button.place(relx=0.8, rely=0.8,relheight=0.2, relwidth=0.2)
 contacts_area = tk.Frame(main_window, bg="#42b6f4", bd=10)
 contacts_area.place(relx=0.05, rely=0.3, relwidth=0.2, relheight=0.6)
 
-contact_label = tk.Label(contacts_area, text="contacts", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+contact_label = tk.Label(contacts_area, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
 contact_label.place(relheight=0.9, relwidth=1)
 
 contact_button = tk.Button(contacts_area, text="Add new contacts", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: add_contacts())
 contact_button.place(relx=0, rely=0.9,relheight=0.1, relwidth=1)
 
-
-# Populating all the fields in the beginning
-NAME = "George"
-populate_name(NAME)
-load_mood(NAME)
-populate_messages(1)
-populate_contacts()
 
 main_window.mainloop()

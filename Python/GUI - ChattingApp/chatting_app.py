@@ -7,10 +7,6 @@ import datetime
 import csv
 import pandas as pd
 
-# Changeable parameters - the dimensions of main window
-HEIGHT = 600
-WIDTH = 700
-
 TITLE = "Chatting App"
 
 # Username will be stored globally, to be accessible easily everywhere
@@ -27,7 +23,12 @@ def populate_name(name):
     USERNAME = name
     name_label['text'] = name
 
-def load_mood(user_name):
+def load_mood(user_name, known_mood=""):
+    # If the mood is already known (user has just edited it), it will be supplied as a parameter
+    if known_mood != "":
+        mood_label['text'] = known_mood
+        return
+
     with open('users.csv', 'r') as users_file:
         csv_reader = csv.DictReader(users_file)
         # Looping through the conversation and seeing which users are in the
@@ -40,21 +41,11 @@ def load_mood(user_name):
 
 # Filling the mood
 def populate_mood(mood):
-    if mood == False:
-        mood_label['text'] = ""
-        return
-
     mood_label['text'] = mood
 
-# Filling the list of contacts
-def populate_contacts(fill=True):
-    if fill == False:
-        contact_label['text'] = ""
-        return
-
+# Filling the list of contacts, each as a button
+def populate_contacts():
     user_name = USERNAME
-    contact_label['text'] = ""
-    # contacts = ["Georgina", "Maty", "Paul"]
     contacts = []
     with open('conversations.csv', 'r') as conversations_file:
         csv_reader = csv.DictReader(conversations_file)
@@ -62,16 +53,33 @@ def populate_contacts(fill=True):
         #   same conversation as our user_name
         for entry in csv_reader:
             if entry['user_1'] == user_name:
-                contacts.append(entry['user_2'])
+                contacts.append({
+                    "name": entry['user_2'],
+                    "conv_id": entry['id']
+                })
             elif entry['user_2'] == user_name:
-                contacts.append(entry['user_1'])
+                contacts.append({
+                    "name": entry['user_1'],
+                    "conv_id": entry['id']
+                })
 
-    # Putting all the contacts in the visible field
-    for contact in contacts:
-        contact_label['text'] += contact + "\n"
+    # Deleting all the previous buttons with contacts if they exist
+    for button in contact_space_for_buttons.winfo_children():
+        button.destroy()
+
+    # Creating new buttons with the corresponding label for each contact
+    for index, user in enumerate(contacts):
+        print("index", index)
+
+        name = user["name"]
+        conversation_id = user["conv_id"]
+        print("name", name)
+        print("conv_id", conversation_id)
+        button = tk.Button(contact_space_for_buttons, text=name, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda conversation_id = conversation_id, index=index, name=name: populate_messages(conversation_id, name))
+        button.place(relx=0, rely=(0.11 * index),relheight=0.1, relwidth=1)
 
 # Reading the content of a file and filling the appropriate text field
-def populate_messages(conversation_id):
+def populate_messages(conversation_id, name):
     if conversation_id == False:
         messaging_label["state"] = "normal" # enabling to manipulate its content
         messaging_label.delete("1.0", "end") # deleting the old content
@@ -93,6 +101,8 @@ def populate_messages(conversation_id):
     messaging_label.insert("insert", text_messages) # adding the new content
     messaging_label["state"] = "disabled" # disabling the content for user manipulation
     messaging_label.yview_moveto(1) # scrolling the scrollbar to the very bottom
+
+    current_contact_label["text"] = "Current contact - {}".format(name)
 
 
 # Sending a message - saving it to the text file
@@ -118,26 +128,117 @@ def send_message(message, conversation_id):
 
 def show_settings():
     print("show settings")
+    print("settings")
+    global settings_window
+    settings_window = tk.Toplevel(main_window)
+    settings_window.title("Add settings")
+    settings_window.geometry("400x200")
+
+    settings_label = tk.Label(settings_window, text="Choose your settings:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+    settings_label.place(relheight=0.2, relwidth=1)
+
+    settings_entry = tk.Entry(settings_window, bg="orange", font=("Calibri", 15), bd=5)
+    settings_entry.place(relx=0, rely=0.2, relheight=0.2, relwidth=0.7)
+
+    settings_saving_button = tk.Button(settings_window, text="Save new settings", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: save_new_settings(settings_entry.get()))
+    settings_saving_button.place(relx=0.2, rely=0.8, relheight=0.15, relwidth=0.25)
+
+    settings_cancelling_button = tk.Button(settings_window, text="Cancel", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(edit_settings_window))
+    settings_cancelling_button.place(relx=0.5, rely=0.8, relheight=0.15, relwidth=0.25)
 
 def close_window(window_name):
     window_name.destroy() # closing the specified window
 
+def send_contact_request(name):
+    print(name)
+
 def add_contacts():
     print("add_contacts")
+    global add_contacts_window
+    add_contacts_window = tk.Toplevel(main_window)
+    add_contacts_window.title("Add contacts")
+    add_contacts_window.geometry("600x400")
+
+    add_contacts_label = tk.Label(add_contacts_window, text="Type the friend's name:", bg="yellow", bd=4)
+    add_contacts_label.place(relx=0, rely=0, relheight=0.1, relwidth=1)
+
+    contacts_entry = tk.Entry(add_contacts_window, bg="orange", font=("Calibri", 15), bd=5)
+    contacts_entry.place(relx=0, rely=0.1, relheight=0.2, relwidth=0.7)
+
+
+    add_contacts_space_for_buttons = tk.Text(add_contacts_window, bg="yellow", bd=4)
+    add_contacts_space_for_buttons.place(relx=0, rely=0.3, relheight=0.7, relwidth=1)
+
+    info_label = tk.Label(add_contacts_window, text="Click a name to add to contacts:", bg="yellow", bd=4)
+    info_label.place(relx=0, rely=0.9, relheight=0.1, relwidth=1)
+
+    list_of_all_users = []
+
+    # Filling the list of all other users apart from the current one
+    with open('users.csv', 'r') as users_file:
+        csv_reader = csv.DictReader(users_file)
+        for entry in csv_reader:
+            if entry["name"] != USERNAME:
+                list_of_all_users.append(entry["name"])
+
+    print("list of all users", list_of_all_users)
+
+    # Creating new buttons with the corresponding label for each contact
+    for index, user in enumerate(list_of_all_users):
+        button = tk.Button(add_contacts_space_for_buttons, text=user, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda user=user: send_contact_request(user))
+        button.place(relx=0, rely=(0.11 * index),relheight=0.1, relwidth=1)
+
+def manage_contact_requests():
+    print("manage_contact_requests")
+    global manage_contacts_window
+    manage_contacts_window = tk.Toplevel(main_window)
+    manage_contacts_window.title("Manage contacts requests")
+    manage_contacts_window.geometry("600x600")
+
+    manage_contacts_space_for_buttons = tk.Text(manage_contacts_window, bg="yellow", bd=4)
+    manage_contacts_space_for_buttons.place(relx=0, rely=0.1, relheight=0.65, relwidth=1)
+
+    contacts_saving_button = tk.Button(manage_contacts_window, text="Save new contacts", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: save_new_contacts(contacts_entry.get()))
+    contacts_saving_button.place(relx=0.2, rely=0.8, relheight=0.15, relwidth=0.25)
+
+    contacts_cancelling_button = tk.Button(manage_contacts_window, text="Cancel", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(edit_contacts_window))
+    contacts_cancelling_button.place(relx=0.5, rely=0.8, relheight=0.15, relwidth=0.25)
+
+    list_of_users_requesting_contact = []
+
+    # Filling the list of all other users apart from the current one
+    with open('contact_requests.csv', 'r') as contact_requests_file:
+        csv_reader = csv.DictReader(contact_requests_file)
+        for entry in csv_reader:
+            if entry["other_user"] == USERNAME:
+                list_of_users_requesting_contact.append(entry["sender_user"])
+
+    print("list_of_users_requesting_contact", list_of_users_requesting_contact)
+
+    # Creating new buttons with the corresponding label for each contact
+    for index, user in enumerate(list_of_users_requesting_contact):
+        button = tk.Button(manage_contacts_space_for_buttons, text=user, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda user=user: send_contact_request(user))
+        button.place(relx=0, rely=(0.1 * index),relheight=0.1, relwidth=1)
 
 # Defining the main window and its title
 main_window = tk.Tk()
+main_window.state('zoomed') # Making the window maximized
 main_window.title(TITLE)
 
 def handle_closing_login_windows(result, user_name):
-    close_window(login_result_window)
+    # close_window(login_result_window)
     if result == "SUCCESS":
-        close_window(login_window)
+        # close_window(login_window)
 
         # Populating all the fields in the beginning
         populate_name(user_name)
         load_mood(user_name)
-        populate_messages(1)
+        # populate_messages(1)
+        messaging_label["state"] = "normal" # enabling to manipulate its content
+        messaging_label.delete("1.0", "end")
+        messaging_label.insert("insert", "Please choose a contact to start a conversation!")
+        messaging_label["state"] = "disabled" # disabling the content for user manipulation
+
         populate_contacts()
     else:
         reset_login()
@@ -354,7 +455,8 @@ def save_new_mood(mood):
     users_file.loc[users_file["name"]==user_name, "mood"] = mood
     users_file.to_csv("users.csv", index=False)
 
-    populate_mood(mood)
+    # Showing the change to the user and closing the editing window
+    load_mood(user_name, mood)
     close_window(edit_mood_window)
 
 def log_out_from_application():
@@ -362,14 +464,29 @@ def log_out_from_application():
     USERNAME=""
     print("logging off")
 
-    populate_name(False)
-    populate_mood(False)
-    populate_contacts(False)
-    populate_messages(False)
+    name_label["text"] = ""
+    mood_label["text"] = ""
+
+    messaging_label["state"] = "normal" # enabling to manipulate its content
+    messaging_label.delete("1.0", "end")
+    messaging_label["state"] = "disabled" # disabling the content for user manipulation
+
+    # populate_name(False)
+    # populate_mood(False)
+    # populate_contacts(False)
+    # populate_messages(False)
+
+    # for slave in contact_space_for_buttons.pack_slaves():
+    #     print(slave["text"])
+
+    # Deleting all the buttons with contacts
+    for widget in contact_space_for_buttons.winfo_children():
+        print(widget["text"])
+        widget.destroy()
 
 
 # Getting the initial screen-size
-canvas = tk.Canvas(main_window, height=HEIGHT, width=WIDTH)
+canvas = tk.Canvas(main_window)
 canvas.pack()
 
 # Setting the background image - if the image exists in the current dir
@@ -410,15 +527,18 @@ logout_button.place(relx=0.55, rely=0.1, relheight=0.5, relwidth=0.4)
 
 # MESSAGING PART
 messaging_area = tk.Frame(main_window, bg="#42b6f4", bd=10)
-messaging_area.place(relx=0.3, rely=0.3, relwidth=0.65, relheight=0.6)
+messaging_area.place(relx=0.3, rely=0.3, relwidth=0.65, relheight=0.65)
+
+current_contact_label = tk.Label(messaging_area, text="Current contact name - ", bg="yellow", font=("Calibri", 15), justify="left", bd=4)
+current_contact_label.place(relx=0, rely=0, relheight=0.09, relwidth=0.97)
 
 scrollbar = tk.Scrollbar(messaging_area)
-scrollbar.place(relx=0.95, relheight=0.8, relwidth=0.05)
+scrollbar.place(relx=0.97, relheight=0.8, relwidth=0.05)
 
 messaging_label = tk.Text(messaging_area, bg="yellow", font=("Calibri", 15), state="disabled", bd=4, yscrollcommand=scrollbar.set)
-messaging_label.place(relheight=0.8, relwidth=0.95)
+messaging_label.place(relx=0, rely=0.1, relheight=0.8, relwidth=0.97)
 
-scrollbar.config( command = messaging_label.yview )
+scrollbar.config(command=messaging_label.yview)
 
 messaging_text = tk.Text(messaging_area, bg="orange", font=("Calibri", 15), bd=5)
 messaging_text.place(relx=0, rely=0.8, relheight=0.2, relwidth=0.8)
@@ -429,13 +549,39 @@ messaging_button.place(relx=0.8, rely=0.8,relheight=0.2, relwidth=0.2)
 
 # CONTACTS PART
 contacts_area = tk.Frame(main_window, bg="#42b6f4", bd=10)
-contacts_area.place(relx=0.05, rely=0.3, relwidth=0.2, relheight=0.6)
+contacts_area.place(relx=0.05, rely=0.3, relwidth=0.2, relheight=0.65)
 
-contact_label = tk.Label(contacts_area, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
-contact_label.place(relheight=0.9, relwidth=1)
+# contact_space_for_buttons = tk.Label(contacts_area, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+contact_space_for_buttons = tk.Text(contacts_area, bg="yellow", font=("Calibri", 15), bd=4)
+contact_space_for_buttons.place(relheight=0.9, relwidth=1)
 
-contact_button = tk.Button(contacts_area, text="Add new contacts", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: add_contacts())
-contact_button.place(relx=0, rely=0.9,relheight=0.1, relwidth=1)
+# names = [{"name": "George", "conv_id": 14}, {"name": "Michael", "conv_id": 16}, {"name": "John", "conv_id": 1}, {"name": "Rachel", "conv_id": 11}, {"name": "Lorcan", "conv_id": 15}]
+#
+# for index, user in enumerate(names):
+#     print("index", index)
+#
+#     name = user["name"]
+#     conversation_id = user["conv_id"]
+#     print("name", name)
+#     print("conv_id", conversation_id)
+#     button = tk.Button(contact_space_for_buttons, text=name, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda conversation_id = conversation_id, index=index, name=name: populate_messages(conversation_id))
+#     button.place(relx=0, rely=(0.11 * index),relheight=0.1, relwidth=1)
 
+# contact_name_1 = tk.Button(contact_space_for_buttons, text="George", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: add_contacts())
+# contact_name_1.place(relx=0, rely=0.0,relheight=0.1, relwidth=1)
+#
+# contact_name_2 = tk.Button(contact_space_for_buttons, text="Michael", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: add_contacts())
+# contact_name_2.place(relx=0, rely=0.11,relheight=0.1, relwidth=1)
+
+
+contact_new_button = tk.Button(contacts_area, text="Add new contacts", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: add_contacts())
+contact_new_button.place(relx=0, rely=0.8,relheight=0.1, relwidth=1)
+
+contact_requests_button = tk.Button(contacts_area, text="Manage requests (0)", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: manage_contact_requests())
+contact_requests_button.place(relx=0, rely=0.9,relheight=0.1, relwidth=1)
+
+# Saving time with no login :)
+# WARNING: need to uncomment the commented closing of windows
+handle_closing_login_windows("SUCCESS", "George")
 
 main_window.mainloop()

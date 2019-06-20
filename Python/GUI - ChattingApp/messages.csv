@@ -1,7 +1,7 @@
 conversation_id,timestamp,user_name,message
 1,123456798,George,Hello what's up?
 1,123456798,George,Hellosdfsd
-2,123456798,John,Helfsdshat's up?
+1,123456798,John,Helfsdshat's up?
 1,123456798,George,Hesdfwhfsd
 1,123456798,John,Hellsdft's up?
 3,123456798,John,Hello wsdfsdp?
@@ -25,3 +25,15 @@ conversation_id,timestamp,user_name,message
 3,1560889515,a,a mood
 1,1560962966,George,yes
 1,1560966286,,hfgdh
+1,1561057366,George,hhuh
+1,1561057438,George,jh
+1,1561057446,George,
+4,1561057501,George,HEJ TOM
+2,1561057509,George,"mary?
+"
+2,1561057527,George,mary?
+2,1561057540,George,marry???
+2,1561057551,George,"hej man,,,"
+5,1561058729,George,"Hello, 132!"""
+6,1561060464,123,"Hello, mm, how dou you dou?"
+7,1561061630,123,aaaaaaaaa

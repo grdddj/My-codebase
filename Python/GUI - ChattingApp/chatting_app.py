@@ -9,9 +9,13 @@ import pandas as pd
 
 TITLE = "Chatting App"
 
-# Username will be stored globally, to be accessible easily everywhere
+# USER_NAME will be stored globally, to be accessible easily everywhere
 # Will get initialised right after user authenticates
-USERNAME = ""
+USER_NAME = ""
+
+CURRENTLY_OPENED_CONTACT_NAME = ""
+
+CURRENT_CONVERSATION_ID = ""
 
 # Filling the name
 def populate_name(name):
@@ -19,8 +23,8 @@ def populate_name(name):
         name_label['text'] = ""
         return
 
-    global USERNAME
-    USERNAME = name
+    global USER_NAME
+    USER_NAME = name
     name_label['text'] = name
 
 def load_mood(user_name, known_mood=""):
@@ -45,12 +49,12 @@ def populate_mood(mood):
 
 # Filling the list of contacts, each as a button
 def populate_contacts():
-    user_name = USERNAME
+    user_name = USER_NAME
     contacts = []
     with open('conversations.csv', 'r') as conversations_file:
         csv_reader = csv.DictReader(conversations_file)
         # Looping through the conversation and seeing which users are in the
-        #   same conversation as our user_name
+        #   same conversation as our user_name (searching for their contacts)
         for entry in csv_reader:
             if entry['user_1'] == user_name:
                 contacts.append({
@@ -80,11 +84,10 @@ def populate_contacts():
 
 # Reading the content of a file and filling the appropriate text field
 def populate_messages(conversation_id, name):
-    if conversation_id == False:
-        messaging_label["state"] = "normal" # enabling to manipulate its content
-        messaging_label.delete("1.0", "end") # deleting the old content
-        messaging_label["state"] = "disabled" # disabling the content for user manipulation
-        return
+    global CURRENT_CONVERSATION_ID
+    global CURRENTLY_OPENED_CONTACT_NAME
+    CURRENT_CONVERSATION_ID = conversation_id
+    CURRENTLY_OPENED_CONTACT_NAME = name
 
     text_messages = ""
 
@@ -95,6 +98,10 @@ def populate_messages(conversation_id, name):
         for entry in csv_reader:
             if entry['conversation_id'] == str(conversation_id):
                 text_messages += "{}: {}\n".format(entry["user_name"], entry["message"])
+
+    # If there are no messages yet, display the initial message to break the silence :)
+    if text_messages == "":
+        text_messages = "Greet your new contact {}!".format(name)
 
     messaging_label["state"] = "normal" # enabling to manipulate its content
     messaging_label.delete("1.0", "end") # deleting the old content
@@ -107,7 +114,7 @@ def populate_messages(conversation_id, name):
 
 # Sending a message - saving it to the text file
 def send_message(message, conversation_id):
-    user_name = USERNAME
+    user_name = USER_NAME
     current_timestamp = int(time.time())
     human_readable_time = datetime.datetime.fromtimestamp(current_timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -123,8 +130,17 @@ def send_message(message, conversation_id):
 
         csv_writer.writerow(input)
 
+    # Deleting the entry field
     messaging_text.delete("1.0", "end")
-    populate_messages(conversation_id)
+
+    print("CURRENT_CONVERSATION_ID", "CURRENTLY_OPENED_CONTACT_NAME", CURRENT_CONVERSATION_ID, CURRENTLY_OPENED_CONTACT_NAME)
+
+    # Populating the message label with a new content
+    # TODO: do not refresh everything, just add a new line, and store it locally
+    populate_messages(CURRENT_CONVERSATION_ID, CURRENTLY_OPENED_CONTACT_NAME)
+
+def save_new_settings():
+    print("save new settings")
 
 def show_settings():
     print("show settings")
@@ -132,25 +148,105 @@ def show_settings():
     global settings_window
     settings_window = tk.Toplevel(main_window)
     settings_window.title("Add settings")
-    settings_window.geometry("400x200")
+    settings_window.geometry("600x400")
 
     settings_label = tk.Label(settings_window, text="Choose your settings:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
     settings_label.place(relheight=0.2, relwidth=1)
 
-    settings_entry = tk.Entry(settings_window, bg="orange", font=("Calibri", 15), bd=5)
-    settings_entry.place(relx=0, rely=0.2, relheight=0.2, relwidth=0.7)
+    # settings_entry = tk.Entry(settings_window, bg="orange", font=("Calibri", 15), bd=5)
+    # settings_entry.place(relx=0, rely=0.2, relheight=0.2, relwidth=0.7)
 
-    settings_saving_button = tk.Button(settings_window, text="Save new settings", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: save_new_settings(settings_entry.get()))
-    settings_saving_button.place(relx=0.2, rely=0.8, relheight=0.15, relwidth=0.25)
+    settings_saving_button = tk.Button(settings_window, text="Save new settings", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: save_new_settings())
+    settings_saving_button.place(relx=0, rely=0.9, relheight=0.1, relwidth=0.2)
 
-    settings_cancelling_button = tk.Button(settings_window, text="Cancel", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(edit_settings_window))
-    settings_cancelling_button.place(relx=0.5, rely=0.8, relheight=0.15, relwidth=0.25)
+    contacts_cancelling_button = tk.Button(settings_window, text="Cancel", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(settings_window))
+    contacts_cancelling_button.place(relx=0.8, rely=0.9, relheight=0.1, relwidth=0.2)
 
 def close_window(window_name):
     window_name.destroy() # closing the specified window
 
-def send_contact_request(name):
+# Accepts the request to be added as a contact
+# Removing the request from contact_requests and creating a new conversation in conversations
+# After successful saving of everything, reload the contacts bar to show the new conversation
+def accept_contact_request(name):
     print(name)
+    # Making sure all the requests with those two names are deleted
+    with open('contact_requests.csv', 'r') as contact_requests_file_read:
+        csv_reader = list(csv.reader(contact_requests_file_read))
+
+    with open('contact_requests.csv', 'w') as contact_requests_file_write:
+        csv_writer = csv.writer(contact_requests_file_write)
+
+        for row in csv_reader:
+            if len(row) == 0:
+                continue
+            if not ((row[0] == name and row[1] == USER_NAME) or (row[0] == USER_NAME and row[1] == name)):
+                csv_writer.writerow(row)
+
+    # Finding out the index of last conversation, to increment it by one in the new conversation
+    with open('conversations.csv', 'r') as conversations_file:
+        csv_reader = list(csv.reader(conversations_file))
+        highest_index = 0
+        # The last line of CSV file can be empty, so in that case take the last but one
+        try:
+            highest_index = int(csv_reader[-1][0])
+        except IndexError:
+            highest_index = int(csv_reader[-2][0])
+        print("highest_index", highest_index)
+
+    # Creating a new entry in the conversation
+    with open('conversations.csv', 'a') as conversations_file:
+        csv_writer = csv.writer(conversations_file)
+
+        conversation_row = []
+        conversation_row.append(highest_index + 1)
+        conversation_row.append(name)
+        conversation_row.append(USER_NAME)
+        conversation_row.append(15487654641)
+
+        csv_writer.writerow(conversation_row)
+
+    # Updating the contact section to include the new contact
+    populate_contacts()
+
+# Sends request to some other user to be added as a contact
+def send_contact_request(user_name):
+    print(user_name)
+    with open('contact_requests.csv', 'a') as contact_requests_file:
+        csv_writer = csv.writer(contact_requests_file)
+
+        sender_user = USER_NAME
+        other_user = user_name
+
+        contact_request_row = []
+        contact_request_row.append(sender_user)
+        contact_request_row.append(other_user)
+
+        csv_writer.writerow(contact_request_row)
+
+# Accepts a new contact, updates the requests and closes the confirmation window
+def add_new_contact_and_close_dialog(user_name):
+    send_contact_request(user_name)
+    close_window(add_new_contact_confirmation_window)
+
+# Confirms whether user really wants to accept contact
+def add_new_contact_confirmation(user_name):
+    global add_new_contact_confirmation_window
+    add_new_contact_confirmation_window = tk.Toplevel(main_window)
+    add_new_contact_confirmation_window.title("Accept contact request?")
+    add_new_contact_confirmation_window.geometry("500x200")
+
+    text_in_the_label = "Do you really want to add user \"{}\" to the contacts?".format(user_name)
+
+    accept_contact_confirmation_label = tk.Label(add_new_contact_confirmation_window, text=text_in_the_label, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+    accept_contact_confirmation_label.place(relx=0, rely=0, relheight=0.5, relwidth=1)
+
+    accept_contact_confirmation_yes_button = tk.Button(add_new_contact_confirmation_window, text="Yes", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: add_new_contact_and_close_dialog(user_name))
+    accept_contact_confirmation_yes_button.place(relx=0.2, rely=0.6, relheight=0.4, relwidth=0.25)
+
+    accept_contact_confirmation_no_button = tk.Button(add_new_contact_confirmation_window, text="No", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(add_new_contact_confirmation_window))
+    accept_contact_confirmation_no_button.place(relx=0.5, rely=0.6, relheight=0.4, relwidth=0.25)
+
 
 def add_contacts():
     print("add_contacts")
@@ -165,12 +261,14 @@ def add_contacts():
     contacts_entry = tk.Entry(add_contacts_window, bg="orange", font=("Calibri", 15), bd=5)
     contacts_entry.place(relx=0, rely=0.1, relheight=0.2, relwidth=0.7)
 
-
     add_contacts_space_for_buttons = tk.Text(add_contacts_window, bg="yellow", bd=4)
     add_contacts_space_for_buttons.place(relx=0, rely=0.3, relheight=0.7, relwidth=1)
 
+    contacts_cancelling_button = tk.Button(add_contacts_window, text="Cancel", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(add_contacts_window))
+    contacts_cancelling_button.place(relx=0.8, rely=0.9, relheight=0.1, relwidth=0.2)
+
     info_label = tk.Label(add_contacts_window, text="Click a name to add to contacts:", bg="yellow", bd=4)
-    info_label.place(relx=0, rely=0.9, relheight=0.1, relwidth=1)
+    info_label.place(relx=0, rely=0.9, relheight=0.1, relwidth=0.8)
 
     list_of_all_users = []
 
@@ -178,7 +276,7 @@ def add_contacts():
     with open('users.csv', 'r') as users_file:
         csv_reader = csv.DictReader(users_file)
         for entry in csv_reader:
-            if entry["name"] != USERNAME:
+            if entry["name"] != USER_NAME:
                 list_of_all_users.append(entry["name"])
 
     print("list of all users", list_of_all_users)
@@ -188,21 +286,35 @@ def add_contacts():
         button = tk.Button(add_contacts_space_for_buttons, text=user, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda user=user: send_contact_request(user))
         button.place(relx=0, rely=(0.11 * index),relheight=0.1, relwidth=1)
 
-def manage_contact_requests():
-    print("manage_contact_requests")
-    global manage_contacts_window
-    manage_contacts_window = tk.Toplevel(main_window)
-    manage_contacts_window.title("Manage contacts requests")
-    manage_contacts_window.geometry("600x600")
+# Accepts a new contact, updates the requests and closes the confirmation window
+def accept_new_contact_and_close_dialog(user_name):
+    accept_contact_request(user_name)
+    populate_contact_requests()
+    close_window(accept_contact_request_confirmation_window)
 
-    manage_contacts_space_for_buttons = tk.Text(manage_contacts_window, bg="yellow", bd=4)
-    manage_contacts_space_for_buttons.place(relx=0, rely=0.1, relheight=0.65, relwidth=1)
+# Confirms whether user really wants to accept contact
+def accept_contact_request_confirmation(user_name):
+    global accept_contact_request_confirmation_window
+    accept_contact_request_confirmation_window = tk.Toplevel(main_window)
+    accept_contact_request_confirmation_window.title("Accept contact request?")
+    accept_contact_request_confirmation_window.geometry("500x200")
 
-    contacts_saving_button = tk.Button(manage_contacts_window, text="Save new contacts", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: save_new_contacts(contacts_entry.get()))
-    contacts_saving_button.place(relx=0.2, rely=0.8, relheight=0.15, relwidth=0.25)
+    text_in_the_label = "Do you really want to add user \"{}\" to the contacts?".format(user_name)
 
-    contacts_cancelling_button = tk.Button(manage_contacts_window, text="Cancel", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(edit_contacts_window))
-    contacts_cancelling_button.place(relx=0.5, rely=0.8, relheight=0.15, relwidth=0.25)
+    accept_contact_confirmation_label = tk.Label(accept_contact_request_confirmation_window, text=text_in_the_label, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+    accept_contact_confirmation_label.place(relx=0, rely=0, relheight=0.5, relwidth=1)
+
+    accept_contact_confirmation_yes_button = tk.Button(accept_contact_request_confirmation_window, text="Yes", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: accept_new_contact_and_close_dialog(user_name))
+    accept_contact_confirmation_yes_button.place(relx=0.2, rely=0.6, relheight=0.4, relwidth=0.25)
+
+    accept_contact_confirmation_no_button = tk.Button(accept_contact_request_confirmation_window, text="No", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(accept_contact_request_confirmation_window))
+    accept_contact_confirmation_no_button.place(relx=0.5, rely=0.6, relheight=0.4, relwidth=0.25)
+
+# Populates the list of cotnact requests
+def populate_contact_requests():
+    # Deleting all the previous buttons with contacts if they exist
+    for button in manage_contacts_space_for_buttons.winfo_children():
+        button.destroy()
 
     list_of_users_requesting_contact = []
 
@@ -210,30 +322,47 @@ def manage_contact_requests():
     with open('contact_requests.csv', 'r') as contact_requests_file:
         csv_reader = csv.DictReader(contact_requests_file)
         for entry in csv_reader:
-            if entry["other_user"] == USERNAME:
+            if entry["other_user"] == USER_NAME:
                 list_of_users_requesting_contact.append(entry["sender_user"])
 
     print("list_of_users_requesting_contact", list_of_users_requesting_contact)
 
     # Creating new buttons with the corresponding label for each contact
     for index, user in enumerate(list_of_users_requesting_contact):
-        button = tk.Button(manage_contacts_space_for_buttons, text=user, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda user=user: send_contact_request(user))
+        button = tk.Button(manage_contacts_space_for_buttons, text=user, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda user=user: accept_contact_request_confirmation(user))
         button.place(relx=0, rely=(0.1 * index),relheight=0.1, relwidth=1)
 
-# Defining the main window and its title
-main_window = tk.Tk()
-main_window.state('zoomed') # Making the window maximized
-main_window.title(TITLE)
+def manage_contact_requests():
+    print("manage_contact_requests")
+    global manage_contacts_window
+    manage_contacts_window = tk.Toplevel(main_window)
+    manage_contacts_window.title("Manage contacts requests")
+    manage_contacts_window.geometry("600x600")
+
+    global manage_contacts_space_for_buttons
+    manage_contacts_space_for_buttons = tk.Text(manage_contacts_window, bg="yellow", bd=4)
+    manage_contacts_space_for_buttons.place(relx=0, rely=0.1, relheight=0.8, relwidth=1)
+
+    contacts_cancelling_button = tk.Button(manage_contacts_window, text="Cancel", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(manage_contacts_window))
+    contacts_cancelling_button.place(relx=0.8, rely=0.9, relheight=0.1, relwidth=0.2)
+
+    info_label = tk.Label(manage_contacts_window, text="Click a name to add to contacts:", bg="yellow", bd=4)
+    info_label.place(relx=0, rely=0.9, relheight=0.1, relwidth=0.8)
+
+    populate_contact_requests()
 
 def handle_closing_login_windows(result, user_name):
     # close_window(login_result_window)
     if result == "SUCCESS":
-        # close_window(login_window)
+        try:
+            close_window(login_window)
+        except:
+            pass
 
         # Populating all the fields in the beginning
         populate_name(user_name)
         load_mood(user_name)
-        # populate_messages(1)
+
         messaging_label["state"] = "normal" # enabling to manipulate its content
         messaging_label.delete("1.0", "end")
         messaging_label.insert("insert", "Please choose a contact to start a conversation!")
@@ -262,15 +391,11 @@ def show_result_from_login(result, user_name):
     login_result_button = tk.Button(login_result_window, text="Close", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4, command=lambda: handle_closing_login_windows(result, user_name))
     login_result_button.place(relx=0.4, rely=0.75, relheight=0.2, relwidth=0.2)
 
-
 def login_into_application():
-    user_name = login_username_entry.get()
+    user_name = login_user_name_entry.get()
     password = login_password_entry.get()
 
     message=""
-
-    print("username", user_name)
-    print("password", password)
 
     with open('users.csv', 'r') as users_file:
         user_list = csv.DictReader(users_file)
@@ -288,9 +413,8 @@ def login_into_application():
     print(message)
     show_result_from_login(message, user_name)
 
-
 def reset_login():
-    login_username_entry.delete(0, "end")
+    login_user_name_entry.delete(0, "end")
     login_password_entry.delete(0, "end")
 
 def login_screen():
@@ -302,12 +426,12 @@ def login_screen():
     login_label = tk.Label(login_window, text="Please enter you login details:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
     login_label.place(relheight=0.2, relwidth=1)
 
-    login_username_label = tk.Label(login_window, text="Username:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
-    login_username_label.place(relx=0.05, rely=0.2, relheight=0.2, relwidth=0.3)
+    login_user_name_label = tk.Label(login_window, text="User name:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+    login_user_name_label.place(relx=0.05, rely=0.2, relheight=0.2, relwidth=0.3)
 
-    global login_username_entry
-    login_username_entry = tk.Entry(login_window, bg="orange", font=("Calibri", 15), bd=5)
-    login_username_entry.place(relx=0.4, rely=0.2, relheight=0.2, relwidth=0.55)
+    global login_user_name_entry
+    login_user_name_entry = tk.Entry(login_window, bg="orange", font=("Calibri", 15), bd=5)
+    login_user_name_entry.place(relx=0.4, rely=0.2, relheight=0.2, relwidth=0.55)
 
     login_password_label = tk.Label(login_window, text="Password:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
     login_password_label.place(relx=0.05, rely=0.5, relheight=0.2, relwidth=0.3)
@@ -325,14 +449,16 @@ def login_screen():
     login_button_register = tk.Button(login_window, text="Register", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: register_screen())
     login_button_register.place(relx=0.7, rely=0.8, relheight=0.15, relwidth=0.25)
 
-def handle_closing_register_windows(result):
+def handle_closing_register_windows(user_name, result):
     close_window(register_result_window)
     if result == "SUCCESS":
         close_window(register_window)
+        handle_closing_login_windows("SUCCESS", user_name)
     else:
         reset_register()
 
-def show_result_from_register(result):
+# TODO: probably generalize this as a "showing_results" function for both login and register
+def show_result_from_register(user_name, result):
     global register_result_window
     register_result_window = tk.Toplevel(login_window)
     register_result_window.title("Login result")
@@ -342,34 +468,35 @@ def show_result_from_register(result):
 
     if result == "SUCCESS":
         text = "Registration successful, welcome!"
-    else:
-        text = "Login failed, please try again!"
+    elif result == "NOT SAME PASSWORD":
+        text = "Passwords are not the same! Registration failed, please try again!"
+    elif result == "USER ALREADY EXISTS":
+        text = "User with the name {} already exists! Registration failed, please try again!".format(user_name)
 
     login_result_label = tk.Label(register_result_window, text=text, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
     login_result_label.place(relx=0.1, rely=0.1, relheight=0.5, relwidth=0.8)
 
-    login_result_button = tk.Button(register_result_window, text="Close", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4, command=lambda: handle_closing_register_windows(result))
+    login_result_button = tk.Button(register_result_window, text="Close", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4, command=lambda: handle_closing_register_windows(user_name, result))
     login_result_button.place(relx=0.4, rely=0.75, relheight=0.2, relwidth=0.2)
 
 def register_into_application():
-    user_name = register_username_entry.get()
+    user_name = register_user_name_entry.get()
     password = register_password_entry.get()
     password_verify = register_password_entry_verify.get()
 
     # Checking if the password was typed both times the same
     if (password != password_verify):
         print("NOT THE SAME PASSWORD")
-        show_result_from_register("NOT SAME PASSWORD")
+        show_result_from_register(user_name, "NOT SAME PASSWORD")
         return
 
     # Checking if there is not already a user with the same name
     with open('users.csv', 'r') as users_file:
         user_list = csv.DictReader(users_file)
-        # Looping through the users and looking for the same username
+        # Looping through the users and looking for the same USER_NAME
         for user in user_list:
             if user['name'] == user_name:
-                message = "USER ALREADY EXISTS"
-                show_result_from_register(message)
+                show_result_from_register(user_name, "USER ALREADY EXISTS")
                 return
 
     # Appending the new user to a CSV file (if relevant)
@@ -386,10 +513,10 @@ def register_into_application():
 
         csv_writer.writerow(input)
 
-    show_result_from_register("SUCCESS")
+    show_result_from_register(user_name, "SUCCESS")
 
 def reset_register():
-    register_username_entry.delete(0, "end")
+    register_user_name_entry.delete(0, "end")
     register_password_entry.delete(0, "end")
     register_password_entry_verify.delete(0, "end")
 
@@ -402,12 +529,12 @@ def register_screen():
     register_label = tk.Label(register_window, text="Please enter you details:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
     register_label.place(relheight=0.2, relwidth=1)
 
-    register_username_label = tk.Label(register_window, text="Username:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
-    register_username_label.place(relx=0.05, rely=0.15, relheight=0.15, relwidth=0.3)
+    register_user_name_label = tk.Label(register_window, text="User name:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+    register_user_name_label.place(relx=0.05, rely=0.15, relheight=0.15, relwidth=0.3)
 
-    global register_username_entry
-    register_username_entry = tk.Entry(register_window, bg="orange", font=("Calibri", 15), bd=5)
-    register_username_entry.place(relx=0.4, rely=0.15, relheight=0.15, relwidth=0.55)
+    global register_user_name_entry
+    register_user_name_entry = tk.Entry(register_window, bg="orange", font=("Calibri", 15), bd=5)
+    register_user_name_entry.place(relx=0.4, rely=0.15, relheight=0.15, relwidth=0.55)
 
     register_password_label = tk.Label(register_window, text="Password:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
     register_password_label.place(relx=0.05, rely=0.35, relheight=0.15, relwidth=0.3)
@@ -449,7 +576,7 @@ def edit_mood(main_window):
 
 # Changes the mood in the DB (CSV file)
 def save_new_mood(mood):
-    user_name = USERNAME
+    user_name = USER_NAME
 
     users_file = pd.read_csv("users.csv")
     users_file.loc[users_file["name"]==user_name, "mood"] = mood
@@ -460,8 +587,8 @@ def save_new_mood(mood):
     close_window(edit_mood_window)
 
 def log_out_from_application():
-    global USERNAME
-    USERNAME=""
+    global USER_NAME
+    USER_NAME=""
     print("logging off")
 
     name_label["text"] = ""
@@ -471,19 +598,16 @@ def log_out_from_application():
     messaging_label.delete("1.0", "end")
     messaging_label["state"] = "disabled" # disabling the content for user manipulation
 
-    # populate_name(False)
-    # populate_mood(False)
-    # populate_contacts(False)
-    # populate_messages(False)
-
-    # for slave in contact_space_for_buttons.pack_slaves():
-    #     print(slave["text"])
-
     # Deleting all the buttons with contacts
     for widget in contact_space_for_buttons.winfo_children():
         print(widget["text"])
         widget.destroy()
 
+        
+# Defining the main window and its title
+main_window = tk.Tk()
+main_window.state('zoomed') # Making the window maximized
+main_window.title(TITLE)
 
 # Getting the initial screen-size
 canvas = tk.Canvas(main_window)
@@ -543,7 +667,7 @@ scrollbar.config(command=messaging_label.yview)
 messaging_text = tk.Text(messaging_area, bg="orange", font=("Calibri", 15), bd=5)
 messaging_text.place(relx=0, rely=0.8, relheight=0.2, relwidth=0.8)
 
-messaging_button = tk.Button(messaging_area, text="Send", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: send_message(messaging_text.get("1.0", "end-1c"), 1))
+messaging_button = tk.Button(messaging_area, text="Send", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: send_message(messaging_text.get("1.0", "end-1c"), CURRENT_CONVERSATION_ID))
 messaging_button.place(relx=0.8, rely=0.8,relheight=0.2, relwidth=0.2)
 
 
@@ -555,33 +679,14 @@ contacts_area.place(relx=0.05, rely=0.3, relwidth=0.2, relheight=0.65)
 contact_space_for_buttons = tk.Text(contacts_area, bg="yellow", font=("Calibri", 15), bd=4)
 contact_space_for_buttons.place(relheight=0.9, relwidth=1)
 
-# names = [{"name": "George", "conv_id": 14}, {"name": "Michael", "conv_id": 16}, {"name": "John", "conv_id": 1}, {"name": "Rachel", "conv_id": 11}, {"name": "Lorcan", "conv_id": 15}]
-#
-# for index, user in enumerate(names):
-#     print("index", index)
-#
-#     name = user["name"]
-#     conversation_id = user["conv_id"]
-#     print("name", name)
-#     print("conv_id", conversation_id)
-#     button = tk.Button(contact_space_for_buttons, text=name, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda conversation_id = conversation_id, index=index, name=name: populate_messages(conversation_id))
-#     button.place(relx=0, rely=(0.11 * index),relheight=0.1, relwidth=1)
-
-# contact_name_1 = tk.Button(contact_space_for_buttons, text="George", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: add_contacts())
-# contact_name_1.place(relx=0, rely=0.0,relheight=0.1, relwidth=1)
-#
-# contact_name_2 = tk.Button(contact_space_for_buttons, text="Michael", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: add_contacts())
-# contact_name_2.place(relx=0, rely=0.11,relheight=0.1, relwidth=1)
-
-
 contact_new_button = tk.Button(contacts_area, text="Add new contacts", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: add_contacts())
 contact_new_button.place(relx=0, rely=0.8,relheight=0.1, relwidth=1)
 
 contact_requests_button = tk.Button(contacts_area, text="Manage requests (0)", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: manage_contact_requests())
 contact_requests_button.place(relx=0, rely=0.9,relheight=0.1, relwidth=1)
 
+
 # Saving time with no login :)
-# WARNING: need to uncomment the commented closing of windows
-handle_closing_login_windows("SUCCESS", "George")
+handle_closing_login_windows("SUCCESS", "123")
 
 main_window.mainloop()

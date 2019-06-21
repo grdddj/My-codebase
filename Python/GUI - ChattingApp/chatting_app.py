@@ -1,11 +1,11 @@
 import tkinter as tk
 from tkinter import font
-import requests
 import os
 import time
 import datetime
 import csv
 import pandas as pd
+import sched
 
 TITLE = "Chatting App"
 
@@ -67,6 +67,24 @@ def populate_contacts():
                     "conv_id": entry['id']
                 })
 
+    # Getting array of all names (for the search in users table)
+    all_contact_names = []
+    for contact in contacts:
+        all_contact_names.append(contact["name"])
+
+    # Including the timestamps for all contacts
+    with open('users.csv', 'r') as users_file:
+        csv_reader = csv.DictReader(users_file)
+        # Looping through the users and seeing whether they are in current user's
+        #   contacts, and if so, saving their last time online timestamp
+        for entry in csv_reader:
+            if entry['name'] in all_contact_names:
+                for index, contact in enumerate(contacts):
+                    if contact["name"] == entry['name']:
+                        contacts[index]["last_time_online"] = int(entry["last_time_online"])
+
+    print("contacts: ", contacts)
+
     # Deleting all the previous buttons with contacts if they exist
     for button in contact_space_for_buttons.winfo_children():
         button.destroy()
@@ -75,19 +93,84 @@ def populate_contacts():
     for index, user in enumerate(contacts):
         print("index", index)
 
-        name = user["name"]
+        user_name = user["name"]
         conversation_id = user["conv_id"]
-        print("name", name)
+        last_timestamp = user["last_time_online"]
+        print("user_name", user_name)
         print("conv_id", conversation_id)
-        button = tk.Button(contact_space_for_buttons, text=name, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda conversation_id = conversation_id, index=index, name=name: populate_messages(conversation_id, name))
-        button.place(relx=0, rely=(0.11 * index),relheight=0.1, relwidth=1)
+
+        current_timestamp = int(time.time())
+        print("current_timestamp", current_timestamp)
+
+        # Determining how long time passed from the user being online the last time
+        time_from_last_online_state = current_timestamp - last_timestamp
+
+        label_background_color = ""
+
+        # Setting label's colour according to the last online date
+        if time_from_last_online_state < 60:
+            label_background_color = "green"
+        elif time_from_last_online_state < 300:
+            label_background_color = "orange"
+        else:
+            label_background_color = "red"
+
+        # Label that is visually showing whether the user is online or not
+        online_status_label = tk.Button(contact_space_for_buttons, bg=label_background_color)
+        online_status_label.place(relx=0, rely=(0.11 * index),relheight=0.1, relwidth=0.2)
+
+        button_with_contact_user_name = tk.Button(contact_space_for_buttons, text=user_name, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda conversation_id = conversation_id, user_name=user_name: populate_messages(conversation_id, user_name))
+        button_with_contact_user_name.place(relx=0.25, rely=(0.11 * index),relheight=0.1, relwidth=0.5)
+
+        info_button = tk.Button(contact_space_for_buttons, text="INFO", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda user_name=user_name: show_user_info(user_name))
+        info_button.place(relx=0.8, rely=(0.11 * index),relheight=0.1, relwidth=0.2)
+
+def show_user_info(user_name):
+    print("show user info", user_name)
+    global show_user_info_window
+    show_user_info_window = tk.Toplevel(main_window)
+    show_user_info_window.title("User info")
+    show_user_info_window.geometry("600x400")
+
+    label_text = "{}'s information:".format(user_name)
+
+    user_mood = ""
+    last_time_online = 0
+
+    # Searching for the information about a specific user
+    with open('users.csv', 'r') as users_file:
+        csv_reader = csv.DictReader(users_file)
+        # Looping through the users and seeing whether they are in current user's
+        #   contacts, and if so, saving their last time online timestamp
+        for entry in csv_reader:
+            if entry["name"] == user_name:
+                user_mood = entry["mood"]
+                last_time_online = int(entry["last_time_online"])
+                break
+
+    human_readable_last_time_online = datetime.datetime.fromtimestamp(last_time_online).strftime('%Y-%m-%d %H:%M:%S')
+
+    mood_label_text = "Mood: {}".format(user_mood)
+    last_time_online_text = "Last time online: {}".format(human_readable_last_time_online)
+
+    show_user_info_label = tk.Label(show_user_info_window, text=label_text, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+    show_user_info_label.place(relx=0, rely=0, relheight=0.2, relwidth=1)
+
+    mood_info_label = tk.Label(show_user_info_window, text=mood_label_text, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+    mood_info_label.place(relx=0, rely=0.2, relheight=0.2, relwidth=1)
+
+    timestamp_info_label = tk.Label(show_user_info_window, text=last_time_online_text, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
+    timestamp_info_label.place(relx=0, rely=0.4, relheight=0.2, relwidth=1)
+
+    show_user_info_cancelling_button = tk.Button(show_user_info_window, text="Cancel", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: close_window(show_user_info_window))
+    show_user_info_cancelling_button.place(relx=0.8, rely=0.9, relheight=0.1, relwidth=0.2)
 
 # Reading the content of a file and filling the appropriate text field
-def populate_messages(conversation_id, name):
+def populate_messages(conversation_id, user_name):
     global CURRENT_CONVERSATION_ID
     global CURRENTLY_OPENED_CONTACT_NAME
     CURRENT_CONVERSATION_ID = conversation_id
-    CURRENTLY_OPENED_CONTACT_NAME = name
+    CURRENTLY_OPENED_CONTACT_NAME = user_name
 
     text_messages = ""
 
@@ -101,7 +184,7 @@ def populate_messages(conversation_id, name):
 
     # If there are no messages yet, display the initial message to break the silence :)
     if text_messages == "":
-        text_messages = "Greet your new contact {}!".format(name)
+        text_messages = "Greet your new contact {}!".format(user_name)
 
     messaging_label["state"] = "normal" # enabling to manipulate its content
     messaging_label.delete("1.0", "end") # deleting the old content
@@ -109,10 +192,11 @@ def populate_messages(conversation_id, name):
     messaging_label["state"] = "disabled" # disabling the content for user manipulation
     messaging_label.yview_moveto(1) # scrolling the scrollbar to the very bottom
 
-    current_contact_label["text"] = "Current contact - {}".format(name)
+    current_contact_label["text"] = "Current contact - {}".format(user_name)
 
 
 # Sending a message - saving it to the text file
+# Also updating the conversation table and storing the time of message as a last timestamp
 def send_message(message, conversation_id):
     user_name = USER_NAME
     current_timestamp = int(time.time())
@@ -122,18 +206,22 @@ def send_message(message, conversation_id):
     with open('messages.csv', 'a') as messages_file:
         csv_writer = csv.writer(messages_file)
 
-        input = []
-        input.append(conversation_id)
-        input.append(current_timestamp)
-        input.append(user_name)
-        input.append(message)
+        message_row = []
+        message_row.append(conversation_id)
+        message_row.append(current_timestamp)
+        message_row.append(user_name)
+        message_row.append(message)
 
-        csv_writer.writerow(input)
+        csv_writer.writerow(message_row)
 
     # Deleting the entry field
     messaging_text.delete("1.0", "end")
 
-    print("CURRENT_CONVERSATION_ID", "CURRENTLY_OPENED_CONTACT_NAME", CURRENT_CONVERSATION_ID, CURRENTLY_OPENED_CONTACT_NAME)
+    current_timestamp = int(time.time())
+
+    conversations_file = pd.read_csv("conversations.csv")
+    conversations_file.loc[conversations_file["id"]==conversation_id, "last_timestamp"] = current_timestamp
+    conversations_file.to_csv("conversations.csv", index=False)
 
     # Populating the message label with a new content
     # TODO: do not refresh everything, just add a new line, and store it locally
@@ -144,7 +232,6 @@ def save_new_settings():
 
 def show_settings():
     print("show settings")
-    print("settings")
     global settings_window
     settings_window = tk.Toplevel(main_window)
     settings_window.title("Add settings")
@@ -152,9 +239,6 @@ def show_settings():
 
     settings_label = tk.Label(settings_window, text="Choose your settings:", bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
     settings_label.place(relheight=0.2, relwidth=1)
-
-    # settings_entry = tk.Entry(settings_window, bg="orange", font=("Calibri", 15), bd=5)
-    # settings_entry.place(relx=0, rely=0.2, relheight=0.2, relwidth=0.7)
 
     settings_saving_button = tk.Button(settings_window, text="Save new settings", bg="grey", fg="black", font=("Calibri", 10), justify="right", command=lambda: save_new_settings())
     settings_saving_button.place(relx=0, rely=0.9, relheight=0.1, relwidth=0.2)
@@ -169,7 +253,7 @@ def close_window(window_name):
 # Removing the request from contact_requests and creating a new conversation in conversations
 # After successful saving of everything, reload the contacts bar to show the new conversation
 def accept_contact_request(name):
-    print(name)
+    print("Accepting request from:", name)
     # Making sure all the requests with those two names are deleted
     with open('contact_requests.csv', 'r') as contact_requests_file_read:
         csv_reader = list(csv.reader(contact_requests_file_read))
@@ -192,7 +276,6 @@ def accept_contact_request(name):
             highest_index = int(csv_reader[-1][0])
         except IndexError:
             highest_index = int(csv_reader[-2][0])
-        print("highest_index", highest_index)
 
     # Creating a new entry in the conversation
     with open('conversations.csv', 'a') as conversations_file:
@@ -206,12 +289,13 @@ def accept_contact_request(name):
 
         csv_writer.writerow(conversation_row)
 
+    print("New conversation with index {} was created".format(highest_index + 1))
     # Updating the contact section to include the new contact
     populate_contacts()
 
 # Sends request to some other user to be added as a contact
 def send_contact_request(user_name):
-    print(user_name)
+    print("Contact request was sent to", user_name)
     with open('contact_requests.csv', 'a') as contact_requests_file:
         csv_writer = csv.writer(contact_requests_file)
 
@@ -249,7 +333,6 @@ def add_new_contact_confirmation(user_name):
 
 
 def add_contacts():
-    print("add_contacts")
     global add_contacts_window
     add_contacts_window = tk.Toplevel(main_window)
     add_contacts_window.title("Add contacts")
@@ -279,11 +362,9 @@ def add_contacts():
             if entry["name"] != USER_NAME:
                 list_of_all_users.append(entry["name"])
 
-    print("list of all users", list_of_all_users)
-
     # Creating new buttons with the corresponding label for each contact
     for index, user in enumerate(list_of_all_users):
-        button = tk.Button(add_contacts_space_for_buttons, text=user, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda user=user: send_contact_request(user))
+        button = tk.Button(add_contacts_space_for_buttons, text=user, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda user=user: add_new_contact_confirmation(user))
         button.place(relx=0, rely=(0.11 * index),relheight=0.1, relwidth=1)
 
 # Accepts a new contact, updates the requests and closes the confirmation window
@@ -325,15 +406,12 @@ def populate_contact_requests():
             if entry["other_user"] == USER_NAME:
                 list_of_users_requesting_contact.append(entry["sender_user"])
 
-    print("list_of_users_requesting_contact", list_of_users_requesting_contact)
-
     # Creating new buttons with the corresponding label for each contact
     for index, user in enumerate(list_of_users_requesting_contact):
         button = tk.Button(manage_contacts_space_for_buttons, text=user, bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda user=user: accept_contact_request_confirmation(user))
         button.place(relx=0, rely=(0.1 * index),relheight=0.1, relwidth=1)
 
 def manage_contact_requests():
-    print("manage_contact_requests")
     global manage_contacts_window
     manage_contacts_window = tk.Toplevel(main_window)
     manage_contacts_window.title("Manage contacts requests")
@@ -370,7 +448,7 @@ def handle_closing_login_windows(result, user_name):
 
         populate_contacts()
     else:
-        reset_login()
+        reset_login(login_result_window)
 
 def show_result_from_login(result, user_name):
     global login_result_window
@@ -410,12 +488,15 @@ def login_into_application():
                     message = "FAILURE"
                 break
 
-    print(message)
     show_result_from_login(message, user_name)
 
-def reset_login():
+# Deletes the content of user_name and password and if asked to, closes the handling dialog
+def reset_login(dialog_to_close=None):
+    if dialog_to_close is not None:
+        close_window(dialog_to_close)
     login_user_name_entry.delete(0, "end")
     login_password_entry.delete(0, "end")
+
 
 def login_screen():
     global login_window
@@ -455,7 +536,7 @@ def handle_closing_register_windows(user_name, result):
         close_window(register_window)
         handle_closing_login_windows("SUCCESS", user_name)
     else:
-        reset_register()
+        reset_register(register_result_window)
 
 # TODO: probably generalize this as a "showing_results" function for both login and register
 def show_result_from_register(user_name, result):
@@ -486,7 +567,6 @@ def register_into_application():
 
     # Checking if the password was typed both times the same
     if (password != password_verify):
-        print("NOT THE SAME PASSWORD")
         show_result_from_register(user_name, "NOT SAME PASSWORD")
         return
 
@@ -591,19 +671,42 @@ def log_out_from_application():
     USER_NAME=""
     print("logging off")
 
+    # Deleting the text in name and mood labels
     name_label["text"] = ""
     mood_label["text"] = ""
 
+    # Emptying all the messages in the label
     messaging_label["state"] = "normal" # enabling to manipulate its content
     messaging_label.delete("1.0", "end")
     messaging_label["state"] = "disabled" # disabling the content for user manipulation
 
     # Deleting all the buttons with contacts
     for widget in contact_space_for_buttons.winfo_children():
-        print(widget["text"])
         widget.destroy()
 
-        
+# Serves to quickly see if user has some new contact requests
+def update_manage_requests():
+    list_of_users_requesting_contact = []
+
+    # Filling the list of all other users apart from the current one
+    with open('contact_requests.csv', 'r') as contact_requests_file:
+        csv_reader = csv.DictReader(contact_requests_file)
+        for entry in csv_reader:
+            if entry["other_user"] == USER_NAME:
+                list_of_users_requesting_contact.append(entry["sender_user"])
+
+    requests_amount = len(list_of_users_requesting_contact)
+
+    contact_requests_button["text"] = "Manage requests ({})".format(requests_amount)
+
+# Is saving the last time user was sending an updating request (was online)
+def log_last_time_online(user_name):
+    current_timestamp = int(time.time())
+
+    users_file = pd.read_csv("users.csv")
+    users_file.loc[users_file["name"]==user_name, "last_time_online"] = current_timestamp
+    users_file.to_csv("users.csv", index=False)
+
 # Defining the main window and its title
 main_window = tk.Tk()
 main_window.state('zoomed') # Making the window maximized
@@ -682,11 +785,39 @@ contact_space_for_buttons.place(relheight=0.9, relwidth=1)
 contact_new_button = tk.Button(contacts_area, text="Add new contacts", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: add_contacts())
 contact_new_button.place(relx=0, rely=0.8,relheight=0.1, relwidth=1)
 
-contact_requests_button = tk.Button(contacts_area, text="Manage requests (0)", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: manage_contact_requests())
+contact_requests_button = tk.Button(contacts_area, text="Manage requests", bg="grey", fg="black", font=("Calibri", 10), justify="center", command=lambda: manage_contact_requests())
 contact_requests_button.place(relx=0, rely=0.9,relheight=0.1, relwidth=1)
 
 
 # Saving time with no login :)
 handle_closing_login_windows("SUCCESS", "123")
+
+
+# # Running all the update functions in regular time intervals
+while True:
+    print("UPDATING")
+    update_manage_requests()
+    time.sleep(5)
+
+# s = sched.scheduler(time.time, time.sleep)
+# def do_something(sc):
+#     print( "Doing stuff...")
+#     update_manage_requests()
+#     s.enter(5, 1, do_something, (sc,))
+#
+# s.enter(5, 1, do_something, (s,))
+# s.run()
+
+#
+def update_the_page():
+    print("UPDATING")
+    populate_contacts()
+    update_manage_requests()
+    populate_messages(CURRENT_CONVERSATION_ID, CURRENTLY_OPENED_CONTACT_NAME)
+    log_last_time_online(USER_NAME)
+    main_window.after(3000, update_the_page)
+
+update_the_page()
+
 
 main_window.mainloop()

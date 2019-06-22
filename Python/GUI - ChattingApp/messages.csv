@@ -35,9 +35,10 @@ conversation_id,timestamp,user_name,message
 2,1561057527,George,mary?
 2,1561057540,George,marry???
 2,1561057551,George,"hej man,,,"
-5,1561058729,George,"Hello, 132!"""
+5,1561058729,George,"Hello, 132!'"
 6,1561060464,123,"Hello, mm, how dou you dou?"
 7,1561061630,123,aaaaaaaaa
+7,1561061630,123,gfdfger
 9,1561138690,123,gsdgdsfg
 5,1561147703,123,hi
 5,1561147706,123,hh
@@ -55,3 +56,13 @@ conversation_id,timestamp,user_name,message
 9,1561148411,123,
 9,1561148411,123,
 9,1561148413,123,jghj
+10,1561205166,123,HFGHFG
+10,1561205292,123,abv
+10,1561205468,123,ttt
+10,1561205566,123,hrthrt
+10,1561205596,123,hfgh
+5,1561214300,123,hi
+5,1561214354,123,ffffffff
+5,1561214362,123,gr
+5,1561214362,123,gr
+7,1561214432,123,gdfg

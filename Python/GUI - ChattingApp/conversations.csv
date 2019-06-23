@@ -1,7 +1,6 @@
-id,user_1,user_2,last_timestamp
-3,George,a,123456789
-5,123,George,1561214362
-7,123,a,1561214432
-9,mmm,123,15487654641
-10,b,123,1561205596
-11,abc,123,15487654641
+conv_id,user_1_name,user_2_name,last_message_timestamp,last_message_user_name,last_user_1_read_timestamp,last_user_2_read_timestamp,last_user_1_typing_timestamp,last_user_2_typing_timestamp
+3,George,a,123456789,abc,132456.0,1561308604.0,1,1
+5,123,George,1561312536,George,1561313217.0,1561313217.0,1561312561,1561312535
+10,b,123,1571300367,abc,1561310627.0,1571300368.0,1,1
+11,abc,123,15487654641,abc,1561310627.0,1561300366.0,1,1
+12,a,123,1561298147,abc,1561310626.0,1561300365.0,1,1

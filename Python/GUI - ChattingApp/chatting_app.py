@@ -25,11 +25,36 @@ LAST_TIMESTAMPS_IN_CONVERSATIONS = {}
 
 
 # Helper function to fill a text component with a content in a safe way
-def define_text_content(text_component, content_to_fill):
+# Possible modes: "rewrite" - fill it completely from the scratch,
+#   "append" - just appending the specified content to already existing one
+def define_text_content(text_component, content_to_fill, mode="rewrite"):
     text_component["state"] = "normal" # enabling to manipulate the content
-    text_component.delete("1.0", "end") # deleting the whole previous content
+    if mode == "rewrite":
+        text_component.delete("1.0", "end") # deleting the whole previous content
     text_component.insert("insert", content_to_fill) # inserting completely new content
     text_component["state"] = "disabled" # disabling the content for user manipulation
+
+# Helper function that is closing a specific window
+def close_window(window_name):
+    window_name.destroy() # closing the specified window
+
+# General window that is just displaying whatever text is supplied to it
+def show_message_to_user(message_content):
+    show_message_window = tk.Toplevel(main_window)
+    show_message_window.title("Message")
+    show_message_window.geometry("500x200")
+
+    show_message_text = tk.Text(show_message_window, bg="yellow", font=("Calibri", 15), bd=4)
+    show_message_text.place(relheight=1, relwidth=1)
+
+    show_message_cancelling_button = tk.Button(show_message_text, text="Cancel",
+                                bg="grey", font=("Calibri", 15),
+                                command=lambda: close_window(show_message_window))
+    show_message_cancelling_button.place(relx=0.7, rely=0.7, relheight=0.3, relwidth=0.3)
+
+    # Filling the text with a suplied message
+    show_message_text.insert("insert", message_content)
+    show_message_text["state"] = "disabled"
 
 # Filling the name to be displayed and setting the global USER_NAME
 # Having non-empty USER_NAME means somebody is logged in
@@ -37,16 +62,6 @@ def populate_name(name):
     global USER_NAME
     USER_NAME = name
     name_label['text'] = name
-
-# Getting the current user's mood from users table and displaying it
-def load_mood(user_name):
-    # Identifying the user_name in users table and taking his mode
-    with open('users.csv', 'r') as users_table:
-        csv_reader = csv.DictReader(users_table)
-        for entry in csv_reader:
-            if entry['name'] == user_name:
-                populate_mood(entry['mood'])
-                break
 
 # Display the current user's mood
 def populate_mood(mood):
@@ -127,12 +142,12 @@ def populate_contacts():
             online_status_label.place(relx=0, rely=(0.11 * index),relheight=0.1, relwidth=0.2)
 
             button_with_contact_user_name = tk.Button(contact_space_for_buttons, text=user_name,
-                                    bg="grey", font=("Calibri", 10), justify="center",
+                                    bg="grey", font=("Calibri", 15), justify="center",
                                     command=lambda conversation_id = conversation_id, user_name=user_name, user_mood=user_mood: populate_conversation(conversation_id, user_name, user_mood))
             button_with_contact_user_name.place(relx=0.25, rely=(0.11 * index),relheight=0.1, relwidth=0.5)
 
             info_button = tk.Button(contact_space_for_buttons, text="INFO", bg="grey",
-                                font=("Calibri", 10), justify="center",
+                                font=("Calibri", 15), justify="center",
                                 command=lambda user_name=user_name: show_user_info_screen(user_name))
             info_button.place(relx=0.8, rely=(0.11 * index),relheight=0.1, relwidth=0.2)
     else:
@@ -198,7 +213,7 @@ def show_user_info_screen(user_name):
     timestamp_info_label.place(relx=0, rely=0.6, relheight=0.4, relwidth=1)
 
     show_user_info_cancelling_button = tk.Button(timestamp_info_label, text="Cancel",
-                            bg="grey", font=("Calibri", 10),
+                            bg="grey", font=("Calibri", 15),
                             command=lambda: close_window(show_user_info_window))
     show_user_info_cancelling_button.place(relx=0.7, rely=0.4, relheight=0.6, relwidth=0.3)
 
@@ -206,96 +221,109 @@ def show_user_info_screen(user_name):
 #   and some other metadata connected with that conversation.
 # Also storing the timestamps of reading the messages and possibly typing
 def populate_conversation(conversation_id, user_name, user_mood):
+    # When no specific conversation is chosen, show the info message and return
+    if conversation_id == 0:
+        define_text_content(messaging_area_text, "Please choose a contact to start a conversation!")
+        return
+
     # Storing the current conversation in the whole program
     global CURRENT_CONVERSATION_ID, CURRENTLY_OPENED_CONTACT_NAME, CURRENTLY_OPENED_CONTACT_MOOD
     CURRENT_CONVERSATION_ID = conversation_id
     CURRENTLY_OPENED_CONTACT_NAME = user_name
     CURRENTLY_OPENED_CONTACT_MOOD = user_mood
 
-    # Looping through all messages and saving those from chosen conversation
+    # Checking if there is already a filename with current conversation,
+    #   and if not, prepare the headers
+    file_path = "Conversations/{}-{}.csv".format(USER_NAME, CURRENTLY_OPENED_CONTACT_NAME)
+    if not os.path.isfile(file_path):
+        with open(file_path, "w") as conversation_file:
+            csv_writer = csv.writer(conversation_file)
+            csv_writer.writerow(["timestamp", "user_name", "message_text"])
+
+    # Saving all messages into a text variable, ready to be displayed
     text_messages = ""
-    with open('messages.csv', 'r') as messages_table:
-        csv_reader = csv.DictReader(messages_table)
-        for entry in csv_reader:
-            if entry['conversation_id'] == str(conversation_id):
-                text_messages += "{}: {}\n".format(entry["user_name"], entry["message"])
+    with open(file_path, 'r') as messages_file:
+        csv_reader = csv.DictReader(messages_file)
+        for message in csv_reader:
+            text_messages += "{}: {}\n".format(message["user_name"], message["message_text"])
 
     # If there are no messages yet, display the initial message to break the silence :)
-    if conversation_id != 0:
-        if text_messages == "":
-            text_messages = "Greet your new contact {}!".format(user_name)
-    # When there is not even a conversation yet, show a general message
-    else:
-        text_messages = "Please choose a contact to start a conversation!"
+    if text_messages == "":
+        text_messages = "Greet your new contact {}!".format(user_name)
 
-    # Filling the text area with all the messages
+    # Filling the text area with all the messages and scrolling to the very bottom
     define_text_content(messaging_area_text, text_messages)
-
-    # Scrolling the scrollbar to the very bottom
     messaging_area_text.yview_moveto(1)
 
     # Showing the name and mood of the current contact
     current_contact_label["text"] = "Current contact - {} ({})".format(user_name, user_mood)
 
-    # Finding out whether the other person displayed the whole conversation
+    # Finding out whether the other person displayed the last message
     # Also updating the last time current user has displayed this conversation
     #   and if the text entry is not blank, updating the typing time as well
-    if conversation_id != 0:
-        # Loading the conversations table
-        conversations_table = pd.read_csv("conversations.csv")
 
-        # Determining if the current user is number 1 or 2 - to know which fields to inspect
-        user_number = 1 if conversations_table.loc[conversations_table["conv_id"]==conversation_id, "user_1_name"].values[0] == USER_NAME else 2
-        other_user_number = 1 if user_number == 2 else 2
+    # Loading the conversations table
+    conversations_table = pd.read_csv("conversations.csv")
 
-        last_message_timestamp = int(conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_timestamp"].values[0])
-        last_displayed_timestamp = int(conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_read_timestamp".format(other_user_number)].values[0])
-        last_message_user_name = conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_user_name"].values[0]
-        last_typing_timestamp = int(conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_typing_timestamp".format(other_user_number)].values[0])
+    # Determining if the current user is number 1 or 2 - to know which fields to inspect
+    user_number = 1 if conversations_table.loc[conversations_table["conv_id"]==conversation_id, "user_1_name"].values[0] == USER_NAME else 2
+    other_user_number = 1 if user_number == 2 else 2
 
-        # If the other user has displayed the conversation after the last message,
-        #   and we were the last messager, show it in a label as "Displayed"
-        if last_displayed_timestamp > last_message_timestamp and last_message_user_name == USER_NAME:
-            message_displayed_label["text"] = "Displayed"
-        else:
-            message_displayed_label["text"] = ""
+    last_message_timestamp = int(conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_timestamp"].values[0])
+    last_displayed_timestamp = int(conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_read_timestamp".format(other_user_number)].values[0])
+    last_message_user_name = conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_user_name"].values[0]
+    last_typing_timestamp = int(conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_typing_timestamp".format(other_user_number)].values[0])
 
-        # Getting the current timestamp to verify the typing of the other person
-        #   and to log the last displayed timestamp of the current user
-        current_timestamp = int(time.time())
+    # If the other user has displayed the conversation after the last message,
+    #   and we were the last messager, show it in a label as "Displayed"
+    if last_displayed_timestamp > last_message_timestamp and last_message_user_name == USER_NAME:
+        message_displayed_label["text"] = "Displayed"
+    else:
+        message_displayed_label["text"] = ""
 
-        # If the other user has been typing in the last 3 seconds, display that
-        if current_timestamp - last_typing_timestamp <= 3:
-            message_typing_label["text"] = "Typing..."
-        else:
-            message_typing_label["text"] = ""
+    # Getting the current timestamp to verify the typing of the other person
+    #   and to log the last displayed timestamp of the current user
+    current_timestamp = int(time.time())
 
-        # Updating the corresponding read-field with a current timestamp
-        conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_read_timestamp".format(user_number)] = current_timestamp
+    # If the other user has been typing in the last 3 seconds, display that
+    if current_timestamp - last_typing_timestamp <= 3:
+        message_typing_label["text"] = "Typing..."
+    else:
+        message_typing_label["text"] = ""
 
-        # When the user has some text in the message entry, update his last typing timestamp
-        if messaging_text.get("1.0", "end-1c") != "":
-            conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_typing_timestamp".format(user_number)] = current_timestamp
+    # Updating the corresponding read-field with a current timestamp
+    conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_read_timestamp".format(user_number)] = current_timestamp
 
-        # Saving all the changes to the table
-        conversations_table.to_csv("conversations.csv", index=False)
+    # When the user has some text in the message entry, update his last typing timestamp
+    if messaging_text.get("1.0", "end-1c") != "":
+        conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_typing_timestamp".format(user_number)] = current_timestamp
+
+    # Saving all the changes to the table
+    conversations_table.to_csv("conversations.csv", index=False)
 
 # Sending a message - saving it to the text file
 # Also updating the conversation table and storing the time of message as a last timestamp
 # Last but not least logging the current user as a last messager of that conversation
 def send_message(message, conversation_id):
-    user_name = USER_NAME
+    # If some basic error handling and defence against invalid inputs
+    if conversation_id == 0:
+        show_message_to_user("It is better to chat with somebody.\nPlease choose some of your contacts.")
+        return
+    elif message == "":
+        show_message_to_user("You certainly wanted to write something more :)")
+        return
+
     current_timestamp = int(time.time())
     human_readable_time = datetime.datetime.fromtimestamp(current_timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
-    # Appending the new message to a CSV file
+    # Appending the new message to a messages table
     with open('messages.csv', 'a') as messages_table:
         csv_writer = csv.writer(messages_table)
 
         message_row = []
         message_row.append(conversation_id)
         message_row.append(current_timestamp)
-        message_row.append(user_name)
+        message_row.append(USER_NAME)
         message_row.append(message)
 
         csv_writer.writerow(message_row)
@@ -303,54 +331,57 @@ def send_message(message, conversation_id):
     # Deleting the entry field
     messaging_text.delete("1.0", "end")
 
-    # Storing the new last timestamp in conversation table
-    current_timestamp = int(time.time())
-
+    # Storing the new last timestamp and last user in conversation table
     conversations_table = pd.read_csv("conversations.csv")
     conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_timestamp"] = current_timestamp
     conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_user_name"] = USER_NAME
     conversations_table.to_csv("conversations.csv", index=False)
 
+    # Checking if there is already a filename with current conversation,
+    #   and if not, write the headers and content
+    # Otherwise append the new message
+    file_path = "Conversations/{}-{}.csv".format(USER_NAME, CURRENTLY_OPENED_CONTACT_NAME)
+    if not os.path.isfile(file_path):
+        with open(file_path, "w") as conversation_file:
+            csv_writer = csv.writer(conversation_file)
+            csv_writer.writerow(["timestamp", "user_name", "message_text"])
+            csv_writer.writerow([current_timestamp, USER_NAME, message])
+    else:
+        with open(file_path, "a") as conversation_file:
+            csv_writer = csv.writer(conversation_file)
+            csv_writer.writerow([current_timestamp, USER_NAME, message])
+
+    # Updating the text in message window
+    new_message = "{}: {}\n".format(USER_NAME, message)
+    define_text_content(messaging_area_text, new_message, "append")
+    messaging_area_text.yview_moveto(1)
+
+
     # Populating the message label with a new content
     # TODO: do not refresh everything, just add a new line, and store it locally
-    populate_conversation(CURRENT_CONVERSATION_ID, CURRENTLY_OPENED_CONTACT_NAME, CURRENTLY_OPENED_CONTACT_MOOD)
+    # populate_conversation(CURRENT_CONVERSATION_ID, CURRENTLY_OPENED_CONTACT_NAME, CURRENTLY_OPENED_CONTACT_MOOD)
 
+# Saves the settings after some changes
 def save_new_settings():
     print("save new settings")
 
-def show_settings():
+# Shows a window with all the defined settings
+def show_settings_screen():
     settings_window = tk.Toplevel(main_window)
     settings_window.title("Add settings")
     settings_window.geometry("600x400")
 
     settings_label = tk.Label(settings_window, text="Choose your settings:",
                     bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
-    settings_label.place(relheight=0.2, relwidth=1)
+    settings_label.place(relheight=1, relwidth=1)
 
-    settings_saving_button = tk.Button(settings_window, text="Save new settings", bg="grey", font=("Calibri", 10),
+    settings_saving_button = tk.Button(settings_label, text="Save new settings", bg="grey", font=("Calibri", 15),
                             command=lambda: save_new_settings())
     settings_saving_button.place(relx=0, rely=0.9, relheight=0.1, relwidth=0.2)
 
-    contacts_cancelling_button = tk.Button(settings_window, text="Cancel", bg="grey", font=("Calibri", 10),
+    contacts_cancelling_button = tk.Button(settings_label, text="Cancel", bg="grey", font=("Calibri", 15),
                             command=lambda: close_window(settings_window))
     contacts_cancelling_button.place(relx=0.8, rely=0.9, relheight=0.1, relwidth=0.2)
-
-def close_window(window_name):
-    window_name.destroy() # closing the specified window
-
-def show_message_to_user(message_content):
-    show_message_window = tk.Toplevel(main_window)
-    show_message_window.title("Message")
-    show_message_window.geometry("500x200")
-
-    show_message_label = tk.Label(show_message_window, text=message_content,
-                                bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
-    show_message_label.place(relheight=1, relwidth=1)
-
-    show_message_cancelling_button = tk.Button(show_message_label, text="Cancel",
-                                bg="grey", font=("Calibri", 10),
-                                command=lambda: close_window(show_message_window))
-    show_message_cancelling_button.place(relx=0.7, rely=0.7, relheight=0.3, relwidth=0.3)
 
 # Rejecting the contact request and deleting it from the contact_requests table
 def delete_contact_request(user_name):
@@ -441,17 +472,20 @@ def confirmation_dialog(shown_message, yes_function, yes_args):
     CONFIRMATION_WINDOW.title("Confirmation window")
     CONFIRMATION_WINDOW.geometry("500x200")
 
-    confirmation_label = tk.Label(CONFIRMATION_WINDOW, text=shown_message, bg="yellow",
-                        font=("Calibri", 15), anchor="nw", justify="left", bd=4)
-    confirmation_label.place(relx=0, rely=0, relheight=1, relwidth=1)
+    confirmation_text = tk.Text(CONFIRMATION_WINDOW, bg="yellow", font=("Calibri", 15), bd=4)
+    confirmation_text.place(relx=0, rely=0, relheight=1, relwidth=1)
 
-    confirmation_yes_button = tk.Button(confirmation_label, text="Yes", bg="grey", font=("Calibri", 10),
+    confirmation_yes_button = tk.Button(confirmation_text, text="Yes", bg="grey", font=("Calibri", 15),
                             command=lambda: yes_function(yes_args, CONFIRMATION_WINDOW))
     confirmation_yes_button.place(relx=0.2, rely=0.6, relheight=0.4, relwidth=0.25)
 
-    confirmation_no_button = tk.Button(confirmation_label, text="No", bg="grey", font=("Calibri", 10),
+    confirmation_no_button = tk.Button(confirmation_text, text="No", bg="grey", font=("Calibri", 15),
                             command=lambda: close_window(CONFIRMATION_WINDOW))
     confirmation_no_button.place(relx=0.5, rely=0.6, relheight=0.4, relwidth=0.25)
+
+    # Filling the text with supplied message
+    confirmation_text.insert("insert", shown_message)
+    confirmation_text["state"] = "disabled"
 
 # Creates a list of application's users, and outputs it to some component
 # Has a form of a label with a name, button to show information about
@@ -481,16 +515,16 @@ def show_users(component_where_to_put_it, search_pattern=None):
     #   contact that passed the filter
     for index, user_name in enumerate(list_of_users):
         user_label = tk.Label(component_where_to_put_it, text=user_name, bg="grey",
-                fg="black", font=("Calibri", 10), justify="center")
+                fg="black", font=("Calibri", 15), justify="center")
         user_label.place(relx=0, rely=(0.11 * index), relheight=0.1, relwidth=0.5)
 
         user_info_button = tk.Button(component_where_to_put_it, text="INFO", bg="orange",
-                fg="black", font=("Calibri", 10), justify="center",
+                fg="black", font=("Calibri", 15), justify="center",
                 command=lambda user_name=user_name: show_user_info_screen(user_name))
         user_info_button.place(relx=0.55, rely=(0.11 * index), relheight=0.1, relwidth=0.2)
 
         user_add_button = tk.Button(component_where_to_put_it, text="ADD", bg="green",
-                fg="black", font=("Calibri", 10), justify="center",
+                fg="black", font=("Calibri", 15), justify="center",
                 command=lambda user_name=user_name: confirmation_dialog("Do you really want to add {} as a new contact?".format(user_name),
                                                               add_new_contact_and_close_dialog, user_name))
         user_add_button.place(relx=0.8, rely=(0.11 * index), relheight=0.1, relwidth=0.2)
@@ -515,7 +549,7 @@ def add_contacts_screen():
     CONTACTS_SEARCH_ENTRY.place(relx=0, rely=0.1, relheight=0.1, relwidth=0.7)
 
     contacts_searching_button = tk.Button(ADD_CONTACTS_WINDOW, text="Search", bg="grey",
-                            fg="black", font=("Calibri", 10),
+                            fg="black", font=("Calibri", 15),
                             command=lambda: show_users(ADD_CONTACTS_SPACE_FOR_BUTTONS, CONTACTS_SEARCH_ENTRY.get()))
     contacts_searching_button.place(relx=0.7, rely=0.1, relheight=0.1, relwidth=0.3)
 
@@ -525,12 +559,12 @@ def add_contacts_screen():
 
 
     show_all_users_button = tk.Button(ADD_CONTACTS_WINDOW, text="Show all users", bg="grey",
-                            fg="black", font=("Calibri", 10),
+                            fg="black", font=("Calibri", 15),
                             command=lambda: show_users(ADD_CONTACTS_SPACE_FOR_BUTTONS))
     show_all_users_button.place(relx=0, rely=0.9, relheight=0.1, relwidth=0.2)
 
     contacts_cancelling_button = tk.Button(ADD_CONTACTS_WINDOW, text="Cancel", bg="grey",
-                            fg="black", font=("Calibri", 10),
+                            fg="black", font=("Calibri", 15),
                             command=lambda: close_window(ADD_CONTACTS_WINDOW))
     contacts_cancelling_button.place(relx=0.8, rely=0.9, relheight=0.1, relwidth=0.2)
 
@@ -542,18 +576,19 @@ def add_contacts_screen():
 # Accepts a new contact, updates the requests and closes the confirmation window
 def accept_new_contact_and_close_dialog(user_name, dialog_to_closed):
     accept_contact_request(user_name)
-    populate_contact_requests()
+    populate_contact_requests(MANAGE_CONTACT_SPACE_FOR_BUTTONS)
     close_window(dialog_to_closed)
 
 # Accepts a new contact, updates the requests and closes the confirmation window
 def reject_new_contact_and_close_dialog(user_name, dialog_to_closed):
     delete_contact_request(user_name)
-    populate_contact_requests()
+    populate_contact_requests(MANAGE_CONTACT_SPACE_FOR_BUTTONS)
     close_window(dialog_to_closed)
 
 # Populates the list of contact requests
 def populate_contact_requests(component_where_to_put_it):
-    # Deleting all the previous buttons with contacts if they exist
+    # Deleting all the previous buttons with contacts and a text if they exist
+    component_where_to_put_it.delete("1.0", "end")
     for button in component_where_to_put_it.winfo_children():
         button.destroy()
 
@@ -566,51 +601,63 @@ def populate_contact_requests(component_where_to_put_it):
             if entry["other_user"] == USER_NAME:
                 list_of_users_requesting_contact.append(entry["sender_user"])
 
+    # If there are no requests for this user, show him an encouraging message
+    if len(list_of_users_requesting_contact) < 1:
+        cheerful_message = "Seems nobody wants to add you to contacts.\nWhy don't you try to add somebody clicking \"Add contacts\" button?"
+        define_text_content(component_where_to_put_it, cheerful_message)
+
     # Creating new buttons with the corresponding label for each contact
     for index, user_name in enumerate(list_of_users_requesting_contact):
         button = tk.Label(component_where_to_put_it, text=user_name, bg="grey",
-                font=("Calibri", 10), justify="center")
+                font=("Calibri", 15), justify="center")
         button.place(relx=0, rely=(0.1 * index), relheight=0.1, relwidth=0.5)
 
         accept_button = tk.Button(component_where_to_put_it, text="Accept", bg="green",
-                font=("Calibri", 10), justify="center",
+                font=("Calibri", 15), justify="center",
                 command=lambda user_name=user_name: confirmation_dialog("Do you really want to add {} as a new contact?".format(user_name),
                                                               accept_new_contact_and_close_dialog, user_name))
         accept_button.place(relx=0.55, rely=(0.1 * index),relheight=0.1, relwidth=0.2)
         button.place(relx=0, rely=(0.1 * index), relheight=0.1, relwidth=0.5)
 
         reject_button = tk.Button(component_where_to_put_it, text="Reject", bg="red",
-                font=("Calibri", 10), justify="center",
+                font=("Calibri", 15), justify="center",
                 command=lambda user_name=user_name: confirmation_dialog("Do you really want to reject {}'s contact request?".format(user_name),
                                                               reject_new_contact_and_close_dialog, user_name))
         reject_button.place(relx=0.8, rely=(0.1 * index), relheight=0.1, relwidth=0.2)
 
 # Window for managing contact requests
 def manage_contact_requests_screen():
-    global manage_contacts_window
     manage_contacts_window = tk.Toplevel(main_window)
     manage_contacts_window.title("Manage contacts requests")
     manage_contacts_window.geometry("600x600")
 
-    manage_contacts_space_for_buttons = tk.Text(manage_contacts_window, bg="yellow", bd=4, state="disabled")
-    manage_contacts_space_for_buttons.place(relx=0, rely=0.1, relheight=0.8, relwidth=1)
+    label_text = "List of users who want to add you into contacts:"
+
+    manage_contacts_label = tk.Label(manage_contacts_window, text=label_text,
+                                font=("Calibri", 15), bg="yellow", bd=4)
+    manage_contacts_label.place(relx=0, rely=0, relheight=0.1, relwidth=1)
+
+    global MANAGE_CONTACT_SPACE_FOR_BUTTONS
+    MANAGE_CONTACT_SPACE_FOR_BUTTONS = tk.Text(manage_contacts_window, bg="yellow",
+                                        font=("Calibri", 15), bd=4, state="disabled")
+    MANAGE_CONTACT_SPACE_FOR_BUTTONS.place(relx=0, rely=0.1, relheight=0.8, relwidth=1)
 
     contacts_cancelling_button = tk.Button(manage_contacts_window, text="Cancel",
-                            bg="grey", font=("Calibri", 10),
+                            bg="grey", font=("Calibri", 15),
                             command=lambda: close_window(manage_contacts_window))
     contacts_cancelling_button.place(relx=0.8, rely=0.9, relheight=0.1, relwidth=0.2)
 
     info_label = tk.Label(manage_contacts_window, text="", bg="yellow", bd=4)
     info_label.place(relx=0, rely=0.9, relheight=0.1, relwidth=0.8)
 
-    populate_contact_requests(manage_contacts_space_for_buttons)
+    populate_contact_requests(MANAGE_CONTACT_SPACE_FOR_BUTTONS)
 
 # Function responsible for logging the user into the application and
 #   populating all the user-dependant content
-def log_user_into_application(user_name):
+def log_user_into_application(user_name, user_mood):
     # Populating all the fields in the beginning
     populate_name(user_name)
-    load_mood(user_name)
+    populate_mood(user_mood)
     define_text_content(messaging_area_text, "Please choose a contact to start a conversation!")
     populate_contacts()
 
@@ -625,7 +672,7 @@ def login_into_application(user_name, password):
                 if user['password'] == password:
                     # If credentials correspond, log user into the application
                     show_message_to_user("Login successful, welcome!")
-                    log_user_into_application(user_name)
+                    log_user_into_application(user['name'], user['mood'])
                     close_window(LOGIN_WINDOW)
                     return
                 else:
@@ -671,15 +718,15 @@ def login_screen():
     LOGIN_PASSWORD_ENTRY = tk.Entry(login_label, bg="orange", font=("Calibri", 15), bd=5, show="*")
     LOGIN_PASSWORD_ENTRY.place(relx=0.4, rely=0.5, relheight=0.2, relwidth=0.55)
 
-    login_button_login = tk.Button(login_label, text="Login", bg="grey", font=("Calibri", 10),
+    login_button_login = tk.Button(login_label, text="Login", bg="grey", font=("Calibri", 15),
                         command=lambda: login_into_application(LOGIN_USER_NAME_ENTRY.get(), LOGIN_PASSWORD_ENTRY.get()))
     login_button_login.place(relx=0.1, rely=0.8, relheight=0.15, relwidth=0.25)
 
-    login_button_reset = tk.Button(login_label, text="Reset", bg="grey", font=("Calibri", 10),
+    login_button_reset = tk.Button(login_label, text="Reset", bg="grey", font=("Calibri", 15),
                         command=lambda: reset_login_entries())
     login_button_reset.place(relx=0.4, rely=0.8, relheight=0.15, relwidth=0.25)
 
-    login_button_register = tk.Button(login_label, text="Register", bg="grey", font=("Calibri", 10),
+    login_button_register = tk.Button(login_label, text="Register", bg="grey", font=("Calibri", 15),
                         command=lambda: register_screen())
     login_button_register.place(relx=0.7, rely=0.8, relheight=0.15, relwidth=0.25)
 
@@ -773,11 +820,11 @@ def register_screen():
     REGISTER_PASSWORD_ENTRY_VERIFY = tk.Entry(register_label, bg="orange", font=("Calibri", 15), bd=5, show="*")
     REGISTER_PASSWORD_ENTRY_VERIFY.place(relx=0.4, rely=0.55, relheight=0.15, relwidth=0.55)
 
-    register_button_reset = tk.Button(register_label, text="Reset", bg="grey", font=("Calibri", 10),
+    register_button_reset = tk.Button(register_label, text="Reset", bg="grey", font=("Calibri", 15),
                             command=lambda: reset_register())
     register_button_reset.place(relx=0.4, rely=0.8, relheight=0.15, relwidth=0.25)
 
-    register_button_register = tk.Button(register_label, text="Register", bg="grey", font=("Calibri", 10),
+    register_button_register = tk.Button(register_label, text="Register", bg="grey", font=("Calibri", 15),
                             command=lambda: register_into_application(REGISTER_USER_NAME_ENTRY.get(), REGISTER_PASSWORD_ENTRY.get(), REGISTER_PASSWORD_ENTRY_VERIFY.get()))
     register_button_register.place(relx=0.7, rely=0.8, relheight=0.15, relwidth=0.25)
 
@@ -795,11 +842,11 @@ def edit_mood_screen():
     mood_entry = tk.Entry(mood_label, bg="orange", font=("Calibri", 15), bd=5)
     mood_entry.place(relx=0, rely=0.2, relheight=0.4, relwidth=1)
 
-    mood_saving_button = tk.Button(mood_label, text="Save new mood", bg="grey", font=("Calibri", 10),
+    mood_saving_button = tk.Button(mood_label, text="Save new mood", bg="grey", font=("Calibri", 15),
                         command=lambda: save_new_mood(mood_entry.get()))
     mood_saving_button.place(relx=0.05, rely=0.7, relheight=0.25, relwidth=0.425)
 
-    mood_cancelling_button = tk.Button(mood_label, text="Cancel", bg="grey", font=("Calibri", 10),
+    mood_cancelling_button = tk.Button(mood_label, text="Cancel", bg="grey", font=("Calibri", 15),
                         command=lambda: close_window(EDIT_MOOD_WINDOW))
     mood_cancelling_button.place(relx=0.5, rely=0.7, relheight=0.25, relwidth=0.425)
 
@@ -875,11 +922,11 @@ def feedback_screen():
     feedback_entry = tk.Text(feedback_label, bg="orange", font=("Calibri", 15), bd=5)
     feedback_entry.place(relx=0, rely=0.2, relheight=0.55, relwidth=1)
 
-    feedback_saving_button = tk.Button(feedback_label, text="Send feedback", bg="grey", font=("Calibri", 10),
+    feedback_saving_button = tk.Button(feedback_label, text="Send feedback", bg="grey", font=("Calibri", 15),
                         command=lambda: send_feedback(feedback_entry.get("1.0", "end-1c")))
     feedback_saving_button.place(relx=0.05, rely=0.8, relheight=0.2, relwidth=0.425)
 
-    feedback_cancelling_button = tk.Button(feedback_label, text="Cancel", bg="grey", font=("Calibri", 10),
+    feedback_cancelling_button = tk.Button(feedback_label, text="Cancel", bg="grey", font=("Calibri", 15),
                         command=lambda: close_window(FEEDBACK_WINDOW))
     feedback_cancelling_button.place(relx=0.5, rely=0.8, relheight=0.2, relwidth=0.425)
 
@@ -926,11 +973,11 @@ name_label.place(rely=0, relheight=0.5, relwidth=0.75)
 mood_label = tk.Label(profile_area, bg="yellow", font=("Calibri", 15), anchor="nw", justify="left", bd=4)
 mood_label.place(rely=0.5, relheight=0.5, relwidth=0.75)
 
-settings_button = tk.Button(profile_area, text="Settings", bg="grey", font=("Calibri", 10),
-                command=lambda: show_settings())
+settings_button = tk.Button(profile_area, text="Settings", bg="grey", font=("Calibri", 15),
+                command=lambda: show_settings_screen())
 settings_button.place(relx=0.75, rely=0, relheight=0.5, relwidth=0.25)
 
-mood_button = tk.Button(profile_area, text="Edit mood", bg="grey", font=("Calibri", 10),
+mood_button = tk.Button(profile_area, text="Edit mood", bg="grey", font=("Calibri", 15),
                 command=lambda: edit_mood_screen())
 mood_button.place(relx=0.75, rely=0.5, relheight=0.5, relwidth=0.25)
 
@@ -998,19 +1045,24 @@ contacts_area.place(relx=0.05, rely=0.3, relwidth=0.2, relheight=0.65)
 contact_space_for_buttons = tk.Text(contacts_area, bg="yellow", font=("Calibri", 15), bd=4, state="disabled")
 contact_space_for_buttons.place(relheight=0.9, relwidth=1)
 
-contact_new_button = tk.Button(contacts_area, text="Add new contacts",
-                    bg="grey", font=("Calibri", 10), justify="center",
+contact_new_button = tk.Button(contacts_area, text="Add contacts",
+                    bg="grey", font=("Calibri", 15), justify="center",
                     command=lambda: add_contacts_screen())
 contact_new_button.place(relx=0, rely=0.8,relheight=0.1, relwidth=1)
 
 contact_requests_button = tk.Button(contacts_area, text="Manage requests",
-                        bg="grey", font=("Calibri", 10), justify="center",
+                        bg="grey", font=("Calibri", 15), justify="center",
                         command=lambda: manage_contact_requests_screen())
 contact_requests_button.place(relx=0, rely=0.9,relheight=0.1, relwidth=1)
 
 
+# Checking if there is already a directory to store conversations,
+#   and if not, create it
+if not os.path.exists("Conversations"):
+    os.mkdir("Conversations")
+
 # Saving time with no login :)
-log_user_into_application("123")
+log_user_into_application("123", "my_mood")
 
 # Cause everything to update with the pause of 2 seconds
 # Only when there is some user logged in (USER_NAME is not empty)

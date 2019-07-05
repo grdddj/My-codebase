@@ -773,7 +773,6 @@ def register_into_application(user_name, password, password_verify):
 
     # Showing successful message, and logging the user in
     show_message_to_user("You have been successfully registered!\nYou are now logged in as {}.".format(user_name))
-    handle_closing_LOGIN_WINDOWs("SUCCESS", user_name)
 
     # Closing all the unnecessary windows
     close_window(REGISTER_WINDOW)

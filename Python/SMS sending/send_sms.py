@@ -8,10 +8,14 @@ my_number = os.environ['MY_NUMBER']
 
 client = Client(account_sid, auth_token)
 
+xyz=""
+for x in range(158):
+    xyz += "b"
+
 text = "Input something sweet (and short)"
 
 message = client.messages.create(
-                              body=text,
+                              body=xyz,
                               from_=twilio_number,
                               to=my_number
                           )

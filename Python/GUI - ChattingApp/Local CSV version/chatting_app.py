@@ -7,8 +7,6 @@ import csv
 import pandas as pd
 import re
 import random
-import mysql.connector
-from mysql.connector import Error
 
 TITLE = "Chatting App"
 
@@ -24,21 +22,6 @@ CURRENT_CONVERSATION_ID = 0
 #   last message that we are storing offline.
 # Structure: {"conv_id": "timestamp"} ... {1: 1557869354, 4: 1562356847}
 LAST_TIMESTAMPS_IN_CONVERSATIONS = {}
-
-try:
-    connection = mysql.connector.connect(host='89.221.219.124',
-                             database='chat',
-                             user='user',
-                             password='password')
-    if connection.is_connected():
-       db_Info = connection.get_server_info()
-       # print("Connected to MySQL database... MySQL Server version on ",db_Info)
-       cursor = connection.cursor(named_tuple=True)
-       # cursor.execute("select database();")
-       # record = cursor.fetchone()
-       # print ("Your connected to - ", record)
-except Error as e :
-    print ("Error while connecting to MySQL", e)
 
 
 # Helper function to fill a text component with a content in a safe way
@@ -90,29 +73,39 @@ def populate_contacts():
     number_of_contacts_rendered = len(contact_space_for_buttons.winfo_children()) / 3
 
     # Getting the list of all contacts of current user
-    contact_list = []
-
-    query = "SELECT * from conversations WHERE user_1_name = '{}' or user_2_name = '{}';".format(USER_NAME, USER_NAME)
-    cursor.execute(query)
-    result = cursor.fetchall()
+    contacts = []
+    with open('conversations.csv', 'r') as conversations_table:
+        csv_reader = csv.DictReader(conversations_table)
+        # Looping through the conversation and seeing which users are in the
+        #   same conversation as our USER_NAME (searching for their contacts)
+        for entry in csv_reader:
+            if entry['user_1_name'] == USER_NAME:
+                contacts.append({
+                    "name": entry['user_2_name'],
+                    "conv_id": entry['conv_id']
+                })
+            elif entry['user_2_name'] == USER_NAME:
+                contacts.append({
+                    "name": entry['user_1_name'],
+                    "conv_id": entry['conv_id']
+                })
 
     # Getting array of all names (for the search in users table)
     all_contact_names = []
-    for conversation in list(result):
-        other_name = conversation.user_2_name if conversation.user_2_name != USER_NAME else conversation.user_1_name
-        all_contact_names.append(other_name)
-        contact_list.append({
-            "name": other_name,
-            "conversation_id": conversation.conversation_id
-        })
+    for contact in contacts:
+        all_contact_names.append(contact["name"])
 
-    for index, contact in enumerate(contact_list):
-        query = "SELECT mood, last_time_online from users WHERE name = '{}';".format(contact['name'])
-        cursor.execute(query)
-        result = cursor.fetchone()
-
-        contact_list[index]["last_time_online"] = result.last_time_online
-        contact_list[index]["mood"] = result.mood
+    # Including the timestamps and moods for all contacts
+    with open('users.csv', 'r') as users_table:
+        csv_reader = csv.DictReader(users_table)
+        # Looping through the users and seeing whether they are in current user's
+        #   contacts, and if so, saving their last time online timestamp and mood
+        for entry in csv_reader:
+            if entry['name'] in all_contact_names:
+                for index, contact in enumerate(contacts):
+                    if contact["name"] == entry['name']:
+                        contacts[index]["last_time_online"] = int(entry["last_time_online"])
+                        contacts[index]["mood"] = entry["mood"]
 
     # Current timestamp will be used in both branches, so calculate it beforehand
     current_timestamp = int(time.time())
@@ -120,16 +113,16 @@ def populate_contacts():
     # When the number of rendered contact does not correspond to the number of fetched
     #   contacts, re-render the whole contact view
     # Otherwise we will just update the current widgets
-    if number_of_contacts_rendered != len(contact_list):
+    if number_of_contacts_rendered != len(contacts):
         # Deleting all the previous buttons with contacts if they exist
         for button in contact_space_for_buttons.winfo_children():
             button.destroy()
 
         # Creating new buttons with the corresponding label for each contact
-        for index, user in enumerate(contact_list):
+        for index, user in enumerate(contacts):
             user_name = user["name"]
             user_mood = user["mood"]
-            conversation_id = user["conversation_id"]
+            conversation_id = int(user["conv_id"])
             last_user_timestamp = user["last_time_online"]
 
             # Determining how long time passed from the user being online the last time
@@ -163,7 +156,7 @@ def populate_contacts():
         for component in contact_space_for_buttons.winfo_children():
             # Choosing only labels from all the children
             if component.winfo_class() == "Label":
-                last_user_timestamp = contact_list[index]["last_time_online"]
+                last_user_timestamp = contacts[index]["last_time_online"]
 
                 # Determining how long time passed from the user being online the last time
                 time_from_last_online_state = current_timestamp - last_user_timestamp
@@ -188,14 +181,20 @@ def show_user_info_screen(user_name):
 
     label_text = "{}'s information:".format(user_name)
 
-    query = "SELECT mood, last_time_online from users WHERE name = '{}';".format(user_name)
-    cursor.execute(query)
-    result = cursor.fetchone()
+    user_mood = ""
+    last_time_online = 0
 
-    user_mood = result.mood
-    last_time_online = result.last_time_online
+    # Searching for the information about a specific user
+    with open('users.csv', 'r') as users_table:
+        csv_reader = csv.DictReader(users_table)
+        # Looping through the users and seeing whether they are in current user's
+        #   contacts, and if so, saving their last time online timestamp
+        for entry in csv_reader:
+            if entry["name"] == user_name:
+                user_mood = entry["mood"]
+                last_time_online = int(entry["last_time_online"])
+                break
 
-    # Transforming the UNIX timestamp into a human friendly date
     human_readable_last_time_online = datetime.datetime.fromtimestamp(last_time_online).strftime('%Y-%m-%d %H:%M:%S')
 
     mood_label_text = "Mood: {}".format(user_mood)
@@ -233,29 +232,20 @@ def populate_conversation(conversation_id, user_name, user_mood):
     CURRENTLY_OPENED_CONTACT_NAME = user_name
     CURRENTLY_OPENED_CONTACT_MOOD = user_mood
 
-    # TODO: implement some synchronization between DB and local files to increase efficiency
-    # # Checking if there is already a filename with current conversation,
-    # #   and if not, prepare the headers
-    # file_path = "Conversations/{}-{}.csv".format(USER_NAME, CURRENTLY_OPENED_CONTACT_NAME)
-    # if not os.path.isfile(file_path):
-    #     with open(file_path, "w") as conversation_file:
-    #         csv_writer = csv.writer(conversation_file)
-    #         csv_writer.writerow(["timestamp", "user_name", "message_text"])
-    #
-    # # Saving all messages into a text variable, ready to be displayed
-    # with open(file_path, 'r') as messages_file:
-    #     csv_reader = csv.DictReader(messages_file)
-    #     for message in csv_reader:
-    #         text_messages += "{}: {}\n".format(message["user_name"], message["message_text"])
+    # Checking if there is already a filename with current conversation,
+    #   and if not, prepare the headers
+    file_path = "Conversations/{}-{}.csv".format(USER_NAME, CURRENTLY_OPENED_CONTACT_NAME)
+    if not os.path.isfile(file_path):
+        with open(file_path, "w") as conversation_file:
+            csv_writer = csv.writer(conversation_file)
+            csv_writer.writerow(["timestamp", "user_name", "message_text"])
 
-
-    query = "SELECT * from messages WHERE conversation_id = '{}'".format(conversation_id)
-    cursor.execute(query)
-    result = cursor.fetchall()
-
+    # Saving all messages into a text variable, ready to be displayed
     text_messages = ""
-    for message in list(result):
-        text_messages += "{}: {}\n".format(message.user_name, message.message)
+    with open(file_path, 'r') as messages_file:
+        csv_reader = csv.DictReader(messages_file)
+        for message in csv_reader:
+            text_messages += "{}: {}\n".format(message["user_name"], message["message_text"])
 
     # If there are no messages yet, display the initial message to break the silence :)
     if text_messages == "":
@@ -272,18 +262,17 @@ def populate_conversation(conversation_id, user_name, user_mood):
     # Also updating the last time current user has displayed this conversation
     #   and if the text entry is not blank, updating the typing time as well
 
-    query = "SELECT * from conversations WHERE conversation_id = '{}'".format(conversation_id)
-    cursor.execute(query)
-    result = cursor.fetchone()
+    # Loading the conversations table
+    conversations_table = pd.read_csv("conversations.csv")
 
     # Determining if the current user is number 1 or 2 - to know which fields to inspect
-    user_number = 1 if result.user_1_name == USER_NAME else 2
+    user_number = 1 if conversations_table.loc[conversations_table["conv_id"]==conversation_id, "user_1_name"].values[0] == USER_NAME else 2
     other_user_number = 1 if user_number == 2 else 2
 
-    last_message_timestamp = result.last_message_timestamp
-    last_displayed_timestamp = result.last_user_1_read_timestamp if other_user_number == 1 else result.last_user_2_read_timestamp
-    last_message_user_name = result.last_message_user_name
-    last_typing_timestamp =  result.last_user_1_typing_timestamp if other_user_number == 1 else result.last_user_2_typing_timestamp
+    last_message_timestamp = int(conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_timestamp"].values[0])
+    last_displayed_timestamp = int(conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_read_timestamp".format(other_user_number)].values[0])
+    last_message_user_name = conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_user_name"].values[0]
+    last_typing_timestamp = int(conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_typing_timestamp".format(other_user_number)].values[0])
 
     # If the other user has displayed the conversation after the last message,
     #   and we were the last messager, show it in a label as "Displayed"
@@ -303,16 +292,14 @@ def populate_conversation(conversation_id, user_name, user_mood):
         message_typing_label["text"] = ""
 
     # Updating the corresponding read-field with a current timestamp
-    query = "UPDATE conversations SET last_user_{}_read_timestamp='{}' WHERE conversation_id = '{}'".format(user_number, current_timestamp, conversation_id)
-    cursor.execute(query)
-    connection.commit()
-    # conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_read_timestamp".format(user_number)] = current_timestamp
+    conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_read_timestamp".format(user_number)] = current_timestamp
 
     # When the user has some text in the message entry, update his last typing timestamp
     if messaging_text.get("1.0", "end-1c") != "":
-        query = "UPDATE conversations SET last_user_{}_typing_timestamp='{}' WHERE conversation_id = '{}'".format(user_number, current_timestamp, conversation_id)
-        cursor.execute(query)
-        connection.commit()
+        conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_user_{}_typing_timestamp".format(user_number)] = current_timestamp
+
+    # Saving all the changes to the table
+    conversations_table.to_csv("conversations.csv", index=False)
 
 # Sending a message - saving it to the text file
 # Also updating the conversation table and storing the time of message as a last timestamp
@@ -327,43 +314,48 @@ def send_message(message, conversation_id):
         return
 
     current_timestamp = int(time.time())
+    human_readable_time = datetime.datetime.fromtimestamp(current_timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
     # Appending the new message to a messages table
-    query = """INSERT INTO messages (conversation_id, timestamp, user_name, message)
-            VALUES ('{}', '{}', '{}', '{}');
-            """.format(conversation_id, current_timestamp, USER_NAME, message)
-    cursor.execute(query)
-    connection.commit()
+    with open('messages.csv', 'a') as messages_table:
+        csv_writer = csv.writer(messages_table)
 
-    # Storing the new last timestamp and last user in conversation table
-    query = """UPDATE conversations SET last_message_timestamp = '{}', last_message_user_name = '{}'
-                WHERE conversation_id = '{}';
-            """.format(current_timestamp, USER_NAME, conversation_id)
-    cursor.execute(query)
-    connection.commit()
+        message_row = []
+        message_row.append(conversation_id)
+        message_row.append(current_timestamp)
+        message_row.append(USER_NAME)
+        message_row.append(message)
 
-    # # Checking if there is already a filename with current conversation,
-    # #   and if not, write the headers and content
-    # # Otherwise append the new message
-    # file_path = "Conversations/{}-{}.csv".format(USER_NAME, CURRENTLY_OPENED_CONTACT_NAME)
-    # if not os.path.isfile(file_path):
-    #     with open(file_path, "w") as conversation_file:
-    #         csv_writer = csv.writer(conversation_file)
-    #         csv_writer.writerow(["timestamp", "user_name", "message_text"])
-    #         csv_writer.writerow([current_timestamp, USER_NAME, message])
-    # else:
-    #     with open(file_path, "a") as conversation_file:
-    #         csv_writer = csv.writer(conversation_file)
-    #         csv_writer.writerow([current_timestamp, USER_NAME, message])
+        csv_writer.writerow(message_row)
 
     # Deleting the entry field
     messaging_text.delete("1.0", "end")
 
+    # Storing the new last timestamp and last user in conversation table
+    conversations_table = pd.read_csv("conversations.csv")
+    conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_timestamp"] = current_timestamp
+    conversations_table.loc[conversations_table["conv_id"]==conversation_id, "last_message_user_name"] = USER_NAME
+    conversations_table.to_csv("conversations.csv", index=False)
+
+    # Checking if there is already a filename with current conversation,
+    #   and if not, write the headers and content
+    # Otherwise append the new message
+    file_path = "Conversations/{}-{}.csv".format(USER_NAME, CURRENTLY_OPENED_CONTACT_NAME)
+    if not os.path.isfile(file_path):
+        with open(file_path, "w") as conversation_file:
+            csv_writer = csv.writer(conversation_file)
+            csv_writer.writerow(["timestamp", "user_name", "message_text"])
+            csv_writer.writerow([current_timestamp, USER_NAME, message])
+    else:
+        with open(file_path, "a") as conversation_file:
+            csv_writer = csv.writer(conversation_file)
+            csv_writer.writerow([current_timestamp, USER_NAME, message])
+
     # Updating the text in message window
-    # TODO: If there is the initial message, do not append it, but delete that first message
     new_message = "{}: {}\n".format(USER_NAME, message)
     define_text_content(messaging_area_text, new_message, "append")
     messaging_area_text.yview_moveto(1)
+
 
     # Populating the message label with a new content
     # TODO: do not refresh everything, just add a new line, and store it locally
@@ -394,12 +386,17 @@ def show_settings_screen():
 # Rejecting the contact request and deleting it from the contact_requests table
 def delete_contact_request(user_name):
     # Making sure all the requests with those two user_names are deleted
-    query = """DELETE FROM contact_requests WHERE
-                    (sender_user='{}' AND other_user='{}' )
-                    or (other_user='{}' AND sender_user='{}');
-                    """.format(user_name, USER_NAME, user_name, USER_NAME)
-    cursor.execute(query)
-    connection.commit()
+    with open('contact_requests.csv', 'r') as contact_requests_table_read:
+        csv_reader = list(csv.reader(contact_requests_table_read))
+
+    with open('contact_requests.csv', 'w') as contact_requests_table_write:
+        csv_writer = csv.writer(contact_requests_table_write)
+
+        for row in csv_reader:
+            if len(row) == 0:
+                continue
+            if not ((row[0] == user_name and row[1] == USER_NAME) or (row[0] == USER_NAME and row[1] == user_name)):
+                csv_writer.writerow(row)
 
 # Accepts the request to be added as a contact
 # Removing the request from contact_requests and creating a new conversation in conversations
@@ -408,9 +405,27 @@ def accept_contact_request(user_name):
     # Deleting all contact requests between those two users
     delete_contact_request(user_name)
 
-    query = "INSERT INTO conversations (user_1_name, user_2_name) VALUES ('{}', '{}');".format(user_name, USER_NAME)
-    cursor.execute(query)
-    connection.commit()
+    # Finding out the index of last conversation, to increment it by one in the new conversation
+    with open('conversations.csv', 'r') as conversations_table:
+        csv_reader = list(csv.reader(conversations_table))
+        highest_index = 0
+        # The last line of CSV file can be empty, so in that case take the last but one
+        try:
+            highest_index = int(csv_reader[-1][0])
+        except IndexError:
+            highest_index = int(csv_reader[-2][0])
+
+    # Creating a new entry in the conversation
+    with open('conversations.csv', 'a') as conversations_table:
+        csv_writer = csv.writer(conversations_table)
+
+        conversation_row = []
+        conversation_row.append(highest_index + 1)
+        conversation_row.append(user_name)
+        conversation_row.append(USER_NAME)
+        conversation_row.append(15487654641)
+
+        csv_writer.writerow(conversation_row)
 
     # Updating the contact section to include the new contact
     populate_contacts()
@@ -418,23 +433,30 @@ def accept_contact_request(user_name):
 # Sends request to some other user to be added as a contact
 def send_contact_request(user_name):
     # Check if these two people already do not share a conversation - otherwise do not continue
-    query = """SELECT conversation_id from conversations WHERE
-                (user_1_name = '{}' and user_2_name = '{}') or
-                (user_2_name = '{}' and user_1_name = '{}')
-            """.format(user_name, USER_NAME, user_name, USER_NAME)
-    cursor.execute(query)
-    result = cursor.fetchone()
+    conversation_already_there = False
+    with open('conversations.csv', 'r') as conversations_table:
+        csv_reader = csv.DictReader(conversations_table)
+        # Looping through the conversation and verifying if these two users are
+        #   already not in there
+        for entry in csv_reader:
+            if ((entry['user_1_name'] == user_name and entry['user_2_name'] == USER_NAME) or (entry['user_1_name'] == USER_NAME and entry['user_2_name'] == user_name)):
+                conversation_already_there = True
+                break
 
-    # If those two users are already connected, notify and return
-    if result is not None:
+    if conversation_already_there == True:
         show_message_to_user("User {} is already in your contacts!".format(user_name))
-        return
-    else:
-        show_message_to_user("Request sent!")
 
-    query = "INSERT INTO contact_requests (sender_user, other_user) VALUES ('{}', '{}')".format(USER_NAME, user_name)
-    cursor.execute(query)
-    connection.commit()
+    with open('contact_requests.csv', 'a') as contact_requests_table:
+        csv_writer = csv.writer(contact_requests_table)
+
+        sender_user = USER_NAME
+        other_user = user_name
+
+        contact_request_row = []
+        contact_request_row.append(sender_user)
+        contact_request_row.append(other_user)
+
+        csv_writer.writerow(contact_request_row)
 
 # Accepts a new contact, updates the requests and closes the confirmation window
 def add_new_contact_and_close_dialog(user_name, dialog_to_close):
@@ -475,16 +497,19 @@ def show_users(component_where_to_put_it, search_pattern=None):
 
     # Filling the list of all other users apart from the current one
     # When search pattern is applied, also filter it with that
-    if search_pattern is None:
-        query = "SELECT name from users WHERE name != '{}'".format(USER_NAME)
-    else:
-        query = """SELECT name from users WHERE name != '{}' and name LIKE '%{}%'""".format(USER_NAME, search_pattern)
-    cursor.execute(query)
-    result = cursor.fetchall()
-
     list_of_users = []
-    for person in result:
-        list_of_users.append(person.name)
+    with open('users.csv', 'r') as users_table:
+        csv_reader = csv.DictReader(users_table)
+        for entry in csv_reader:
+            if entry["name"] != USER_NAME:
+                # If the pattern is defined, comparing the name with it,
+                #   and if it is not suitable, continue to the next name
+                if search_pattern is not None:
+                    pattern = re.compile(search_pattern, re.IGNORECASE)
+                    if pattern.search(entry["name"]) is None:
+                        continue
+                # If the user has not been deselected, include him into the list
+                list_of_users.append(entry["name"])
 
     # Creating new labels and buttons with the corresponding label for each
     #   contact that passed the filter
@@ -569,19 +594,12 @@ def populate_contact_requests(component_where_to_put_it):
 
     list_of_users_requesting_contact = []
 
-    query = """SELECT sender_user from contact_requests WHERE other_user = '{}';""".format(USER_NAME)
-    cursor.execute(query)
-    result = cursor.fetchall()
-
-    for request in result:
-        list_of_users_requesting_contact.append(request.sender_user)
-    #
-    # # Filling the list of all other users apart from the current one
-    # with open('contact_requests.csv', 'r') as contact_requests_table:
-    #     csv_reader = csv.DictReader(contact_requests_table)
-    #     for entry in csv_reader:
-    #         if entry["other_user"] == USER_NAME:
-    #             list_of_users_requesting_contact.append(entry["sender_user"])
+    # Filling the list of all other users apart from the current one
+    with open('contact_requests.csv', 'r') as contact_requests_table:
+        csv_reader = csv.DictReader(contact_requests_table)
+        for entry in csv_reader:
+            if entry["other_user"] == USER_NAME:
+                list_of_users_requesting_contact.append(entry["sender_user"])
 
     # If there are no requests for this user, show him an encouraging message
     if len(list_of_users_requesting_contact) < 1:
@@ -636,15 +654,10 @@ def manage_contact_requests_screen():
 
 # Function responsible for logging the user into the application and
 #   populating all the user-dependant content
-def log_user_into_application(user_name):
-    # Finding out the mood
-    query = "SELECT mood from users WHERE name = '{}';".format(user_name)
-    cursor.execute(query)
-    result = cursor.fetchone()
-
+def log_user_into_application(user_name, user_mood):
     # Populating all the fields in the beginning
     populate_name(user_name)
-    populate_mood(result.mood)
+    populate_mood(user_mood)
     define_text_content(messaging_area_text, "Please choose a contact to start a conversation!")
     populate_contacts()
 
@@ -652,28 +665,26 @@ def log_user_into_application(user_name):
 # If they match, log the user in, otherwise notify him with error message
 def login_into_application(user_name, password):
     # Finding the user in users table, and verifying his password
-    query = "SELECT password from users WHERE name = '{}';".format(user_name)
-    cursor.execute(query)
-    result = cursor.fetchone()
+    with open('users.csv', 'r') as users_table:
+        user_list = csv.DictReader(users_table)
+        for user in user_list:
+            if user['name'] == user_name:
+                if user['password'] == password:
+                    # If credentials correspond, log user into the application
+                    show_message_to_user("Login successful, welcome!")
+                    log_user_into_application(user['name'], user['mood'])
+                    close_window(LOGIN_WINDOW)
+                    return
+                else:
+                    # If credentials do not match, throw error message
+                    show_message_to_user("Login failed, please try again!")
+                    reset_login_entries()
+                    return
+                break
 
     # If the user is not found at all, throw error message
-    if result is None:
-        show_message_to_user("Login failed, please try again!")
-        reset_login_entries()
-        return
-
-    # If credentials correspond, log user into the application
-    if result.password == password:
-        show_message_to_user("Login successful, welcome!")
-        log_user_into_application(user_name)
-        close_window(LOGIN_WINDOW)
-        return
-    else:
-        # If credentials do not match, throw error message
-        show_message_to_user("Login failed, please try again!")
-        reset_login_entries()
-        return
-
+    show_message_to_user("Login failed, please try again!")
+    reset_login_entries()
 
 # Deletes the content of user_name and password
 def reset_login_entries():
@@ -735,25 +746,33 @@ def register_into_application(user_name, password, password_verify):
         return
 
     # Checking if there is not already a user with the same name
-    query = "SELECT name from users WHERE name = '{}'".format(user_name)
-    cursor.execute(query)
-    result = cursor.fetchall()
-    if len(result) > 0:
-        show_message_to_user("User with the name {} already exists!\nRegistration failed, please try again!".format(user_name))
-        reset_register()
-        return
+    with open('users.csv', 'r') as users_table:
+        user_list = csv.DictReader(users_table)
+        # Looping through the users and looking for the same USER_NAME
+        for user in user_list:
+            if user['name'] == user_name:
+                show_message_to_user("User with the name {} already exists!\nRegistration failed, please try again!".format(user_name))
+                reset_register()
+                return
 
     # Appending the new user to a users table (if relevant)
-    current_timestamp = int(time.time())
-    query = """INSERT INTO users (name, mood, last_time_online, date_of_registration,password) VALUES
-                                ('{}', 'I have a good mood', '{}', '{}', '{}');
-                                """.format(user_name, current_timestamp, current_timestamp, password)
-    cursor.execute(query)
-    connection.commit()
+    with open('users.csv', 'a') as users_table:
+        csv_writer = csv.writer(users_table)
+
+        # Finding out the current timestamp to fill the time of registration
+        current_timestamp = int(time.time())
+
+        new_user_row = []
+        new_user_row.append(user_name)
+        new_user_row.append("I have a good mood")
+        new_user_row.append(current_timestamp)
+        new_user_row.append(current_timestamp)
+        new_user_row.append(password)
+
+        csv_writer.writerow(new_user_row)
 
     # Showing successful message, and logging the user in
     show_message_to_user("You have been successfully registered!\nYou are now logged in as {}.".format(user_name))
-    log_user_into_application(user_name)
 
     # Closing all the unnecessary windows
     close_window(REGISTER_WINDOW)
@@ -813,7 +832,7 @@ def edit_mood_screen():
     global EDIT_MOOD_WINDOW
     EDIT_MOOD_WINDOW = tk.Toplevel(main_window)
     EDIT_MOOD_WINDOW.title("Edit mood")
-    EDIT_MOOD_WINDOW.geometry("400x200")
+    EDIT_MOOD_WINDOW.geometry("300x150")
 
     mood_label = tk.Label(EDIT_MOOD_WINDOW, text="Please enter the new mood:", bg="yellow",
                     font=("Calibri", 15), anchor="nw", justify="left", bd=4)
@@ -824,18 +843,18 @@ def edit_mood_screen():
 
     mood_saving_button = tk.Button(mood_label, text="Save new mood", bg="grey", font=("Calibri", 15),
                         command=lambda: save_new_mood(mood_entry.get()))
-    mood_saving_button.place(relx=0.05, rely=0.7, relheight=0.25, relwidth=0.5)
+    mood_saving_button.place(relx=0.05, rely=0.7, relheight=0.25, relwidth=0.425)
 
     mood_cancelling_button = tk.Button(mood_label, text="Cancel", bg="grey", font=("Calibri", 15),
                         command=lambda: close_window(EDIT_MOOD_WINDOW))
-    mood_cancelling_button.place(relx=0.6, rely=0.7, relheight=0.25, relwidth=0.3)
+    mood_cancelling_button.place(relx=0.5, rely=0.7, relheight=0.25, relwidth=0.425)
 
 # Changes the mood in the users table
 def save_new_mood(mood):
     # Updates the current user's mood in the DB
-    query = "UPDATE users SET mood = '{}' WHERE name = '{}';".format(mood, USER_NAME)
-    cursor.execute(query)
-    connection.commit()
+    users_table = pd.read_csv("users.csv")
+    users_table.loc[users_table["name"]==USER_NAME, "mood"] = mood
+    users_table.to_csv("users.csv", index=False)
 
     # Showing the change to the user and closing the editing window
     populate_mood(mood)
@@ -864,18 +883,18 @@ def log_out_from_application():
 # Serves to quickly see if user has some new contact requests
 def update_number_of_requests():
     # Finding out which users sent contact request to the current user
-
-    query = """SELECT sender_user from contact_requests WHERE other_user = '{}';""".format(USER_NAME)
-    cursor.execute(query)
-    result = cursor.fetchall()
-
-    amunt_of_requests = len(result)
+    list_of_users_requesting_contact = []
+    with open('contact_requests.csv', 'r') as contact_requests_table:
+        csv_reader = csv.DictReader(contact_requests_table)
+        for entry in csv_reader:
+            if entry["other_user"] == USER_NAME:
+                list_of_users_requesting_contact.append(entry["sender_user"])
 
     # Displaying the number of requests as a button text
-    contact_requests_button["text"] = "Manage requests ({})".format(amunt_of_requests)
+    contact_requests_button["text"] = "Manage requests ({})".format(len(list_of_users_requesting_contact))
 
     # When there are some new requests, change the button colour to notify the user
-    if amunt_of_requests > 0:
+    if len(list_of_users_requesting_contact) > 0:
         contact_requests_button["bg"] = "red"
     else:
         contact_requests_button["bg"] = "grey"
@@ -884,13 +903,9 @@ def update_number_of_requests():
 def log_last_time_online(user_name):
     current_timestamp = int(time.time())
 
-    query = "UPDATE users SET last_time_online = '{}' WHERE name = '{}';".format(current_timestamp, user_name)
-    cursor.execute(query)
-    connection.commit()
-
-    # users_table = pd.read_csv("users.csv")
-    # users_table.loc[users_table["name"]==user_name, "last_time_online"] = current_timestamp
-    # users_table.to_csv("users.csv", index=False)
+    users_table = pd.read_csv("users.csv")
+    users_table.loc[users_table["name"]==user_name, "last_time_online"] = current_timestamp
+    users_table.to_csv("users.csv", index=False)
 
 # Window providing functionality to send feedback
 def feedback_screen():
@@ -918,12 +933,16 @@ def feedback_screen():
 def send_feedback(feedback_message):
     current_timestamp = int(time.time())
 
-    # TODO: allow for czech characters in feedback_message, now it throws error
-    query = """INSERT INTO feedback (user_name, message, timestamp)
-                VALUES ('{}', '{}', '{}');
-            """.format(USER_NAME, feedback_message, current_timestamp)
-    cursor.execute(query)
-    connection.commit()
+    # Appending the feedback message to a table
+    with open('feedback.csv', 'a') as feedback_table:
+        csv_writer = csv.writer(feedback_table)
+
+        feedback_row = []
+        feedback_row.append(USER_NAME)
+        feedback_row.append(feedback_message)
+        feedback_row.append(current_timestamp)
+
+        csv_writer.writerow(feedback_row)
 
     # Closing the feedback window and showing a grateful message
     close_window(FEEDBACK_WINDOW)
@@ -1042,7 +1061,7 @@ if not os.path.exists("Conversations"):
     os.mkdir("Conversations")
 
 # Saving time with no login :)
-# log_user_into_application("tt")
+log_user_into_application("123", "my_mood")
 
 # Cause everything to update with the pause of 2 seconds
 # Only when there is some user logged in (USER_NAME is not empty)

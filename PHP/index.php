@@ -82,7 +82,7 @@ if (!$conn) {
       </tr>
 
       <?php
-        $sql = "SELECT * FROM hates";
+        $sql = "SELECT * FROM hates ORDER BY hate_id DESC";
         $result = $conn->query($sql);
          while ($row = $result->fetch_assoc()) {
     ?>
@@ -154,7 +154,7 @@ if (!$conn) {
       </tr>
 
       <?php
-        $sql = "SELECT * FROM loves";
+        $sql = "SELECT * FROM loves ORDER BY love_id DESC";
         $result = $conn->query($sql);
          while ($row = $result->fetch_assoc()) {
     ?>

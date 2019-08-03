@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Nejlepší komentáře Novinky</title>
+    <link rel="stylesheet" href="discussion.css">
+  </head>
+  <body>
+    <!-- Introduction -->
+    <p>
+      Také Vám přináší radost četba nejlepších či nejhorších komentářů z Novinek, ale nemáte čas prodírat se mnoha desítkami
+      či stovkami z nich, abyste našli ty nejzábavnější? Jste na správné adrese!
+    </p>
+
+    <p>
+      Stačí vložit odkaz na článek z Novinek, vybrat si chtěné výsledky, jejich počet, a už se jen smíchy za břicho popadat.
+    </p>
+
+    <p>
+      Tip: Jestliže necháte odkaz prázdný, nebo bude vyhodnocen jako nefunkční, zobrazí se komentáře z nynějšího hlavního článku na Novinkách.
+    </p>
+
+    <!-- The link to the article -->
+    Odkaz:
+    <input type="text" id="news_link" value="" size="130" placeholder="Vložte odkaz na článek...">
+
+    <br>
+    <!-- The ordering of the comments -->
+    Seřazení:
+    <select id="ordering">
+      <option value="best" selected>Nejlepší</option>
+      <option value="worst">Nejhorší</option>
+      <option value="newest">Nejnovější</option>
+      <option value="oldest">Nejstarší</option>
+    </select>
+
+    <br>
+    <!-- The requested amount of results -->
+    Počet výsledků:
+    <input type="number" id="limit" value="10">
+
+    <br>
+    <!-- Submit button -->
+    <button type="button" id="submit_button">Hledat</button>
+
+    <br>
+    <br>
+    <!-- The error section -->
+    <span id="error" class="big_red"></span>
+
+    <!-- The information section -->
+    <span id="info" class="big_red" style="justify-content: center"></span>
+
+    <br>
+    <!-- The name of the article -->
+    <div id="article_name" class="hidden"></div>
+
+    <br>
+    <!-- The amount of comments on the article -->
+    <div id="amount" class="hidden"></div>
+
+    <br>
+    <!-- The table with content -->
+    <table id="content" class="hidden">
+
+    </table>
+
+    <script src="discussion.js"></script>
+
+  </body>
+</html>

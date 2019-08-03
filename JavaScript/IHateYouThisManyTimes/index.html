@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>I Hate You This Many Times</title>
+    <link rel="stylesheet" href="ihateyouthismanytimes.css">
+  </head>
+  <body>
+
+
+    <p>Do you hate somebody? Do you love somebody? Do you both hate and love somebody? You are on the right address!</p>
+    <p>Just fill in the forms below, and grant a person with a valuable feedback, they would not get otherwise.</p>
+
+    <div  class="collumn" style="float: left; width: 50%;margin-bottom: 25px;">
+      <h3>Hate form</h3>
+        <div>
+          <label for="hater_name">Your name</label><br>
+          <input  id="hater_name" type="text" placeholder="Your name"> <br><br>
+        </div>
+        <div>
+          <label for="hate_other_person_name">Hated person</label><br>
+          <input  id="hate_other_person_name" type="text" placeholder="Hated person's name"> <br><br>
+        </div>
+        <div>
+          <label for="hate_reason">Reason you hate him/her</label><br>
+          <textarea id="hate_reason" placeholder="Reason" rows="5" cols="40"></textarea>
+        </div>
+        <br>
+        <button type="button" id="submit_hate">Submit hate!</button>
+
+
+        <h3>Hate leaderboard</h3>
+        <table id="hate_leaderboard_table">
+
+        </table>
+
+        <h3>Hate details</h3>
+        <table id="hate_details_table">
+
+        </table>
+
+    </div>
+
+
+    <div  class="collumn" style="float: left; width: 50%;margin-bottom: 25px;">
+      <h3>Love form</h3>
+        <div>
+          <label for="lover_name">Your name</label><br>
+          <input  id="lover_name" type="text" placeholder="Your name"> <br><br>
+        </div>
+        <div>
+          <label for="love_other_person_name">Loved person</label><br>
+          <input  id="love_other_person_name" type="text" placeholder="Loved person's name"> <br><br>
+        </div>
+        <div>
+          <label for="love_reason">Reason you love him/her</label><br>
+          <textarea id="love_reason" placeholder="Reason" rows="5" cols="40"></textarea>
+        </div>
+        <br>
+        <button type="button" id="submit_love">Submit love!</button>
+
+
+        <h3>Love leaderboard</h3>
+        <table id="love_leaderboard_table">
+
+        </table>
+
+        <h3>Love details</h3>
+        <table id="love_details_table">
+
+        </table>
+
+    </div>
+
+    <br>
+    <hr style="clear: both">
+
+    <script src="ihateyouthismanytimes.js"></script>
+
+  </body>
+</html>

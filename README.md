@@ -9,6 +9,6 @@ http://nejlepsi-komentare-novinky.cz/ ... aggregator of comments on Novinky.cz n
 
 http://www.ihateyouthismanytimes.cz/ ... feedback giver for lovers/haters
 
-http://www.grdddj.eu//elo.html ... chess FIDE ELO webscraper
+http://www.grdddj.eu/elo ... chess FIDE ELO webscraper
 
-http://www.grdddj.eu/birthday.html ... common birthday calculator
+http://www.grdddj.eu/birthday ... common birthday calculator

@@ -1,6 +1,6 @@
 // jQuery is imported in scraper.html, so we can use it
 
-// GLOBAL letIABLES
+// GLOBAL VARIABLES
 let text = "";  // string, storing the whole text
 let allWords = []; // array of strings, storing all the separate words
 let uniqueWords = []; // array of strings, storing all the unique words

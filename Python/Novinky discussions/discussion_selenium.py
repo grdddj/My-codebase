@@ -91,6 +91,7 @@ def fetch_comments(news_link="", limit="", best_or_worst=""):
     time.sleep(0.5)
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
+    driver.quit() 
 
     # Continuing, only when we have acquired valid discussion link
     comments = []

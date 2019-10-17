@@ -28,7 +28,7 @@ def main():
     try:
         availability_text = soup.find(class_=class_to_look_for).get_text().strip()
     except AttributeError:
-        print("Class with name 'availability-value' does not exist there!")
+        print("Class with name {} does not exist there!".format(class_to_look_for))
         exit()
 
     try:
@@ -58,24 +58,28 @@ def send_emails(recipients, availability_text):
         bytes, and it does not look the best when receiving the email.
     """
     for recipient in recipients:
-        # Sending the output as an email
-        port = 465  # For SSL
-        smtp_server = "smtp.gmail.com"
-        sender_email = "scraper006@gmail.com"  # Enter your address
-        receiver_email = recipient  # Enter receiver address
-        password = "+Scraper006+"
+        try:
+            # Sending the output as an email
+            port = 465  # For SSL
+            smtp_server = "smtp.gmail.com"
+            sender_email = "scraper006@gmail.com"  # Enter your address
+            receiver_email = recipient  # Enter receiver address
+            password = "+Scraper006+"
 
-        message = """\
-        Subject: Time to buy!
+            message = """\
+            Subject: Time to buy!
 
-        Current state of the availability: {}
-        """.format(availability_text.encode("utf-8"))
+            Current state of the availability: {}
+            """.format(availability_text.encode("utf-8"))
 
-        context = ssl.create_default_context()
+            context = ssl.create_default_context()
 
-        with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-            server.login(sender_email, password)
-            server.sendmail(sender_email, receiver_email, message)
+            with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+                server.login(sender_email, password)
+                server.sendmail(sender_email, receiver_email, message)
+        except Exception as e:
+            print("It looks like we could not send the email to {}".format(recipient))
+            print("Error message: {}".format(e))
 
 if __name__ == "__main__":
     main()

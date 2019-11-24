@@ -12,3 +12,5 @@ http://www.ihateyouthismanytimes.cz/ ... feedback giver for lovers/haters (Javas
 http://www.grdddj.eu/elo ... chess FIDE ELO webscraper (Javascript)
 
 http://www.grdddj.eu/birthday ... common birthday calculator (Javascript)
+
+http://www.grdddj.eu/hackathon_repos/ ... repository watcher (Javascript, python API)

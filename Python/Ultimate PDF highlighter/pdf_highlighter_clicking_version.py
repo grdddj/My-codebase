@@ -45,8 +45,6 @@ One strange thing I noticed is the script is reacting much more slowly
 
 from pynput import mouse
 import pyautogui
-import subprocess
-import os
 import time
 
 from helpers import Helpers
@@ -73,7 +71,7 @@ class Global:
     amount_of_usage = 0
 
     # Whether to show user notifications
-    SHOW_NOTIFICATIONS = True
+    SHOW_NOTIFICATIONS = False
 
     # Instruction for the user that will be shown at the beginning
     start_instructions = \
@@ -188,5 +186,8 @@ if __name__ == "__main__":
             text=Global.start_instructions,
             title='PDF HIGLIGHTER - INSTRUCTIONS',
             button='OK')
+    print(Global.start_instructions)
+    print("\nWARNING!\nThere needs to be a file 'highlight_button.png'" + \
+            "the picture of the highlighting button!")
     with mouse.Listener(on_click=on_click) as listener:
         listener.join()

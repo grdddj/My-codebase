@@ -40,9 +40,6 @@ Possible improvements:
 
 from pynput.keyboard import Key, Listener
 import pyautogui
-import subprocess
-import os
-import time
 
 from helpers import Helpers
 
@@ -104,7 +101,7 @@ class Global:
     # The "Notepad notifications" have however one advantage - user can
     #   both read the notifications and use the program, while here the
     #   open alert blocks the program itself - and user has to close it.
-    SHOW_NOTIFICATIONS = True
+    SHOW_NOTIFICATIONS = False
 
     # Instruction for the user that will be shown at the beginning
     start_instructions = \
@@ -214,5 +211,6 @@ if __name__ == "__main__":
             text=Global.start_instructions,
             title='PDF HIGLIGHTER - INSTRUCTIONS',
             button='OK')
+    print(Global.start_instructions)
     with Listener(on_release=on_release) as listener:
         listener.join()

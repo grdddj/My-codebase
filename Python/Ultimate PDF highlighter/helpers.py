@@ -33,8 +33,7 @@ class Helpers:
             # Trying to locate the object in a small region
             position_of_object = pyautogui.locateOnScreen(
                 object_image_location,
-                region=region_where_to_look,
-                confidence=confidence_of_locating)
+                region=region_where_to_look)
 
             # If we managed to find the object in the smaller region, return it
             # Otherwise the object will be searched for on the whole screen
@@ -44,8 +43,7 @@ class Helpers:
         # Locating the object on the whole screen (after first trial failed
         #   or was not even wanted)
         position_of_object = pyautogui.locateOnScreen(
-            object_image_location,
-            confidence=confidence_of_locating)
+            object_image_location)
 
         return {"found": position_of_object is not None,
                 "coords": position_of_object}

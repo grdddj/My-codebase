@@ -49,10 +49,9 @@ import subprocess
 import os
 import time
 
-class Global:
-    # Determining the directory the file is located in
-    WORKING_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
+from helpers import Helpers
 
+class Global:
     # Specifying which mouse clicks to listen for, where is the picture
     #   we want to be clicking, and which keyboard action we want to take
     mouse_button_to_listen = mouse.Button.middle
@@ -164,7 +163,7 @@ def copy_and_highlight() -> None:
         "square_size": Global.square_size_where_to_look_for_button_first}
 
     # Trying to locate the object on the current screen
-    position_of_object = _get_position_of_object(
+    position_of_object = Helpers._get_position_of_object(
         object_image_location=Global.where_to_click_picture_location,
         confidence_of_locating=Global.confidence_of_locating,
         coords_and_square_size=coords_and_square_size)
@@ -181,90 +180,6 @@ def copy_and_highlight() -> None:
         print("Object clicked")
     else:
         print("OBJECT NOT LOCATED!!!")
-
-def _get_position_of_object(object_image_location: str,
-                           confidence_of_locating: float = 1,
-                           coords_and_square_size: dict = None) -> dict:
-    """
-    Determines the position of a certain object on the screen.
-    When we suspect the object will be around a certain location,
-        we can input dictionary with these data, and it will
-        first investigate this smaller location - thus making
-        the search possibly quicker that searching in the whole screen
-
-    Using None as a default argument, because using empty dictionary is bad:
-    - https://docs.quantifiedcode.com/python-anti-patterns/correctness/mutable_default_value_as_argument.html
-    """
-
-    # Trying to locate the object in the vicinity of current position (if wanted)
-    if coords_and_square_size is not None:
-        # Getting the coordination of the region
-        region_where_to_look = _safely_create_square_region_on_the_screen(
-            x_coord=coords_and_square_size["x_coord"],
-            y_coord=coords_and_square_size["y_coord"],
-            square_size=coords_and_square_size["square_size"],
-            screen_size=pyautogui.size())
-
-        # Trying to locate the object in a small region
-        position_of_object = pyautogui.locateOnScreen(
-            object_image_location,
-            region=region_where_to_look,
-            confidence=confidence_of_locating)
-
-        # If we managed to find the object in the smaller region, return it
-        # Otherwise the object will be searched for on the whole screen
-        if position_of_object:
-            return {"found": True, "coords": position_of_object}
-
-    # Locating the object on the whole screen (after first trial failed
-    #   or was not even wanted)
-    position_of_object = pyautogui.locateOnScreen(
-        object_image_location,
-        confidence=confidence_of_locating)
-
-    return {"found": position_of_object is not None,
-            "coords": position_of_object}
-
-def _safely_create_square_region_on_the_screen(x_coord: int,
-                                               y_coord: int,
-                                               square_size: int,
-                                               screen_size: tuple) -> tuple:
-    """
-    Determines a square region on the screen, that has a defined square size
-        and is surrounding the point with given x and y coordinates.
-    It tries to put the point in the middle of the square, but when the
-        point is close to screen boundary, it is not possible - in this case
-        it returns still the same-sized square, but fully located on
-        the screen.
-    """
-
-    # Finding out the resolution of the screen, to righly construct the square
-    x_screen_size, y_screen_size = screen_size
-
-    # Guard against square sizes bigger than the whole screen
-    assert(square_size <= x_screen_size and square_size <= y_screen_size)
-
-    # Calculating the coordinates of ideal top-left square corner
-    x_corner = int(x_coord - square_size / 2)
-    y_corner = int(y_coord - square_size / 2)
-
-    # Transforming the possibly negative coordinates to non-negative,
-    #   as negative coordinations do not exist
-    x_corner = x_corner if x_corner > -1 else 0
-    y_corner = y_corner if y_corner > -1 else 0
-
-    # Identifying if the square would be outside the screen, and if so,
-    #   adjust the corner further from the border, to fix this
-    if x_corner + square_size >= x_screen_size:
-        x_corner = x_screen_size - square_size - 1
-    if y_corner + square_size >= y_screen_size:
-        y_corner = y_screen_size - square_size - 1
-
-    # Last sanity check before returning
-    assert(0 <= x_corner < x_screen_size - square_size)
-    assert(0 <= y_corner < y_screen_size - square_size)
-
-    return (x_corner, y_corner, square_size, square_size)
 
 if __name__ == "__main__":
     # Notifying the user and starting to listen

@@ -40,8 +40,19 @@ Possible improvements:
 
 from pynput.keyboard import Key, Listener
 import pyautogui
+import logging
+import subprocess
 
 from helpers import Helpers
+
+# Using logging as a neat way to find out errors in production
+ERROR_FILENAME = "pdf_highlighter_keyboard_ERRORS.log"
+logging.basicConfig(filename=ERROR_FILENAME,
+					level=logging.INFO,
+					format='%(asctime)s %(levelname)s %(message)s')
+
+# Full path to the Notepad executable, to be able to open error logs in it
+NOTEPAD_PATH = r"C:\Windows\notepad.exe"
 
 class Global:
     # Specifying which key to listen for, key for stopping,
@@ -205,12 +216,36 @@ def copy_and_highlight() -> None:
         pyautogui.typewrite("z")
 
 if __name__ == "__main__":
-    # Notifying the user and starting to listen
-    if Global.SHOW_NOTIFICATIONS:
+    try:
+        # Notifying the user and starting to listen
+        if Global.SHOW_NOTIFICATIONS:
+            pyautogui.alert(
+                text=Global.start_instructions,
+                title='PDF HIGLIGHTER - INSTRUCTIONS',
+                button='OK')
+        print(Global.start_instructions)
+        with Listener(on_release=on_release) as listener:
+            listener.join()
+    except Exception as e:
+        # If some unexpected exception happens, log it and encourage user to
+        #   look there, and maybe report the issue
+        logging.exception(e)
+
+        # Showing that there was some unexpected error
+        error_text = "Exception ocurred - please look into the error log: {}".format(ERROR_FILENAME)
+        print(error_text)
+
         pyautogui.alert(
-            text=Global.start_instructions,
-            title='PDF HIGLIGHTER - INSTRUCTIONS',
-            button='OK')
-    print(Global.start_instructions)
-    with Listener(on_release=on_release) as listener:
-        listener.join()
+            text=error_text,
+            title='ERROR HAPPENED!',
+            button='I will look there')
+
+        # Showing the error log in the Notepad
+        # There can be multiple errors, like notepad path not existing etc.
+        try:
+            subprocess.Popen([NOTEPAD_PATH, ERROR_FILENAME])
+        except:
+            print("UNABLE TO LAUNCH NOTEPAD IN LOCATION '{}'".format(NOTEPAD_PATH))
+
+        # Raising the actual error, to be also visible in the terminal
+        raise(e)

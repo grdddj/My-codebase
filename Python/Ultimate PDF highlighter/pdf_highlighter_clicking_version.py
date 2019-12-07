@@ -46,8 +46,19 @@ One strange thing I noticed is the script is reacting much more slowly
 from pynput import mouse
 import pyautogui
 import time
+import logging
+import subprocess
 
 from helpers import Helpers
+
+# Using logging as a neat way to find out errors in production
+ERROR_FILENAME = "pdf_highlighter_clicking_ERRORS.log"
+logging.basicConfig(filename=ERROR_FILENAME,
+					level=logging.INFO,
+					format='%(asctime)s %(levelname)s %(message)s')
+
+# Full path to the Notepad executable, to be able to open error logs in it
+NOTEPAD_PATH = r"C:\Windows\notepad.exe"
 
 class Global:
     # Specifying which mouse clicks to listen for, where is the picture
@@ -180,14 +191,38 @@ def copy_and_highlight() -> None:
         print("OBJECT NOT LOCATED!!!")
 
 if __name__ == "__main__":
-    # Notifying the user and starting to listen
-    if Global.SHOW_NOTIFICATIONS:
+    try:
+        # Notifying the user and starting to listen
+        if Global.SHOW_NOTIFICATIONS:
+            pyautogui.alert(
+                text=Global.start_instructions,
+                title='PDF HIGLIGHTER - INSTRUCTIONS',
+                button='OK')
+        print(Global.start_instructions)
+        print("\nWARNING!\nThere needs to be a file 'highlight_button.png'" + \
+                "the picture of the highlighting button!")
+        with mouse.Listener(on_click=on_click) as listener:
+            listener.join()
+    except Exception as e:
+        # If some unexpected exception happens, log it and encourage user to
+        #   look there, and maybe report the issue
+        logging.exception(e)
+
+        # Showing that there was some unexpected error
+        error_text = "Exception ocurred - please look into the error log: {}".format(ERROR_FILENAME)
+        print(error_text)
+
         pyautogui.alert(
-            text=Global.start_instructions,
-            title='PDF HIGLIGHTER - INSTRUCTIONS',
-            button='OK')
-    print(Global.start_instructions)
-    print("\nWARNING!\nThere needs to be a file 'highlight_button.png'" + \
-            "the picture of the highlighting button!")
-    with mouse.Listener(on_click=on_click) as listener:
-        listener.join()
+            text=error_text,
+            title='ERROR HAPPENED!',
+            button='I will look there')
+
+        # Showing the error log in the Notepad
+        # There can be multiple errors, like notepad path not existing etc.
+        try:
+            subprocess.Popen([NOTEPAD_PATH, ERROR_FILENAME])
+        except:
+            print("UNABLE TO LAUNCH NOTEPAD IN LOCATION '{}'".format(NOTEPAD_PATH))
+
+        # Raising the actual error, to be also visible in the terminal
+        raise(e)

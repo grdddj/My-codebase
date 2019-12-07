@@ -148,7 +148,7 @@ if __name__ == "__main__":
         try:
             subprocess.Popen([NOTEPAD_PATH, ERROR_FILENAME])
         except:
-            print("UNABLE TO LAUNCH NOTEPAD IN LOCATION '{}'".notepad(NOTEPAD_PATH))
+            print("UNABLE TO LAUNCH NOTEPAD IN LOCATION '{}'".format(NOTEPAD_PATH))
 
         # Raising the actual error, to be also visible in the terminal
         raise(e)

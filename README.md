@@ -14,3 +14,5 @@ http://www.grdddj.eu/elo ... chess FIDE ELO webscraper (Javascript)
 http://www.grdddj.eu/birthday ... common birthday calculator (Javascript)
 
 http://www.grdddj.eu/hackathon_repos/ ... repository watcher (Javascript, python API)
+
+http://koronavirus-v-komentarich.cz/ ... remake of comments aggregators, focusing on the coronavirus situation (Javascript, python API)

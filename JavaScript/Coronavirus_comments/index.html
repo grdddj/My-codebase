@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Stránka analyzující komentáře ohledně článků týkajích se koronaviru z webu Novinky.cz">
+    <meta name="keywords" content="Novinky.cz, komentáře, nejlepší, seřazení, diskuse, koronavirus">
+    <meta name="author" content="Jiří Musil">
+    <title>Koronavirus v komentářích</title>
+    <link rel="stylesheet" href="discussion.css">
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div>
+          <!-- Introduction -->
+          <h3>
+            Komentáře rychle, přehledně, anonymně
+          </h3>
+
+          <h6>
+            Podívejte se, jaké jsou nejlepší/nejhorší reakce na momentální situaci,
+            alespoň podle čtenářů a diskutérů Novinek.
+          </h6>
+
+          <!-- The ordering of the comments -->
+          Seřazení:
+          <select id="ordering">
+            <option value="best" selected>Nejlepší podle počtu hlasů</option>
+            <option value="worst">Nejhorší podle počtu hlasů</option>
+          </select>
+
+          <br>
+
+          <!-- The extent of the comments -->
+          Rozsah:
+          <select id="extent">
+            <option value="all" selected>Všechny články</option>
+            <option value="individual">Konkrétní článek</option>
+          </select>
+
+          <br>
+
+          <!-- The choice of articles -->
+          Články:
+          <select id="articles">
+            <!-- To be filled dynamically -->
+          </select>
+
+          <br>
+
+          <!-- The requested amount of results -->
+          Počet výsledků:
+          <input type="number" id="limit" value="20" max="500">
+
+          <br>
+
+          <!-- Submit button -->
+          <button type="button" id="submit_button" class="btn btn-primary">Hledat</button>
+        </div>
+
+        <div>
+          <!-- The error section -->
+          <span id="error" class="big_red"></span>
+
+          <br>
+          <!-- The table with content -->
+          <table id="content" class="table table-striped">
+
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+
+    <script src="discussion.js"></script>
+
+  </body>
+</html>

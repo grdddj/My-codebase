@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Ano, nebo ne</title>
+  </head>
+  <body>
+    <p>Zadejte svůj dotaz:</p>
+
+    <input type="text" id="my_input" size="50" value="">
+    <br>
+    <br>
+
+    <button type="button" id="my_button">Ano, nebo ne?</button>
+    <br>
+    <br>
+
+    <div id="result" style="font-size: 350%;">
+
+    </div>
+
+    <script type="text/javascript">
+      function yesOrNo() {
+        const content = document.getElementById("my_input").value
+
+        const pattern = "  |^ | $"
+        const patternObject = new RegExp(pattern, "i")
+
+        let answer = ""
+        if (content.match(patternObject)) {
+          answer = "Ano"
+        } else if (Math.random() > 0.5) {
+          answer = "Ano"
+        } else {
+          answer = "Ne"
+        }
+
+        const response = `<b>${answer}</b>`
+        document.getElementById('result').innerHTML = response
+      }
+
+      document.getElementById("my_button").addEventListener("click", yesOrNo)
+    </script>
+  </body>
+</html>

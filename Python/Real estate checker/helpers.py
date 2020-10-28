@@ -19,5 +19,4 @@ def get_current_ts():
 
 
 def get_current_date():
-    current_ts = get_current_ts()
-    return datetime.fromtimestamp(current_ts).strftime('%Y-%m-%d')
+    return datetime.now().strftime('%Y-%m-%d')

@@ -79,8 +79,6 @@ def incorporate_new_info(info_dict, up_to_date_info):
                     info_dict["flat_id"], new_key, info_dict[new_key], new_info)
                 logger.log_info(info_msg)
 
-                info_dict[new_key] = new_info
-
                 history_key = "{}_history".format(new_key)
                 new_obj = {
                     "date": helpers.get_current_date(),
@@ -100,6 +98,8 @@ def incorporate_new_info(info_dict, up_to_date_info):
                         old_obj,
                         new_obj
                     ]
+
+                info_dict[new_key] = new_info
 
 
 def get_up_to_date_info(flat_id):
@@ -124,6 +124,8 @@ def get_up_to_date_info(flat_id):
     captured_info = get_captured_info(content, names_and_identifier_to_capture)
 
     # TODO: transform  the last_edit state - Včera, dnes ...
+    #   so that the edits are not triggered in vain
+    #   - replace these with real dates - 2020-10-22
 
     captured_info["description"] = description
     return captured_info

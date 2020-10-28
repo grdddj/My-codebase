@@ -134,8 +134,6 @@ def analyze_content(estates):
                     flat_id, last_results[flat_id]["price"], info["price"])
                 logger.log_info(info_msg)
 
-                last_results[flat_id]["price"] = info["price"]
-
                 new_price_obj = {
                     "date": info["last_update_date"],
                     "timestamp": info["last_update_ts"],
@@ -154,6 +152,8 @@ def analyze_content(estates):
                         old_price_obj,
                         new_price_obj
                     ]
+
+                last_results[flat_id]["price"] = info["price"]
 
     save_new_results(last_results)
 

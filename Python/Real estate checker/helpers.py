@@ -20,3 +20,7 @@ def get_current_ts():
 
 def get_current_date():
     return datetime.now().strftime('%Y-%m-%d')
+
+
+def get_timestamp_from_formatted_date(formatted_date):
+    return int(datetime.strptime(formatted_date, '%Y-%m-%d').timestamp())

@@ -24,10 +24,6 @@ one_page_limit = 999
 
 # TODO: create some aggregator CLI script that will have some
 #   functions data results available and input() will choose which one to show
-# Those changed price
-# changed state
-# new ones - first update ts is new
-# removed ones - last update ts is old
 # average price on a certain day
 # histogram of prices at a certain day
 # average cost for a square meter

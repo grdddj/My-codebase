@@ -74,6 +74,11 @@ def incorporate_new_info(info_dict, up_to_date_info):
 
             info_dict[new_key] = new_info
         else:
+            # TODO: hotfix, do not hardcode it this way
+            if new_key == "last_edit":
+                info_dict[new_key] = new_info
+                continue
+                
             if info_dict[new_key] != new_info:
                 info_msg = "Info changed (id {}): key {} from {} to {}".format(
                     info_dict["flat_id"], new_key, info_dict[new_key], new_info)
@@ -112,6 +117,7 @@ def get_up_to_date_info(flat_id):
     description = content["text"]["value"]
 
     # TODO: add the agent and agency, as it can come in handy when negotiating
+    # TODO: do not store "last_edit" history - hardcoded now
 
     names_and_identifier_to_capture = {
         "price_detail": "Poznámka k ceně",
@@ -122,10 +128,6 @@ def get_up_to_date_info(flat_id):
     }
 
     captured_info = get_captured_info(content, names_and_identifier_to_capture)
-
-    # TODO: transform  the last_edit state - Včera, dnes ...
-    #   so that the edits are not triggered in vain
-    #   - replace these with real dates - 2020-10-22
 
     captured_info["description"] = description
     return captured_info

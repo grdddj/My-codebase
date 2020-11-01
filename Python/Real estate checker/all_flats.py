@@ -27,10 +27,9 @@ one_page_limit = 999
 # average price on a certain day
 # histogram of prices at a certain day
 # average cost for a square meter
-# amount that sold each day/week
-# new offers each day/week
 
 # TODO: create Django app to show these statistics and overall data (images etc.)
+# OR creating a PyQt5 frontend
 
 # TODO: add Mongo DB instead of JSON files
 

@@ -1,3 +1,4 @@
 config.py
 *.exe
 __pycache__
+db.json

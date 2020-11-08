@@ -33,6 +33,7 @@ from calc import CalculatorGUI
 # TODO: some place for message, or popup, that can be controlled remotely for notifications
 # TODO: what is new button
 # TODO: flashing buttons instead of popups that something is new
+# TODO: look into giving arguments via pyinstaller, to build custom .exe (name, version...)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,3 @@
-import os
 import requests
 import time
 from datetime import datetime
@@ -16,7 +15,7 @@ class SupportWindow:
         self.parent = parent
 
         self.confirmation_sent = False
-        self.number_of_messages_known = 0
+        self.last_message_timestamp = 0
 
         self.user_name = Config.NAME
 
@@ -36,9 +35,9 @@ class SupportWindow:
 
         # So that when opening the window again, all messages will be shown,
         #   even when no new messages come
-        self.number_of_messages_known = 0
+        self.last_message_timestamp = 0
 
-    def show(self):
+    def show_support_window(self):
         self.support_window = tk.Toplevel(self.parent)
         self.support_window.title("Support")
         self.support_window.state("zoomed")
@@ -99,71 +98,74 @@ class SupportWindow:
 
         self.update_messaging_area()
 
-    def call_the_message_updating_function_infinitely(self):
-        self.after_loop_id = self.parent.after(Config.chat_refresh_time, self.update_messaging_area)
-        print("self.after_loop_id", self.after_loop_id)
-
     def update_messaging_area(self):
         self.call_the_message_updating_function_infinitely()
 
         try:
-            chat_messages = self.get_chat_messages()
-
-            # Checking the amount of new messages, and if messages come from somebody else
-            #   so that we are notified
-            number_of_messages = len(chat_messages)
-            there_are_new_messages = number_of_messages != self.number_of_messages_known
-            if there_are_new_messages:
-                new_messages = chat_messages[self.number_of_messages_known-1:]
-                self.number_of_messages_known = number_of_messages
-
-                # Creating conversation string to be shown
-                # TODO: each message could be a label on its own
-                # The one sent by us on right and others on left (as on Messenger)
-                # TODO: process only the new messages, and the "append" filling
-                self.fill_messaging_area_with_all_messages(chat_messages)
-
-                if self.is_there_some_new_message_from_somebody_else(new_messages):
-                    self.support_window.focus_force()
+            self.update_chat_messages()
         except Exception as err:
             self.handle_problems_when_filling_message_area(err)
 
-    def get_chat_messages(self):
-        response = requests.get(Config.API_URL, timeout=1)
-        content = response.json()
+    def call_the_message_updating_function_infinitely(self):
+        self.after_loop_id = self.parent.after(Config.chat_refresh_time, self.update_messaging_area)
+        print("self.after_loop_id", self.after_loop_id)
 
-        # TODO: get only the messages if there are some new, not to send so much data in vain
-        #   send the number of messages we have and server will compare it, and maybe send the data
-        # IF the get is supporting parameters - if not, we will use POST
-        chat_messages = content.get(Config.CHAT_KEY, [])
+    def update_chat_messages(self):
+        new_chat_messages = self.get_new_chat_messages()
 
-        return chat_messages
+        # Checking the amount of new messages, and if messages come from somebody else
+        #   so that we are notified
+        if new_chat_messages:
+            self.last_message_timestamp = new_chat_messages[-1]["timestamp"]
 
-    def fill_messaging_area_with_all_messages(self, chat_messages):
-        conversation = ""
+            # Creating conversation string to be shown
+            # TODO: each message could be a label on its own
+            # The one sent by us on right and others on left (as on Messenger)
+            self.include_new_messages_into_messaging_area(new_chat_messages)
+
+            self.force_focus_on_window_if_there_are_new_messages_from_others(new_chat_messages)
+
+    def get_new_chat_messages(self):
+        # TODO: somehow handle the case of timeout (gracefully, so user does not even notice)
+        parameters = {
+            "chat_name": Config.CHAT_NAME,
+            "last_message_timestamp": self.last_message_timestamp
+        }
+        response = requests.get(Config.API_URL_CHAT, params=parameters, timeout=1)
+        new_chat_messages = response.json()
+
+        print("new_chat_messages", new_chat_messages)
+        return new_chat_messages
+
+    def include_new_messages_into_messaging_area(self, chat_messages):
+        conversation_text = self.create_conversation_text_from_messages(chat_messages)
+        self.append_conversation_text_into_messaging_area(conversation_text)
+        self.move_scrollbar_to_the_bottom()
+
+    def create_conversation_text_from_messages(self, chat_messages):
+        conversation_text = ""
         for entry in chat_messages:
-            name = entry.get("name", "ghost")
+            name = entry.get("user_name", "ghost")
             message = entry.get("message", "")
             timestamp = entry.get("timestamp", 0)
 
             time_to_show = self.get_time_to_show_in_message(timestamp)
 
             string_to_add = f"{name} ({time_to_show}): {message}\n"
-            conversation = conversation + string_to_add
+            conversation_text = conversation_text + string_to_add
 
-        self.define_text_content(self.messaging_area_text, conversation)
-        self.messaging_area_text.yview_moveto(1)
+        return conversation_text
 
     def is_there_some_new_message_from_somebody_else(self, new_messages):
         is_there_some_new_message_from_somebody_else = False
         for message in new_messages:
-            if message.get("name") != self.user_name:
+            if message.get("user_name") != self.user_name:
                 is_there_some_new_message_from_somebody_else = True
 
         return is_there_some_new_message_from_somebody_else
 
     def get_time_to_show_in_message(self, timestamp):
-        if not timestamp:
+        if not timestamp or timestamp == 1:
             return "way ago"
 
         dt_object = datetime.fromtimestamp(timestamp)
@@ -185,12 +187,13 @@ class SupportWindow:
         return message_is_from_today
 
     def handle_problems_when_filling_message_area(self, err):
-        conversation = f"Network error happened, please check internet connection.\nErr: {err}"
-        self.define_text_content(self.messaging_area_text, conversation)
-        self.number_of_messages_known = 0
+        # conversation = f"Network error happened, please check internet connection.\nErr: {err}"
+        # self.define_text_content(self.messaging_area_text, conversation)
+        # self.last_message_timestamp = 0
+        print("problems when filling", err)
 
     def process_message_from_entry(self):
-        message = self.message_entry.get()
+        message = self.get_text_from_message_entry()
         print(message)
 
         if not message:
@@ -199,58 +202,61 @@ class SupportWindow:
             return self.send_message(message)
 
     def send_message(self, message):
-        self.message_entry.delete(0, "end")
-
-        timestamp = int(time.time())
-
-        data = {"name": self.user_name, "message": message, "timestamp": timestamp}
-        data_to_send = {"key_to_save": Config.CHAT_KEY, "data": data}
+        data = {
+            "user_name": self.user_name,
+            "message": message,
+            "timestamp": time.time(),
+            "details": ""
+        }
+        data_to_send = {"chat_name": Config.CHAT_NAME, "data": data}
 
         try:
-            requests.post(Config.API_URL, json=data_to_send)
+            requests.post(Config.API_URL_CHAT, json=data_to_send)
         except Exception as err:
             self.inform_about_message_sending_problem(err)
+            return
+
+        self.clean_message_entry()
 
         self.show_confirmation_message()
 
     def get_latest_update(self):
+        if self.should_the_latest_version_really_be_downloaded():
+            self.inform_about_downloading_start()
+
+            try:
+                timestamp = int(time.time())
+                path_where_to_save_it = f"Casio_fx-85_CE_X_latest_{timestamp}.exe"
+
+                self.download_latest_update(path_where_to_save_it)
+                self.inform_about_downloading_finish(path_where_to_save_it)
+            except Exception as err:
+                self.inform_about_downloading_problem(err)
+
+    def should_the_latest_version_really_be_downloaded(self):
         last_update = self.get_the_time_of_last_update()
         title = 'Get latest version'
         question = f'Last update released {last_update}. Do you really want to download it?'
         should_get_latest_version = messagebox.askquestion(title, question, icon='warning')
-        if should_get_latest_version == 'yes':
-            self.inform_about_downloading_start()
 
-            try:
-                self.download_latest_update()
-                self.inform_about_downloading_finish()
-            except Exception as err:
-                self.inform_about_downloading_problem(err)
+        return should_get_latest_version == "yes"
 
     @staticmethod
     def get_the_time_of_last_update():
-        response = requests.get(Config.API_URL)
-        content = response.json()
+        try:
+            response = requests.get(Config.API_URL_LAST_UPDATE)
+            last_update = response.json()
+        except Exception as err:
+            return f"Error when finding out. Err: {err}"
 
-        key_to_use = "last_update"
-        updates_list = content.get(key_to_use, [])
-        if len(updates_list):
-            last_update = updates_list[-1]
-            last_update_ts = last_update.get("timestamp", 0)
-            dt_object = datetime.fromtimestamp(last_update_ts)
-            time_to_show = dt_object.strftime('%d. %m. %Y at %H:%M:%S')
-            return time_to_show
-        else:
-            return "Never"
+        last_update_ts = last_update.get("timestamp", 0)
+        dt_object = datetime.fromtimestamp(last_update_ts)
+        time_to_show = dt_object.strftime('%d. %m. %Y at %H:%M:%S')
+        return time_to_show
 
     @staticmethod
-    def download_latest_update():
-        WORKING_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
-        timestamp = int(time.time())
-        file_name = f"Casio_fx-85_CE_X_latest_{timestamp}.exe"
-        file_name = os.path.join(WORKING_DIRECTORY, file_name)
-
-        urllib.request.urlretrieve(Config.latest_version_url, file_name)
+    def download_latest_update(path_where_to_save_it):
+        urllib.request.urlretrieve(Config.latest_version_url, path_where_to_save_it)
 
     @staticmethod
     def inform_about_downloading_start():
@@ -259,9 +265,9 @@ class SupportWindow:
         messagebox.showinfo(title, message)
 
     @staticmethod
-    def inform_about_downloading_finish():
+    def inform_about_downloading_finish(path_where_file_was_saved):
         title = "Download finished!"
-        message = "You can find the new file in the same directory as this one. It will have a unique suffix."
+        message = f"New file is located at the same directory as the current one. Name: {path_where_file_was_saved}."
         messagebox.showinfo(title, message)
 
     @staticmethod
@@ -296,8 +302,7 @@ class SupportWindow:
                                  font=("Calibri", font_size), justify="center", bd=4)
         message_label.place(relheight=1, relwidth=1)
 
-        # Placing the window (at least its left top corner) to the center
-        self.parent.parent.eval(f'tk::PlaceWindow {str(message_window)} center')
+        self.place_the_window_to_the_center_of_the_screen(message_window)
 
     def handle_empty_message(self):
         title = "No empty messages!"
@@ -339,15 +344,48 @@ class SupportWindow:
 
         if new_name:
             self.user_name = new_name
-            title = "Name changed!"
-            message = "Your name was changed. Have fun with your new identity!"
-            messagebox.showinfo(title, message)
+            self.inform_about_successful_name_change()
         else:
             if new_name == "":
-                title = "No empty names!"
-                message = "Empty names are not allowed. Who would then recognize you?"
-                messagebox.showinfo(title, message)
+                self.inform_about_empty_name_when_changing()
             elif new_name is None:
-                title = "Out of ideas?"
-                message = "Did not come up with a good name? Try looking at the calendar."
-                messagebox.showinfo(title, message)
+                self.inform_about_cancelling_the_name_change()
+
+    @staticmethod
+    def inform_about_successful_name_change():
+        title = "Name changed!"
+        message = "Your name was changed. Have fun with your new identity!"
+        messagebox.showinfo(title, message)
+
+    @staticmethod
+    def inform_about_empty_name_when_changing():
+        title = "No empty names!"
+        message = "Empty names are not allowed. Who would then recognize you?"
+        messagebox.showinfo(title, message)
+
+    @staticmethod
+    def inform_about_cancelling_the_name_change():
+        title = "Out of ideas?"
+        message = "Did not come up with a good name? Try looking at the calendar."
+        messagebox.showinfo(title, message)
+
+    def move_scrollbar_to_the_bottom(self):
+        self.messaging_area_text.yview_moveto(1)
+
+    def force_focus_on_window_if_there_are_new_messages_from_others(self, new_messages):
+        if self.is_there_some_new_message_from_somebody_else(new_messages):
+            print("focusing hard")
+            self.parent.after(1, lambda: self.support_window.focus_force())
+            # self.support_window.focus_force()
+
+    def append_conversation_text_into_messaging_area(self, conversation_text):
+        self.define_text_content(self.messaging_area_text, conversation_text, mode="append")
+
+    def get_text_from_message_entry(self):
+        return self.message_entry.get()
+
+    def clean_message_entry(self):
+        self.message_entry.delete(0, "end")
+
+    def place_the_window_to_the_center_of_the_screen(self, window):
+        self.parent.parent.eval(f'tk::PlaceWindow {str(window)} center')

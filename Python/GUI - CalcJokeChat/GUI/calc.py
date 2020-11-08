@@ -84,29 +84,29 @@ class CalculatorGUI(tk.Frame):
         divide = self.create_operator_button(operator="/")
         divide.grid(row=5, column=3)
 
-        equal = self.create_button("=", command=self.equalpress)
+        equal = self.create_button("=", command=self.press_equals)
         equal.grid(row=5, column=2)
 
-        clear = self.create_button("Clear", command=self.clear)
+        clear = self.create_button("Clear", command=self.clear_the_equation)
         clear.grid(row=5, column='1')
 
-        pi = self.create_button("pi", command=lambda: self.press(3.141592653589793))
+        pi = self.create_button("pi", command=lambda: self.press_number_or_operator(3.141592653589793))
         pi.grid(row=6, column=0)
 
         Decimal = self.create_operator_button(operator=".")
         Decimal.grid(row=6, column=1)
 
-        support = self.create_button("SUPPORT", command=self.show_support, bg_color="orange")
+        support = self.create_button("SUPPORT", command=self.show_support_window, bg_color="orange")
         support.grid(row=6, column=2)
 
         joke = self.create_button("JOKE", command=self.tell_joke, bg_color="orange")
         joke.grid(row=6, column=3)
 
-    def press(self, num):
+    def press_number_or_operator(self, num):
         self.expression = self.expression + str(num)
         self.equation.set(self.expression)
 
-    def equalpress(self):
+    def press_equals(self):
         try:
             total = str(eval(self.expression))
             self.equation.set(total)
@@ -115,7 +115,7 @@ class CalculatorGUI(tk.Frame):
             self.equation.set("error")
             self.expression = ""
 
-    def clear(self):
+    def clear_the_equation(self):
         self.expression = ""
         self.equation.set("")
 
@@ -124,9 +124,9 @@ class CalculatorGUI(tk.Frame):
         joke = random.choice(self.jokes_list)
         messagebox.showinfo("'Joke'", joke)
 
-    def show_support(self):
+    def show_support_window(self):
         print("showing support")
-        self.support_window.show()
+        self.support_window.show_support_window()
 
     def create_button(self, text, command, bg_color=None, fg_color=None):
         if not fg_color:
@@ -142,10 +142,10 @@ class CalculatorGUI(tk.Frame):
         return tk.Button(self.parent, text=str(number), fg=self.fg_color, bg=self.bg_color,
                          font=self.button_font, bd=self.button_border,
                          height=self.height_of_buttons, width=self.width_of_buttons,
-                         command=lambda: self.press(number))
+                         command=lambda: self.press_number_or_operator(number))
 
     def create_operator_button(self, operator):
         return tk.Button(self.parent, text=operator, fg=self.fg_color, bg=self.bg_color,
                          font=self.button_font, bd=self.button_border,
                          height=self.height_of_buttons, width=self.width_of_buttons,
-                         command=lambda: self.press(operator))
+                         command=lambda: self.press_number_or_operator(operator))

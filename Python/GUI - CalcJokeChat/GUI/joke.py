@@ -11,8 +11,8 @@ class Jokes:
         try:
             with open(jokes_file_path, 'r', encoding='utf-8') as my_file:
                 self.JOKES = json.load(my_file)
-        except:
-            jokes = ["impossible to fetch jokes"]
+        except Exception as err:
+            self.JOKES = [f"Impossible to fetch jokes. Err: {err}"]
 
     @staticmethod
     def get_resource_path(relative_path):

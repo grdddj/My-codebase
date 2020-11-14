@@ -31,15 +31,18 @@ class ChatMessage(Base):
     id = Column(Integer, primary_key=True)
     chat_name = Column(String)
     user_name = Column(String)
+    message_type = Column(String)
     message = Column(String)
     timestamp = Column(Float)
     ip_address = Column(String)
     details = Column(String)
 
     def __repr__(self):
-        return f"<Chat(chat_name='{self.chat_name}', user_name='{self.user_name}', " + \
-               f"message='{self.message}'), timestamp='{self.timestamp}', " + \
-               f"ip_address='{self.ip_address}'), details='{self.details}'>"
+        return (
+            f"<Chat(chat_name='{self.chat_name}', user_name='{self.user_name}', "
+            f"message='{self.message}'), message='{self.message}'), timestamp='{self.timestamp}', "
+            f"ip_address='{self.ip_address}'), details='{self.details}'>"
+        )
 
 
 class LastUpdate(Base):

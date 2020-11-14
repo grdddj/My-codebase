@@ -51,6 +51,6 @@ def announce_new_version():
 
 
 if __name__ == "__main__":
-    # deploy_new_exe_file()
+    deploy_new_exe_file()
     announce_new_version_old()
     announce_new_version()

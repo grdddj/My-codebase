@@ -3,3 +3,10 @@ config.py
 __pycache__
 db.json
 *.sqlite
+download
+pictures
+files
+output
+dist
+build
+*.spec

@@ -34,6 +34,13 @@ from calc import CalculatorGUI
 # TODO: what is new button
 # TODO: flashing buttons instead of popups that something is new
 # TODO: look into giving arguments via pyinstaller, to build custom .exe (name, version...)
+# TODO: check that we receive 200 OK response from requests
+# TODO: include HTTPS for the API
+# TODO: measure speed of writing (from first character in entry to the message sending)
+#   - could be cheated by copy-pasting the content
+# TODO: button "Moving to Messenger"
+# TODO: think about the viability of web-version
+# TODO: simutaneous listening to music
 
 
 if __name__ == "__main__":

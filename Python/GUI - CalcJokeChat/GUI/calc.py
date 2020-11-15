@@ -35,7 +35,6 @@ class CalculatorGUI(tk.Frame):
         self.show_gui()
 
     def show_gui(self):
-
         expression_field = tk.Entry(self.parent, bg="white", font=("Calibri", 20),
                                     bd=5, textvariable=self.equation)
         expression_field.grid(columnspan=4, ipadx=145)

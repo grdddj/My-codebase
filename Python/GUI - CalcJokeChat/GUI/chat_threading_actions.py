@@ -9,51 +9,6 @@ from PIL import Image
 from config import Config
 
 
-class GettingMessageData(threading.Thread):
-    def __init__(self, queue):
-        threading.Thread.__init__(self)
-        self.queue = queue
-
-        self._stop_event = threading.Event()
-
-        self.last_message_timestamp = 0
-
-    def stop(self):
-        print("stopping the background thread")
-        self._stop_event.set()
-        threading.Thread.join(self, None)
-
-    def is_stopped(self):
-        return self._stop_event.is_set()
-
-    def run(self):
-        while True:
-            if self.is_stopped():
-                break
-
-            try:
-                new_messages = self.get_new_chat_messages()
-                if new_messages:
-                    self.last_message_timestamp = new_messages[-1]["timestamp"]
-                    self.queue.put(new_messages)
-            except Exception as err:
-                print("exception when getting messages", err)
-            finally:
-                time.sleep(Config.time_to_sleep_between_getting_messages)
-
-    def get_new_chat_messages(self):
-        # TODO: somehow handle the case of timeout (gracefully, so user does not even notice)
-        parameters = {
-            "chat_name": Config.CHAT_NAME,
-            "last_message_timestamp": self.last_message_timestamp,
-            "max_result_size": Config.how_many_messages_to_load_at_startup
-        }
-        response = requests.get(Config.API_URL_CHAT, params=parameters, timeout=1)
-        new_chat_messages = response.json()
-
-        return new_chat_messages
-
-
 class ActionInDifferentThread(threading.Thread):
     def __init__(self, queue, user_name=""):
         threading.Thread.__init__(self)

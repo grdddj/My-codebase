@@ -1,11 +1,13 @@
+import tkinter as tk
 from tkinter import messagebox
 from tkinter import simpledialog
 from tkinter import filedialog
 
 
 class Dialogs:
-    def __init__(self, parent):
+    def __init__(self, parent, root_gui):
         self.parent = parent
+        self.root_gui = root_gui
 
     def last_update_downloading_finish(self, path_where_file_was_saved):
         title = "Download finished!"
@@ -104,3 +106,39 @@ class Dialogs:
     def get_file_path(self):
         file_path = filedialog.askopenfilename(parent=self.parent.support_window)
         return file_path
+
+    def handle_empty_message(self):
+        title = "No empty messages!"
+        message = "Sending empty messages is not cool. You would not send empty envelopes either."
+        colour = "red"
+        font_size = 15
+        geometry = "750x100"
+        self.show_message_on_top(on_top_window=self.parent.support_window,
+                                 message=message, colour=colour,
+                                 font_size=font_size, title=title, geometry=geometry)
+
+    def block_support(self):
+        message = "You thought it is so easy?"
+        title = "Blocking support"
+        colour = "red"
+        font_size = 25
+        geometry = "400x100"
+        self.show_message_on_top(on_top_window=self.parent.support_window,
+                                 message=message, colour=colour,
+                                 font_size=font_size, title=title, geometry=geometry)
+
+    # TODO: show the message on the center of screen
+    # TODO: maybe calculate the dimensions according to the text
+    def show_message_on_top(self, on_top_window, message, colour, font_size, title, geometry):
+        message_window = tk.Toplevel(on_top_window)
+        message_window.title(title)
+        message_window.geometry(geometry)
+
+        message_label = tk.Label(message_window, text=message, bg=colour,
+                                 font=("Calibri", font_size), justify="center", bd=4)
+        message_label.place(relheight=1, relwidth=1)
+
+        self.place_the_window_to_the_center_of_the_screen(message_window)
+
+    def place_the_window_to_the_center_of_the_screen(self, window):
+        self.root_gui.eval(f'tk::PlaceWindow {str(window)} center')

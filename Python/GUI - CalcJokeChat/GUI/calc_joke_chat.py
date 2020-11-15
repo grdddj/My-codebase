@@ -41,6 +41,8 @@ from calc import CalculatorGUI
 # TODO: button "Moving to Messenger"
 # TODO: think about the viability of web-version
 # TODO: simutaneous listening to music
+# TODO: real-time streaming of the other's content in message entry
+# TODO: some effect when clicking the smile labels and the buttons
 
 
 if __name__ == "__main__":

@@ -1,8 +1,5 @@
-import os
-import requests
 import traceback
 import queue
-from datetime import datetime
 from PIL import ImageTk, Image
 
 import tkinter as tk
@@ -11,6 +8,7 @@ from tkinter import ttk
 from config import Config
 from chat_dialogs import Dialogs
 import chat_threading_actions as actions
+import chat_getting_messages as messages
 import helpers
 
 
@@ -63,7 +61,10 @@ class SupportWindow:
     def __init__(self, parent):
         self.parent = parent
 
-        self.dialogs = Dialogs(self)
+        self.dialogs = Dialogs(
+            parent=self,
+            root_gui=self.parent.parent
+        )
 
         self.confirmation_sent = False
 
@@ -74,10 +75,6 @@ class SupportWindow:
         # Needed for the destroyment of infinite checking og messages
         self.after_loop_id = 0
 
-        self.message_text_font = ("Helvetica", 16)
-        self.message_background = "orange"
-        self.message_anchor = tk.W
-
         self.button_font = ("Calibri", 20, "bold")
         self.button_border = 5
         self.button_rel_x = 0.75
@@ -87,7 +84,10 @@ class SupportWindow:
     def on_destroy(self):
         print("Cancel, reset and destroy")
         # Making sure the after() function is not called anymore on the background
-        self.parent.after_cancel(self.after_loop_id)
+        try:
+            self.parent.after_cancel(self.after_loop_id)
+        except ValueError:
+            pass
 
         # The message getting thread in the background must be killed
         self.getting_message_data_thread.stop()
@@ -114,7 +114,7 @@ class SupportWindow:
 
         block_support_button = tk.Button(self.support_window, text="Block support",
                                          bg="tomato", bd=self.button_border, cursor="hand2",
-                                         font=self.button_font, command=self.block_support)
+                                         font=self.button_font, command=self.dialogs.block_support)
         block_support_button.place(relx=self.button_rel_x,
                                    rely=0.01,
                                    relheight=self.button_rel_height,
@@ -280,7 +280,7 @@ class SupportWindow:
             success = msg["success"]
             if success:
                 file_name_saved = msg["file_name_saved"]
-                self.file_uploaded_successfully(file_name_saved)
+                self.dialogs.file_uploaded_successfully(file_name_saved)
             else:
                 reason = msg["reason"]
                 self.dialogs.file_upload_problem(reason)
@@ -289,119 +289,12 @@ class SupportWindow:
 
     def start_getting_messages_in_the_background(self):
         self.message_queue = queue.Queue()
-        self.getting_message_data_thread = actions.GettingMessageData(
-            queue=self.message_queue
+        self.getting_message_data_thread = messages.GettingMessageData(
+            messages_frame=self.messages_frame,
+            support_window=self.support_window,
+            handle_file_download=self.handle_file_download,
         )
         self.getting_message_data_thread.start()
-        self.parent.after(100, self.update_messaging_area)
-
-    def update_messaging_area(self):
-        try:
-            new_messages = self.message_queue.get(0)
-            for message in new_messages:
-                self.update_chat_messages(message)
-        except queue.Empty:
-            pass
-            # print("queue is empty")
-        except Exception as err:
-            self.handle_problems_when_filling_message_area(err)
-
-        self.call_the_message_updating_function_infinitely()
-
-    def call_the_message_updating_function_infinitely(self):
-        self.after_loop_id = self.parent.after(
-            Config.chat_refresh_time_in_ms, self.update_messaging_area)
-
-    def update_chat_messages(self, new_message):
-        self.include_new_message_into_messaging_area(new_message)
-
-        self.force_focus_on_window_if_there_are_new_messages_from_others([new_message])
-
-    def include_new_message_into_messaging_area(self, message_object):
-        self.get_the_background_color_and_anchor_side_for_message(message_object)
-
-        message_type = message_object.get("message_type", "text")
-        if message_type == "text":
-            self.create_and_include_a_text_label(message_object)
-        elif message_type == "smile":
-            self.create_and_include_a_smile_label(message_object)
-        elif message_type == "picture":
-            self.create_and_include_an_image_label(message_object)
-        elif message_type == "file":
-            self.create_and_include_a_file_label(message_object)
-
-        self.move_scrollbar_to_the_bottom()
-
-    def get_the_background_color_and_anchor_side_for_message(self, message_object):
-        if message_object.get("ip_address") == self.ip_address:
-            self.message_background = "orange"
-            self.message_anchor = tk.E
-        else:
-            self.message_background = "light sea green"
-            self.message_anchor = tk.W
-
-    def create_and_include_a_text_label(self, message_object):
-        user_name = message_object.get("user_name", "ghost")
-        message = message_object.get("message", "")
-        timestamp = message_object.get("timestamp", 0)
-        time_to_show = self.get_time_to_show_in_message(timestamp)
-        text_to_show = f"{user_name} ({time_to_show}): {message}\n"
-        ttk.Label(self.messages_frame.scrollable_frame, text=text_to_show,
-                  relief="solid", wraplengt=600, background=self.message_background,
-                  font=self.message_text_font,
-                  ).pack(anchor=self.message_anchor)
-
-    def create_and_include_a_smile_label(self, message_object):
-        smile_type = message_object.get("message")
-
-        file_name = f"smileys/{smile_type}.png"
-        file_path = helpers.get_resource_path(file_name)
-
-        smile_file_exists = os.path.isfile(file_path)
-        if not smile_file_exists:
-            # TODO: return some text or default picture
-            print("smile not there", smile_type)
-        else:
-            photo = ImageTk.PhotoImage(Image.open(file_path))
-
-            smiley_face = tk.Label(self.messages_frame.scrollable_frame, image=photo)
-            smiley_face.photo = photo
-            smiley_face.pack(anchor=self.message_anchor)
-
-    def create_and_include_an_image_label(self, message_object):
-        file_name = message_object.get("message", "")
-
-        if not os.path.isdir(Config.picture_folder):
-            os.mkdir(Config.picture_folder)
-
-        file_path = os.path.join(Config.picture_folder, file_name)
-
-        if not os.path.isfile(file_path):
-            parameters = {"file_name": file_name}
-            response = requests.get(Config.API_URL_PICTURE_STORAGE, params=parameters)
-            with open(file_path, 'wb') as f:
-                f.write(response.content)
-
-        photo = ImageTk.PhotoImage(Image.open(file_path))
-
-        photo_label = tk.Label(self.messages_frame.scrollable_frame, image=photo)
-        photo_label.photo = photo
-        photo_label.pack(anchor=self.message_anchor)
-
-    def create_and_include_a_file_label(self, message_object):
-        user_name = message_object.get("user_name", "ghost")
-        file_name = message_object.get("message", "")
-        timestamp = message_object.get("timestamp", 0)
-        time_to_show = self.get_time_to_show_in_message(timestamp)
-        text_to_show = f"{user_name} ({time_to_show}): FILE (click to download) - {file_name}\n"
-        file_label = ttk.Label(
-            self.messages_frame.scrollable_frame, text=text_to_show,
-            relief="solid", wraplengt=600, background=self.message_background,
-            font=self.message_text_font, cursor="hand2"
-            )
-        file_label.pack(anchor=self.message_anchor)
-
-        file_label.bind('<Button-1>', lambda event: self.handle_file_download(file_name))
 
     def handle_file_download(self, file_name):
         if not self.dialogs.should_the_file_really_be_downloaded(file_name):
@@ -430,40 +323,11 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_file_download)
 
-    def is_there_some_new_message_from_somebody_else(self, new_messages):
-        is_there_some_new_message_from_somebody_else = False
-        for message in new_messages:
-            if message.get("ip_address") != self.ip_address:
-                is_there_some_new_message_from_somebody_else = True
-
-        return is_there_some_new_message_from_somebody_else
-
-    def get_time_to_show_in_message(self, timestamp):
-        if not timestamp or timestamp == 1:
-            return "way ago"
-
-        dt_object = datetime.fromtimestamp(timestamp)
-
-        message_is_from_today = helpers.is_date_from_today(dt_object)
-        if not message_is_from_today:
-            time_to_show = dt_object.strftime('%d. %m. %H:%M')
-        else:
-            time_to_show = dt_object.strftime('%H:%M')
-
-        return time_to_show
-
-    def handle_problems_when_filling_message_area(self, err):
-        # conversation = f"Network error happened, please check internet connection.\nErr: {err}"
-        # self.define_text_content(self.messaging_area_text, conversation)
-        # self.last_message_timestamp = 0
-        print("problems when filling", err)
-        print(traceback.format_exc())
-
     def process_message_from_entry(self):
         message = self.get_text_from_message_entry()
 
         if not message:
-            return self.handle_empty_message()
+            return self.dialogs.handle_empty_message()
         else:
             return self.handle_message_sending(message)
 
@@ -518,37 +382,6 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_latest_update_download)
 
-    def block_support(self):
-        message = "You thought it is so easy?"
-        title = "Blocking support"
-        colour = "red"
-        font_size = 25
-        geometry = "400x100"
-        self.show_message_on_top(on_top_window=self.support_window, message=message, colour=colour,
-                                 font_size=font_size, title=title, geometry=geometry)
-
-    # TODO: show the message on the center of screen
-    # TODO: maybe calculate the dimensions according to the text
-    def show_message_on_top(self, on_top_window, message, colour, font_size, title, geometry):
-        message_window = tk.Toplevel(on_top_window)
-        message_window.title(title)
-        message_window.geometry(geometry)
-
-        message_label = tk.Label(message_window, text=message, bg=colour,
-                                 font=("Calibri", font_size), justify="center", bd=4)
-        message_label.place(relheight=1, relwidth=1)
-
-        self.place_the_window_to_the_center_of_the_screen(message_window)
-
-    def handle_empty_message(self):
-        title = "No empty messages!"
-        message = "Sending empty messages is not cool. You would not send empty envelopes either."
-        colour = "red"
-        font_size = 15
-        geometry = "750x100"
-        self.show_message_on_top(on_top_window=self.support_window, message=message, colour=colour,
-                                 font_size=font_size, title=title, geometry=geometry)
-
     def change_name(self):
         new_name = self.dialogs.get_new_name(self.user_name)
 
@@ -561,21 +394,8 @@ class SupportWindow:
             elif new_name is None:
                 self.dialogs.name_change_cancelling()
 
-    def move_scrollbar_to_the_bottom(self):
-        self.messages_frame.canvas.update_idletasks()
-        self.messages_frame.canvas.yview_moveto(1)
-
-    def force_focus_on_window_if_there_are_new_messages_from_others(self, new_messages):
-        if self.is_there_some_new_message_from_somebody_else(new_messages):
-            print("focusing hard")
-            self.parent.after(1, lambda: self.support_window.focus_force())
-            self.support_window.focus_force()
-
     def get_text_from_message_entry(self):
         return self.message_entry.get()
 
     def clean_message_entry(self):
         self.message_entry.delete(0, "end")
-
-    def place_the_window_to_the_center_of_the_screen(self, window):
-        self.parent.parent.eval(f'tk::PlaceWindow {str(window)} center')

@@ -6,6 +6,9 @@ import threading
 import urllib.request
 from PIL import Image
 
+import websocket
+import json
+
 from config import Config
 
 
@@ -28,15 +31,28 @@ class ActionInDifferentThread(threading.Thread):
     def action_to_be_done(self):
         print("WILL BE IMPLEMENTED BY THE SUBCLASSES")
 
+    @staticmethod
+    def send_message_through_websocket_to_all_clients(message_data):
+        # TODO: consider the connection to be open all the time
+        ws = websocket.create_connection(Config.MESSAGES_WEBSOCKET_URL)
+
+        json_message_data = json.dumps(message_data)
+        ws.send(json_message_data)
+
+        ws.close()
+
     def send_chat_data(self, message_type, message):
-        data = {
+        message_data = {
             "message_type": message_type,
             "user_name": self.user_name,
             "message": message,
             "timestamp": time.time(),
             "details": ""
         }
-        data_to_send = {"chat_name": Config.CHAT_NAME, "data": data}
+
+        self.send_message_through_websocket_to_all_clients(message_data)
+
+        data_to_send = {"chat_name": Config.CHAT_NAME, "data": message_data}
 
         requests.post(Config.API_URL_CHAT, json=data_to_send)
 

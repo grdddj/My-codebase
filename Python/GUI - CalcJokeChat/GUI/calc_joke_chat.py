@@ -34,15 +34,19 @@ from calc import CalculatorGUI
 # TODO: what is new button
 # TODO: flashing buttons instead of popups that something is new
 # TODO: look into giving arguments via pyinstaller, to build custom .exe (name, version...)
-# TODO: check that we receive 200 OK response from requests
+# TODO: check that we receive 200 OK response from requests - r.status_code == 200
 # TODO: include HTTPS for the API
 # TODO: measure speed of writing (from first character in entry to the message sending)
 #   - could be cheated by copy-pasting the content
 # TODO: button "Moving to Messenger"
 # TODO: think about the viability of web-version
-# TODO: simutaneous listening to music
+# TODO: simultaneous listening to music - websocket connection
 # TODO: real-time streaming of the other's content in message entry
 # TODO: some effect when clicking the smile labels and the buttons
+# TODO: when the message in entry is too long, the last character is sometimes not visible
+# TODO: make the text in labels being copyable
+# TODO: message area accepting drops of files
+# TODO: create some error logging even in production
 
 
 if __name__ == "__main__":

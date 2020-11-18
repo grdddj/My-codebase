@@ -1,4 +1,3 @@
-import traceback
 import queue
 from PIL import ImageTk, Image
 
@@ -175,16 +174,18 @@ class SupportWindow:
         smileys_first_row = [
             "happy",
             "smiling",
+            "wink",
             "unhappy",
         ]
 
         smileys_second_row = [
             "laughing",
             "thinking",
+            "facepalm",
             "thumb-up",
         ]
 
-        positions = [0.75, 0.825, 0.90]
+        positions = [0.74, 0.80, 0.86, 0.92]
 
         def render_smiley(relx, rely, smile_type):
             file_name = f"smileys_icons/{smile_type}.png"
@@ -288,7 +289,6 @@ class SupportWindow:
             self.parent.after(100, self.process_queue_for_file_upload)
 
     def start_getting_messages_in_the_background(self):
-        self.message_queue = queue.Queue()
         self.getting_message_data_thread = messages.GettingMessageData(
             messages_frame=self.messages_frame,
             support_window=self.support_window,
@@ -333,6 +333,7 @@ class SupportWindow:
 
     def handle_message_sending(self, message):
         self.clean_message_entry()
+        self.focus_on_message_entry()
 
         self.message_sending_queue = queue.Queue()
         actions.MessageSending(
@@ -350,6 +351,7 @@ class SupportWindow:
                 # TODO: could input the message back into the message entry
                 reason = msg["reason"]
                 self.dialogs.sending_message_problem(reason)
+            self.focus_on_message_entry()
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_message_sending)
 
@@ -399,3 +401,6 @@ class SupportWindow:
 
     def clean_message_entry(self):
         self.message_entry.delete(0, "end")
+
+    def focus_on_message_entry(self):
+        self.message_entry.focus()

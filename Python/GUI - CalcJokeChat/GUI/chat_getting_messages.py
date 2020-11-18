@@ -1,12 +1,16 @@
 import requests
-import time
 import os
+import json
 import threading
 import traceback
 import tkinter as tk
 from PIL import ImageTk, Image
 from tkinter import ttk
 from datetime import datetime
+
+import websocket
+from websocket import WebSocketConnectionClosedException
+# websocket.enableTrace(True)
 
 from config import Config
 import helpers
@@ -22,48 +26,48 @@ class GettingMessageData(threading.Thread):
 
         self.ip_address = helpers.get_ip_address()
 
-        self._stop_event = threading.Event()
-
-        self.last_message_timestamp = 0
-
         self.message_text_font = ("Helvetica", 16)
         self.message_background = "orange"
         self.message_anchor = tk.W
 
     def stop(self):
         print("stopping the background thread")
-        self._stop_event.set()
-        threading.Thread.join(self, None)
-
-    def is_stopped(self):
-        return self._stop_event.is_set()
+        self.ws.close()
 
     def run(self):
-        while True:
-            if self.is_stopped():
-                break
+        self.get_recent_messages_from_api_and_render_them()
+        self.listen_on_the_websocket_and_render_incoming_messages()
+        print("end of the 'run' function")
 
+    def get_recent_messages_from_api_and_render_them(self):
+        new_messages = self.get_recent_chat_messages()
+        for message_obj in new_messages:
+            self.process_message_and_include_it_in_frontend(message_obj)
+
+    def listen_on_the_websocket_and_render_incoming_messages(self):
+        print("running the ws")
+        self.ws = websocket.create_connection(Config.MESSAGES_WEBSOCKET_URL)
+
+        while True:
+            # When the websocket object is closed, the lookup can raise OSError
             try:
-                new_messages = self.get_new_chat_messages()
-                if new_messages:
-                    self.last_message_timestamp = new_messages[-1]["timestamp"]
-                    for new_message in new_messages:
-                        self.process_message_and_include_it_in_frontend(new_message)
-                    self.force_focus_on_window()
+                new_message = self.ws.recv()
+                message_obj = json.loads(new_message)
+                self.process_message_and_include_it_in_frontend(message_obj)
+            except (OSError, WebSocketConnectionClosedException) as err:
+                print("CLOSE exception", err)
+                break
             except Exception as err:
                 print("exception when getting messages", err)
                 print(traceback.format_exc())
-            finally:
-                time.sleep(Config.time_to_sleep_between_getting_messages)
 
-    def get_new_chat_messages(self):
-        # TODO: somehow handle the case of timeout (gracefully, so user does not even notice)
+    def get_recent_chat_messages(self):
         parameters = {
             "chat_name": Config.CHAT_NAME,
-            "last_message_timestamp": self.last_message_timestamp,
+            "last_message_timestamp": 0,
             "max_result_size": Config.how_many_messages_to_load_at_startup
         }
-        response = requests.get(Config.API_URL_CHAT, params=parameters, timeout=1)
+        response = requests.get(Config.API_URL_CHAT, params=parameters)
         new_chat_messages = response.json()
 
         return new_chat_messages
@@ -82,6 +86,7 @@ class GettingMessageData(threading.Thread):
             self.create_and_include_a_file_label(message_object)
 
         self.move_scrollbar_to_the_bottom()
+        self.force_focus_on_window()
 
     def get_the_background_color_and_anchor_side_for_message(self, message_object):
         if message_object.get("ip_address") == self.ip_address:
@@ -170,7 +175,6 @@ class GettingMessageData(threading.Thread):
 
     def force_focus_on_window(self):
         print("focusing hard")
-        # self.parent.after(1, lambda: self.support_window.focus_force())
         self.support_window.focus_force()
 
     def move_scrollbar_to_the_bottom(self):

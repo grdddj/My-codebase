@@ -9,6 +9,7 @@ from chat_dialogs import Dialogs
 import chat_threading_actions as actions
 import chat_getting_messages as messages
 import helpers
+import chat_logger
 
 
 class ScrollableFrameForMessages(ttk.Frame):
@@ -80,8 +81,10 @@ class SupportWindow:
         self.button_rel_width = 0.2
         self.button_rel_height = 0.1
 
+        self.log_identifier = "GUI"
+
     def on_destroy(self):
-        print("Cancel, reset and destroy")
+        self.log_info("Destroying the support window")
         # Making sure the after() function is not called anymore on the background
         try:
             self.parent.after_cancel(self.after_loop_id)
@@ -93,7 +96,10 @@ class SupportWindow:
 
         self.support_window.destroy()
 
+        self.log_info("Support window successfully destroyed")
+
     def show_support_window(self):
+        self.log_info("Showing the support window")
         self.support_window = tk.Toplevel(self.parent)
         self.support_window.title("Support")
         self.support_window.state("zoomed")
@@ -171,6 +177,7 @@ class SupportWindow:
         self.start_getting_messages_in_the_background()
 
     def render_smiley_icons_to_be_clicked(self):
+        self.log_info("Rendering smiley-icons")
         smileys_first_row = [
             "happy",
             "smiling",
@@ -212,10 +219,12 @@ class SupportWindow:
             render_smiley(relx, rely, smile_type)
 
     def handle_smile_icon_click(self, smile_type):
+        self.log_info(f"Smile clicked - {smile_type}")
         self.message_sending_queue = queue.Queue()
         actions.SmileSending(
             queue=self.message_sending_queue,
             user_name=self.user_name,
+            ip_address=self.ip_address,
             smile_type=smile_type
         ).start()
         self.parent.after(100, self.process_queue_for_smile_sending)
@@ -242,7 +251,8 @@ class SupportWindow:
         actions.PictureUpload(
             queue=self.picture_upload_queue,
             picture_path=picture_path,
-            user_name=self.user_name
+            user_name=self.user_name,
+            ip_address=self.ip_address,
         ).start()
         self.parent.after(100, self.process_queue_for_picture_upload)
 
@@ -271,7 +281,8 @@ class SupportWindow:
         actions.FileUpload(
             queue=self.file_upload_queue,
             file_path=file_path,
-            user_name=self.user_name
+            user_name=self.user_name,
+            ip_address=self.ip_address,
         ).start()
         self.parent.after(100, self.process_queue_for_file_upload)
 
@@ -289,6 +300,7 @@ class SupportWindow:
             self.parent.after(100, self.process_queue_for_file_upload)
 
     def start_getting_messages_in_the_background(self):
+        self.log_info("Starting to get messages on the background")
         self.getting_message_data_thread = messages.GettingMessageData(
             messages_frame=self.messages_frame,
             support_window=self.support_window,
@@ -325,6 +337,7 @@ class SupportWindow:
 
     def process_message_from_entry(self):
         message = self.get_text_from_message_entry()
+        self.log_info(f"Processing message from entry - {message}")
 
         if not message:
             return self.dialogs.handle_empty_message()
@@ -339,6 +352,7 @@ class SupportWindow:
         actions.MessageSending(
             queue=self.message_sending_queue,
             user_name=self.user_name,
+            ip_address=self.ip_address,
             message=message
         ).start()
         self.parent.after(100, self.process_queue_for_message_sending)
@@ -386,6 +400,7 @@ class SupportWindow:
 
     def change_name(self):
         new_name = self.dialogs.get_new_name(self.user_name)
+        self.log_info(f"New name chosen - {new_name}")
 
         if new_name:
             self.user_name = new_name
@@ -400,7 +415,12 @@ class SupportWindow:
         return self.message_entry.get()
 
     def clean_message_entry(self):
+        self.log_info("Cleaning message entry")
         self.message_entry.delete(0, "end")
 
     def focus_on_message_entry(self):
+        self.log_info("Focusing on message entry")
         self.message_entry.focus()
+
+    def log_info(self, message):
+        chat_logger.info(f"{self.log_identifier} - {message}")

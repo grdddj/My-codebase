@@ -3,21 +3,16 @@ import tkinter as tk
 from joke import Jokes
 from chat import SupportWindow
 from calc import CalculatorGUI
+import chat_logger as logger
+
 
 # TODO: "Answer to" functionality
-# TODO: tell apart the messages of User vs Support - different colours etc.
-# TODO: have some spacing between the messages (or right-left side)
 # TODO: translation capabilities (like Lorcan's chatbot)
-# TODO: allow for sharing pictures and files
 # TODO: think about the sizing of the chat - so the words are not cut at the end of line
 #   hardcode the window size and limit the characters
-# TODO: emoticons
-# TODO: thumbs up or other one-click symbol
 # TODO: having a mood
 # TODO: storing the whole user profile
 # TODO: showing if somebody is on/offline
-# TODO: websocket!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#   however, not sure how it would work with only one-thread Tkinter
 # TODO: creating a better app in PyQt5?
 # TODO: issue some alerts on there
 # TODO: have gifts (for money)
@@ -46,11 +41,13 @@ from calc import CalculatorGUI
 # TODO: when the message in entry is too long, the last character is sometimes not visible
 # TODO: make the text in labels being copyable
 # TODO: message area accepting drops of files
-# TODO: create some error logging even in production
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    CalculatorGUI(root, Jokes, SupportWindow)
-    root.eval('tk::PlaceWindow . center')
-    root.mainloop()
+    try:
+        root = tk.Tk()
+        CalculatorGUI(root, Jokes, SupportWindow)
+        root.eval('tk::PlaceWindow . center')
+        root.mainloop()
+    except Exception as err:
+        logger.exception(f"Could not spawn the program - {err}")

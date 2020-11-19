@@ -10,10 +10,10 @@ from datetime import datetime
 
 import websocket
 from websocket import WebSocketConnectionClosedException
-# websocket.enableTrace(True)
 
 from config import Config
 import helpers
+import chat_logger
 
 
 class GettingMessageData(threading.Thread):
@@ -30,36 +30,49 @@ class GettingMessageData(threading.Thread):
         self.message_background = "orange"
         self.message_anchor = tk.W
 
+        self.log_identifier = "GETTING MESSAGES"
+
     def stop(self):
-        print("stopping the background thread")
+        self.log_info("Stopping the messaging websocket thread")
         self.ws.close()
 
     def run(self):
-        self.get_recent_messages_from_api_and_render_them()
-        self.listen_on_the_websocket_and_render_incoming_messages()
-        print("end of the 'run' function")
+        try:
+            self.get_recent_messages_from_api_and_render_them()
+            self.listen_on_the_websocket_and_render_incoming_messages()
+            self.log_info("The messaging thread successfully destroyed")
+        except Exception as err:
+            print(traceback.format_exc())
+            self.log_exception(f"Getting messages exception - {err}")
+            raise
 
     def get_recent_messages_from_api_and_render_them(self):
+        self.log_info("Getting messages from API")
         new_messages = self.get_recent_chat_messages()
+        self.log_info(f"Received {len(new_messages)} recent messages from API.")
         for message_obj in new_messages:
             self.process_message_and_include_it_in_frontend(message_obj)
 
     def listen_on_the_websocket_and_render_incoming_messages(self):
-        print("running the ws")
+        self.log_info("Starting to listen on the websocket for messages")
         self.ws = websocket.create_connection(Config.MESSAGES_WEBSOCKET_URL)
 
         while True:
             # When the websocket object is closed, the lookup can raise OSError
             try:
                 new_message = self.ws.recv()
+                if not new_message:
+                    self.log_info("Websocket received an empty message. Ignoring")
+                    continue
+                self.log_info(f"Websocket received a new message - {new_message}")
                 message_obj = json.loads(new_message)
                 self.process_message_and_include_it_in_frontend(message_obj)
             except (OSError, WebSocketConnectionClosedException) as err:
-                print("CLOSE exception", err)
+                self.log_error(f"WS Close exception - {err}. Breaking from ws listening loop.")
                 break
             except Exception as err:
-                print("exception when getting messages", err)
                 print(traceback.format_exc())
+                self.log_exception(f"WS processing exception - {err}")
 
     def get_recent_chat_messages(self):
         parameters = {
@@ -67,6 +80,7 @@ class GettingMessageData(threading.Thread):
             "last_message_timestamp": 0,
             "max_result_size": Config.how_many_messages_to_load_at_startup
         }
+        self.log_info(f"Parameters to send to API - {parameters}")
         response = requests.get(Config.API_URL_CHAT, params=parameters)
         new_chat_messages = response.json()
 
@@ -75,7 +89,7 @@ class GettingMessageData(threading.Thread):
     def process_message_and_include_it_in_frontend(self, message_object):
         self.get_the_background_color_and_anchor_side_for_message(message_object)
 
-        message_type = message_object.get("message_type", "text")
+        message_type = message_object.get("message_type", "")
         if message_type == "text":
             self.create_and_include_a_text_label(message_object)
         elif message_type == "smile":
@@ -84,6 +98,9 @@ class GettingMessageData(threading.Thread):
             self.create_and_include_an_image_label(message_object)
         elif message_type == "file":
             self.create_and_include_a_file_label(message_object)
+        else:
+            self.log_warning(f"Message type not supported - {message_type}")
+            return
 
         self.move_scrollbar_to_the_bottom()
         self.force_focus_on_window()
@@ -97,6 +114,7 @@ class GettingMessageData(threading.Thread):
             self.message_anchor = tk.W
 
     def create_and_include_a_text_label(self, message_object):
+        self.log_info(f"Creating text label - {message_object}")
         user_name = message_object.get("user_name", "ghost")
         message = message_object.get("message", "")
         timestamp = message_object.get("timestamp", 0)
@@ -108,6 +126,7 @@ class GettingMessageData(threading.Thread):
                   ).pack(anchor=self.message_anchor)
 
     def create_and_include_a_smile_label(self, message_object):
+        self.log_info(f"Creating smile label - {message_object}")
         smile_type = message_object.get("message")
 
         file_name = f"smileys/{smile_type}.png"
@@ -116,7 +135,7 @@ class GettingMessageData(threading.Thread):
         smile_file_exists = os.path.isfile(file_path)
         if not smile_file_exists:
             # TODO: return some text or default picture
-            print("smile not there", smile_type)
+            self.log_error(f"Smile not there - {smile_type}")
         else:
             photo = ImageTk.PhotoImage(Image.open(file_path))
 
@@ -125,6 +144,7 @@ class GettingMessageData(threading.Thread):
             smiley_face.pack(anchor=self.message_anchor)
 
     def create_and_include_an_image_label(self, message_object):
+        self.log_info(f"Creating image label - {message_object}")
         file_name = message_object.get("message", "")
 
         if not os.path.isdir(Config.picture_folder):
@@ -133,6 +153,7 @@ class GettingMessageData(threading.Thread):
         file_path = os.path.join(Config.picture_folder, file_name)
 
         if not os.path.isfile(file_path):
+            self.log_info(f"Downloading the picture for the label - {file_path}")
             parameters = {"file_name": file_name}
             response = requests.get(Config.API_URL_PICTURE_STORAGE, params=parameters)
             with open(file_path, 'wb') as f:
@@ -145,6 +166,7 @@ class GettingMessageData(threading.Thread):
         photo_label.pack(anchor=self.message_anchor)
 
     def create_and_include_a_file_label(self, message_object):
+        self.log_info(f"Creating file label - {message_object}")
         user_name = message_object.get("user_name", "ghost")
         file_name = message_object.get("message", "")
         timestamp = message_object.get("timestamp", 0)
@@ -174,9 +196,22 @@ class GettingMessageData(threading.Thread):
         return time_to_show
 
     def force_focus_on_window(self):
-        print("focusing hard")
+        self.log_info("Focusing on the support window")
         self.support_window.focus_force()
 
     def move_scrollbar_to_the_bottom(self):
+        self.log_info("Moving scrollbar to the bottom")
         self.messages_frame.canvas.update_idletasks()
         self.messages_frame.canvas.yview_moveto(1)
+
+    def log_info(self, message):
+        chat_logger.info(f"{self.log_identifier} - {message}")
+
+    def log_error(self, message):
+        chat_logger.error(f"{self.log_identifier} - {message}")
+
+    def log_warning(self, message):
+        chat_logger.warning(f"{self.log_identifier} - {message}")
+
+    def log_exception(self, message):
+        chat_logger.exception(f"{self.log_identifier} - {message}")

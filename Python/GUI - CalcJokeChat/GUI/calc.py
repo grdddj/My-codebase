@@ -5,6 +5,7 @@ from tkinter import font
 from tkinter import messagebox
 
 from config import Config
+import chat_logger as logger
 
 
 class CalculatorGUI(tk.Frame):
@@ -35,6 +36,7 @@ class CalculatorGUI(tk.Frame):
         self.show_gui()
 
     def show_gui(self):
+        logger.info("CALC - Showing the calculator GUI")
         expression_field = tk.Entry(self.parent, bg="white", font=("Calibri", 20),
                                     bd=5, textvariable=self.equation)
         expression_field.grid(columnspan=4, ipadx=145)
@@ -108,9 +110,11 @@ class CalculatorGUI(tk.Frame):
     def press_equals(self):
         try:
             total = str(eval(self.expression))
+            logger.info(f"CALC - Calculation made - '{self.expression} = {total}'")
             self.equation.set(total)
             self.expression = total
-        except Exception:
+        except Exception as err:
+            logger.error(f"CALC - Expression could not be evaluated - {err}. Expression - {self.expression}")
             self.equation.set("error")
             self.expression = ""
 
@@ -119,12 +123,11 @@ class CalculatorGUI(tk.Frame):
         self.equation.set("")
 
     def tell_joke(self):
-        print("joke")
         joke = random.choice(self.jokes_list)
+        logger.info(f"CALC - Telling a joke - {joke}")
         messagebox.showinfo("'Joke'", joke)
 
     def show_support_window(self):
-        print("showing support")
         self.support_window.show_support_window()
 
     def create_button(self, text, command, bg_color=None, fg_color=None):

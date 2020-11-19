@@ -4,6 +4,7 @@ import requests
 from datetime import datetime
 
 from config import Config
+import chat_logger as logger
 
 
 def get_resource_path(relative_path):
@@ -18,6 +19,7 @@ def get_resource_path(relative_path):
 
 
 def get_ip_address():
+    logger.info("HELPERS - Getting the IP address")
     response = requests.get(Config.API_URL_IP)
     ip_address_json = response.json()
     return ip_address_json["ip_address"]

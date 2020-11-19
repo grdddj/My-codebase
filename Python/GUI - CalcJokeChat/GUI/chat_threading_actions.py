@@ -10,33 +10,42 @@ import websocket
 import json
 
 from config import Config
+import chat_logger
 
 
 class ActionInDifferentThread(threading.Thread):
-    def __init__(self, queue, user_name=""):
+    def __init__(self, queue, user_name="", ip_address=""):
         threading.Thread.__init__(self)
         self.queue = queue
         self.user_name = user_name
+        self.ip_address = ip_address
 
         self.final_message_to_the_queue = {"success": True}
+
+        self.log_identifier = "THREADING"
 
     def run(self):
         try:
             self.action_to_be_done()
             self.queue.put(self.final_message_to_the_queue)
+            self.log_info("Different thread has finished successfully")
         except Exception as err:
+            self.log_exception(f"Different thread has problems - {err}")
             results = {"success": False, "reason": err}
             self.queue.put(results)
 
     def action_to_be_done(self):
         print("WILL BE IMPLEMENTED BY THE SUBCLASSES")
 
-    @staticmethod
-    def send_message_through_websocket_to_all_clients(message_data):
+    def send_message_through_websocket_to_all_clients(self, message_data):
         # TODO: consider the connection to be open all the time
+        self.log_info("Initializing websocket to send message through it")
         ws = websocket.create_connection(Config.MESSAGES_WEBSOCKET_URL)
 
+        message_data["ip_address"] = self.ip_address
         json_message_data = json.dumps(message_data)
+
+        self.log_info(f"Sending message through websocket - {json_message_data}")
         ws.send(json_message_data)
 
         ws.close()
@@ -54,15 +63,22 @@ class ActionInDifferentThread(threading.Thread):
 
         data_to_send = {"chat_name": Config.CHAT_NAME, "data": message_data}
 
+        self.log_info(f"Sending message to DB - {data_to_send}")
         requests.post(Config.API_URL_CHAT, json=data_to_send)
+
+    def log_info(self, message):
+        chat_logger.info(f"{self.log_identifier} - {message}")
+
+    def log_exception(self, message):
+        chat_logger.exception(f"{self.log_identifier} - {message}")
 
 
 class FileUpload(ActionInDifferentThread):
-    def __init__(self, queue, file_path, user_name):
-        ActionInDifferentThread.__init__(self, queue, user_name)
+    def __init__(self, queue, file_path, user_name, ip_address):
+        ActionInDifferentThread.__init__(self, queue, user_name, ip_address)
         self.file_path = file_path
-
         self.file_name_saved = ""
+        self.log_info(f"FileUpload started - {self.file_path}")
 
     def action_to_be_done(self):
         self.upload_the_file_and_get_its_name()
@@ -73,6 +89,7 @@ class FileUpload(ActionInDifferentThread):
         with open(self.file_path, 'rb') as file:
             response = requests.post(Config.API_URL_FILE_STORAGE, files={'file': file})
         self.file_name_saved = response.json().get("file_name")
+        self.log_info(f"File uploaded and name got - {self.file_name_saved}")
 
     def send_file(self, file_name):
         self.send_chat_data(message_type="file", message=file_name)
@@ -82,6 +99,7 @@ class FileDownload(ActionInDifferentThread):
     def __init__(self, queue, file_name):
         ActionInDifferentThread.__init__(self, queue)
         self.file_name = file_name
+        self.log_info(f"FileDownload started - {self.file_name}")
 
     def action_to_be_done(self):
         if not os.path.isdir(Config.download_folder):
@@ -112,6 +130,7 @@ class FileDownload(ActionInDifferentThread):
 class LatestUpdateDownload(ActionInDifferentThread):
     def __init__(self, queue):
         ActionInDifferentThread.__init__(self, queue)
+        self.log_info("LatestUpdateDownload started")
 
     def action_to_be_done(self):
         timestamp = int(time.time())
@@ -122,27 +141,30 @@ class LatestUpdateDownload(ActionInDifferentThread):
 
 
 class SmileSending(ActionInDifferentThread):
-    def __init__(self, queue, user_name, smile_type):
-        ActionInDifferentThread.__init__(self, queue, user_name)
+    def __init__(self, queue, user_name, smile_type, ip_address):
+        ActionInDifferentThread.__init__(self, queue, user_name, ip_address)
         self.smile_type = smile_type
+        self.log_info(f"SmileSending started - {self.smile_type}")
 
     def action_to_be_done(self):
         self.send_chat_data(message_type="smile", message=self.smile_type)
 
 
 class MessageSending(ActionInDifferentThread):
-    def __init__(self, queue, user_name, message):
-        ActionInDifferentThread.__init__(self, queue, user_name)
+    def __init__(self, queue, user_name, message, ip_address):
+        ActionInDifferentThread.__init__(self, queue, user_name, ip_address)
         self.message = message
+        self.log_info(f"MessageSending started - {self.message}")
 
     def action_to_be_done(self):
         self.send_chat_data(message_type="text", message=self.message)
 
 
 class PictureUpload(ActionInDifferentThread):
-    def __init__(self, queue, picture_path, user_name):
-        ActionInDifferentThread.__init__(self, queue, user_name)
+    def __init__(self, queue, picture_path, user_name, ip_address):
+        ActionInDifferentThread.__init__(self, queue, user_name, ip_address)
         self.picture_path = picture_path
+        self.log_info(f"PictureUpload started - {self.picture_path}")
 
     def action_to_be_done(self):
         if not os.path.isdir(Config.picture_folder):
@@ -161,6 +183,7 @@ class PictureUpload(ActionInDifferentThread):
         if self.file_name_saved != picture_name:
             new_picture_save_path = os.path.join(Config.picture_folder, self.file_name_saved)
             os.rename(picture_save_path, new_picture_save_path)
+            self.log_info(f"Renaming the file from '{picture_save_path}' to '{new_picture_save_path}'")
 
         self.final_message_to_the_queue["file_name_saved"] = self.file_name_saved
 
@@ -168,12 +191,12 @@ class PictureUpload(ActionInDifferentThread):
         with open(file_path_to_upload, 'rb') as file:
             response = requests.post(Config.API_URL_PICTURE_STORAGE, files={'file': file})
         self.file_name_saved = response.json().get("file_name")
+        self.log_info(f"Picture uploaded and name got - {self.file_name_saved}")
 
     def send_picture(self, picture_name):
         self.send_chat_data(message_type="picture", message=picture_name)
 
-    @staticmethod
-    def transform_picture_to_max_pixels_size_and_save_it(picture_path, picture_save_path):
+    def transform_picture_to_max_pixels_size_and_save_it(self, picture_path, picture_save_path):
         max_pixels_size = Config.pictures_max_pixels_size
         orig_image = Image.open(picture_path)
         x_size, y_size = orig_image.size
@@ -191,5 +214,7 @@ class PictureUpload(ActionInDifferentThread):
                 new_x = int(x_size * ratio)
             im2 = orig_image.resize((new_x, new_y), Image.BICUBIC)
             im2.save(picture_save_path)
+            self.log_info(f"Picture transformed from {x_size}x{y_size} to {new_x}x{new_y}")
         else:
             orig_image.save(picture_save_path)
+            self.log_info(f"Picture did not need any transforming - {picture_path}")

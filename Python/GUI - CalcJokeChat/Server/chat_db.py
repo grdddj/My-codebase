@@ -33,6 +33,7 @@ class ChatMessage(Base):
     user_name = Column(String)
     message_type = Column(String)
     message = Column(String)
+    answer_to_message = Column(String)
     timestamp = Column(Float)
     ip_address = Column(String)
     details = Column(String)
@@ -40,8 +41,9 @@ class ChatMessage(Base):
     def __repr__(self):
         return (
             f"<Chat(chat_name='{self.chat_name}', user_name='{self.user_name}', "
-            f"message='{self.message}'), message='{self.message}'), timestamp='{self.timestamp}', "
-            f"ip_address='{self.ip_address}'), details='{self.details}'>"
+            f"message='{self.message}'), answer_to_message='{self.answer_to_message}'), "
+            f"timestamp='{self.timestamp}', ip_address='{self.ip_address}'), "
+            f"details='{self.details}'>"
         )
 
 

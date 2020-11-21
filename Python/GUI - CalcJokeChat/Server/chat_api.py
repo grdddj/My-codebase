@@ -44,6 +44,7 @@ class DB_content_old(Resource):
             "user_name": request_data["data"].get("name", ""),
             "timestamp": request_data["data"].get("timestamp", 1),
             "message": request_data["data"].get("message", ""),
+            "answer_to_message": request_data["data"].get("answer_to_message", ""),
             "message_type": request_data["data"].get("message_type", "text"),
             "details": ""
         }

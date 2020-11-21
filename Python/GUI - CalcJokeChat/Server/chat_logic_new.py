@@ -12,6 +12,7 @@ _, session = return_engine_and_session()
 def save_new_message(chat_name, data, ip_address_of_sender):
     user_name = data.get("user_name", "")
     message = data.get("message", "")
+    answer_to_message = data.get("answer_to_message", "")
     message_type = data.get("message_type", "text")
     timestamp = data.get("timestamp", 0)
     details = data.get("details", "")
@@ -21,6 +22,7 @@ def save_new_message(chat_name, data, ip_address_of_sender):
         user_name=user_name,
         message_type=message_type,
         message=message,
+        answer_to_message=answer_to_message,
         timestamp=timestamp,
         ip_address=ip_address_of_sender,
         details=details
@@ -44,6 +46,7 @@ def get_chat_messages(chat_name, last_message_timestamp, max_result_size):
             "user_name": message.user_name,
             "message_type": message.message_type,
             "message": message.message,
+            "answer_to_message": message.answer_to_message,
             "timestamp": message.timestamp,
             "ip_address": message.ip_address,
             "details": message.details,

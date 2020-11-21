@@ -12,4 +12,4 @@ build
 *.spec
 .mypy_cache
 my_env
-*.txt
+*logs.txt

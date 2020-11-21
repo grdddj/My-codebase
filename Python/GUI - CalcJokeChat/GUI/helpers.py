@@ -3,6 +3,7 @@ import sys
 import requests
 from datetime import datetime
 import pyperclip
+from autocorrect import Speller
 
 from config import Config
 import chat_logger as logger
@@ -67,3 +68,24 @@ def define_entry_content(entry_component, content_to_fill):
 
 def copy_into_clipboard(message):
     pyperclip.copy(message)
+
+
+class SpellChecker:
+    def __init__(self):
+        self.speller = Speller()
+
+    def check_the_text_for_errors(self, text):
+        correct_text = self.speller(text)
+
+        if text == correct_text:
+            return {"success": True}
+
+        corrected_words = []
+
+        text_words = text.split(" ")
+        correct_words = correct_text.split(" ")
+        for original, correct in zip(text_words, correct_words):
+            if original != correct:
+                corrected_words.append((original, correct))
+
+        return {"success": False, "corrected_words": corrected_words}

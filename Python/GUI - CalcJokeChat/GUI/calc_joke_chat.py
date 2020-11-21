@@ -6,7 +6,6 @@ from calc import CalculatorGUI
 import chat_logger as logger
 
 
-# TODO: "Answer to" functionality
 # TODO: translation capabilities (like Lorcan's chatbot)
 # TODO: think about the sizing of the chat - so the words are not cut at the end of line
 #   hardcode the window size and limit the characters
@@ -20,7 +19,6 @@ import chat_logger as logger
 # TODO: notification about incoming message
 #   - voice signal - play mp3 or wav, which can be packed together with app
 # TODO: "Seen" of the message
-# TODO: autocorrect, aka Grammarly
 # TODO: machine learning determining the tone of conversation (or topic)
 # TODO: predefined answers
 # TODO: random questions
@@ -37,7 +35,6 @@ import chat_logger as logger
 # TODO: simultaneous listening to music - websocket connection
 # TODO: some effect when clicking the smile labels and the buttons
 # TODO: when the message in entry is too long, the last character is sometimes not visible
-# TODO: make the text in labels being copyable
 # TODO: message area accepting drops of files
 # TODO: selfhealing of WS connection problems (reconnect in after() loop)
 

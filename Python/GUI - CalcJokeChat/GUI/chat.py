@@ -69,6 +69,11 @@ class SupportWindow:
             root_gui=self.parent.parent
         )
 
+        # TODO: consider moving this to a separate thread, to have zero latency
+        # TODO: improve the spellchecking logic - if the result is negative,
+        #   check for every change probably, to give feedback that all is OK
+        self.spell_checker = helpers.SpellChecker()
+
         self.confirmation_sent = False
 
         self.ip_address = helpers.get_ip_address()
@@ -77,7 +82,7 @@ class SupportWindow:
 
         self.button_font = ("Calibri", 20, "bold")
         self.button_border = 5
-        self.button_rel_x = 0.75
+        self.button_rel_x = 0.77
         self.button_rel_width = 0.2
         self.button_rel_height = 0.1
 
@@ -135,10 +140,10 @@ class SupportWindow:
             font=("Calibri", 15), bd=2,
             variable=self.should_send_entry_updates
         )
-        self.entry_updates_checkbox.place(relx=0.74, rely=0.81, relheight=0.05)
+        self.entry_updates_checkbox.place(relx=0.77, rely=0.81, relheight=0.05)
 
         self.health_check_label = tk.Label(self.support_window)
-        self.health_check_label.place(relx=0.96, rely=0.01, relheight=0.04, relwidth=0.03)
+        self.health_check_label.place(relx=0.97, rely=0.01, relheight=0.04, relwidth=0.03)
         self.set_health_check(ok=True)
 
         self.message_entry = tk.Entry(self.support_window, bg="orange", font=("Calibri", 25), bd=5)
@@ -146,6 +151,13 @@ class SupportWindow:
         self.message_entry.focus_set()
         self.message_entry.bind("<Return>", (lambda event: self.process_message_from_entry()))
         self.message_entry.bind("<Key>", (lambda event: self.send_content_of_message_entry(event)))
+        self.message_entry.bind("<space>", lambda event: self.spell_check_the_message_from_entry())
+
+        self.spell_check_label = tk.Label(
+            self.support_window, width=64, height=64, cursor="hand2")
+        self.spell_check_label.place(relx=0.7, rely=0.87)
+        self.spell_check_label.bind('<Button-1>', lambda event: self.handle_spellcheck_window())
+        self.set_spell_check_icon(ok=True)
 
         self.answer_to_message_entry = tk.Entry(
             self.support_window, bg="yellow", font=("Calibri", 13),
@@ -253,7 +265,7 @@ class SupportWindow:
             "thumb-up",
         ]
 
-        positions = [0.74, 0.80, 0.86, 0.92]
+        positions = [0.77, 0.83, 0.89, 0.95]
 
         def render_smiley(relx, rely, smile_type):
             file_name = f"smileys_icons/{smile_type}.png"
@@ -396,6 +408,35 @@ class SupportWindow:
                 self.dialogs.file_download_problem(reason)
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_file_download)
+
+    def spell_check_the_message_from_entry(self):
+        message = self.get_text_from_message_entry()
+
+        self.log_info(f"Starting the spellcheck - {message}")
+        result = self.spell_checker.check_the_text_for_errors(message)
+        self.log_info(f"Finished spellcheck - {'SUCCESS' if result['success'] else 'FAILURE'}")
+
+        self.set_spell_check_icon(result["success"])
+
+    def set_spell_check_icon(self, ok=True):
+        if ok:
+            file_name = "icons/grammarly_icon_green.png"
+        else:
+            file_name = "icons/grammarly_icon_red.png"
+
+        file_path = helpers.get_resource_path(file_name)
+
+        photo = ImageTk.PhotoImage(Image.open(file_path))
+        self.spell_check_label.configure(image=photo)
+        self.spell_check_label.photo = photo
+
+    def handle_spellcheck_window(self):
+        message = self.get_text_from_message_entry()
+        result = self.spell_checker.check_the_text_for_errors(message)
+        if result["success"]:
+            self.dialogs.spell_check_is_successful()
+        else:
+            self.dialogs.spell_check_uncovered_problems(result["corrected_words"])
 
     def send_content_of_message_entry(self, event):
         message = self.get_text_from_message_entry()

@@ -105,6 +105,32 @@ class Dialogs:
         message = f"Message coppied into clipboard - {message}."
         messagebox.showinfo(title, message, parent=self.parent.support_window)
 
+    def spell_check_is_successful(self):
+        self.log_info("spell_check_was_successful")
+        title = "Everything is fine!"
+        message = "Congratulations. You spell like a boss!"
+        colour = "lime green"
+        font_size = 25
+        geometry = "700x100"
+        self.show_message_on_top(on_top_window=self.parent.support_window,
+                                 message=message, colour=colour,
+                                 font_size=font_size, title=title, geometry=geometry)
+
+    def spell_check_uncovered_problems(self, corrected_words):
+        self.log_info("spell_check_uncovered_problems")
+        title = "There are some corrections"
+
+        corrections = [f"{mistake} -> {suggested}" for mistake, suggested in corrected_words]
+        corrections_to_display = "\n".join(corrections)
+        message = f"Consider looking at the suggested corrections: \n{corrections_to_display}"
+
+        colour = "tomato"
+        font_size = 25
+        geometry = "800x400"
+        self.show_message_on_top(on_top_window=self.parent.support_window,
+                                 message=message, colour=colour,
+                                 font_size=font_size, title=title, geometry=geometry)
+
     def should_the_latest_version_really_be_downloaded(self, last_update):
         self.log_info("should_the_latest_version_really_be_downloaded")
         title = 'Get latest version'

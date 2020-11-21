@@ -1,5 +1,7 @@
 import queue
+import json
 from PIL import ImageTk, Image
+import websocket
 
 import tkinter as tk
 from tkinter import ttk
@@ -72,9 +74,6 @@ class SupportWindow:
 
         self.user_name = Config.NAME
 
-        # Needed for the destroyment of infinite checking og messages
-        self.after_loop_id = 0
-
         self.button_font = ("Calibri", 20, "bold")
         self.button_border = 5
         self.button_rel_x = 0.75
@@ -83,16 +82,20 @@ class SupportWindow:
 
         self.log_identifier = "GUI"
 
+        self.log_info("Initializing websocket connection")
+        # TODO: create some error handling, when the connection goes down
+        # Probably an after() loop here, to check the connection and if down,
+        #   recreate it and recreate the message sending object
+        self.ws = websocket.create_connection(Config.MESSAGES_WEBSOCKET_URL)
+
     def on_destroy(self):
         self.log_info("Destroying the support window")
-        # Making sure the after() function is not called anymore on the background
-        try:
-            self.parent.after_cancel(self.after_loop_id)
-        except ValueError:
-            pass
 
         # The message getting thread in the background must be killed
         self.getting_message_data_thread.stop()
+
+        self.log_info("Closing websocket connection")
+        self.ws.close()
 
         self.support_window.destroy()
 
@@ -111,64 +114,111 @@ class SupportWindow:
         messaging_area.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.messages_frame = ScrollableFrameForMessages(messaging_area)
-        self.messages_frame.place(relx=0, rely=0, relheight=0.87, relwidth=0.70)
+        self.messages_frame.place(relx=0, rely=0, relheight=0.82, relwidth=0.70)
+
+        self.is_other_writing_entry = tk.Entry(
+            self.support_window, bg="light sea green",
+            disabledbackground="light sea green",
+            disabledforeground="black",
+            font=("Calibri", 15), bd=5, state="disabled"
+        )
+        self.is_other_writing_entry.place(relx=0, rely=0.83, relheight=0.05, relwidth=0.7)
+
+        self.should_send_entry_updates = tk.BooleanVar()
+        self.should_send_entry_updates.set(True)
+        self.entry_updates_checkbox = tk.Checkbutton(
+            self.support_window, text="Send real-time entry updates",
+            font=("Calibri", 15), bd=2,
+            variable=self.should_send_entry_updates
+        )
+        self.entry_updates_checkbox.place(relx=0.74, rely=0.81, relheight=0.05)
+
+        self.health_check_label = tk.Label(self.support_window)
+        self.health_check_label.place(relx=0.96, rely=0.01, relheight=0.04, relwidth=0.03)
+        self.set_health_check(ok=True)
 
         self.message_entry = tk.Entry(self.support_window, bg="orange", font=("Calibri", 25), bd=5)
         self.message_entry.place(relx=0, rely=0.88, relheight=0.1, relwidth=0.7)
+        self.message_entry.focus_set()
         self.message_entry.bind("<Return>", (lambda event: self.process_message_from_entry()))
+        self.message_entry.bind("<Key>", (lambda event: self.send_content_of_message_entry(event)))
 
-        block_support_button = tk.Button(self.support_window, text="Block support",
-                                         bg="tomato", bd=self.button_border, cursor="hand2",
-                                         font=self.button_font, command=self.dialogs.block_support)
-        block_support_button.place(relx=self.button_rel_x,
-                                   rely=0.01,
-                                   relheight=self.button_rel_height,
-                                   relwidth=self.button_rel_width)
+        block_support_button = tk.Button(
+            self.support_window, text="Block support",
+            bg="tomato", bd=self.button_border, cursor="hand2",
+            font=self.button_font, command=self.dialogs.block_support
+        )
+        block_support_button.place(
+            relx=self.button_rel_x,
+            rely=0.01,
+            relheight=self.button_rel_height,
+            relwidth=self.button_rel_width
+        )
 
-        download_latest_version_button = tk.Button(self.support_window, text="Get latest version",
-                                                   bg="lime green", font=self.button_font,
-                                                   bd=self.button_border, cursor="hand2",
-                                                   command=self.get_latest_update)
-        download_latest_version_button.place(relx=self.button_rel_x,
-                                             rely=0.13,
-                                             relheight=self.button_rel_height,
-                                             relwidth=self.button_rel_width)
+        download_latest_version_button = tk.Button(
+            self.support_window, text="Get latest version",
+            bg="lime green", font=self.button_font,
+            bd=self.button_border, cursor="hand2",
+            command=self.get_latest_update
+        )
+        download_latest_version_button.place(
+            relx=self.button_rel_x,
+            rely=0.13,
+            relheight=self.button_rel_height,
+            relwidth=self.button_rel_width
+        )
 
-        change_name_button = tk.Button(self.support_window, text="Change name",
-                                       bg="orange", font=self.button_font,
-                                       bd=self.button_border, cursor="hand2",
-                                       command=self.change_name)
-        change_name_button.place(relx=self.button_rel_x,
-                                 rely=0.25,
-                                 relheight=self.button_rel_height,
-                                 relwidth=self.button_rel_width)
+        change_name_button = tk.Button(
+            self.support_window, text="Change name",
+            bg="orange", font=self.button_font,
+            bd=self.button_border, cursor="hand2",
+            command=self.change_name
+        )
+        change_name_button.place(
+            relx=self.button_rel_x,
+            rely=0.25,
+            relheight=self.button_rel_height,
+            relwidth=self.button_rel_width
+        )
 
-        send_picture_button = tk.Button(self.support_window, text="Send picture",
-                                        bg="MediumPurple1", font=self.button_font,
-                                        bd=self.button_border, cursor="hand2",
-                                        command=self.handle_picture_sending_dialog)
-        send_picture_button.place(relx=self.button_rel_x,
-                                  rely=0.37,
-                                  relheight=self.button_rel_height,
-                                  relwidth=self.button_rel_width)
+        send_picture_button = tk.Button(
+            self.support_window, text="Send picture",
+            bg="MediumPurple1", font=self.button_font,
+            bd=self.button_border, cursor="hand2",
+            command=self.handle_picture_sending_dialog
+        )
+        send_picture_button.place(
+            relx=self.button_rel_x,
+            rely=0.37,
+            relheight=self.button_rel_height,
+            relwidth=self.button_rel_width
+        )
 
-        send_file_button = tk.Button(self.support_window, text="Send file",
-                                     bg="SteelBlue1", font=self.button_font,
-                                     bd=self.button_border, cursor="hand2",
-                                     command=self.handle_file_sending_dialog)
-        send_file_button.place(relx=self.button_rel_x,
-                               rely=0.49,
-                               relheight=self.button_rel_height,
-                               relwidth=self.button_rel_width)
+        send_file_button = tk.Button(
+            self.support_window, text="Send file",
+            bg="SteelBlue1", font=self.button_font,
+            bd=self.button_border, cursor="hand2",
+            command=self.handle_file_sending_dialog
+        )
+        send_file_button.place(
+            relx=self.button_rel_x,
+            rely=0.49,
+            relheight=self.button_rel_height,
+            relwidth=self.button_rel_width
+        )
 
-        message_sending_button = tk.Button(self.support_window, text="Send message",
-                                           bg="grey", font=self.button_font,
-                                           bd=self.button_border, cursor="hand2",
-                                           command=self.process_message_from_entry)
-        message_sending_button.place(relx=self.button_rel_x,
-                                     rely=0.88,
-                                     relheight=self.button_rel_height,
-                                     relwidth=self.button_rel_width)
+        message_sending_button = tk.Button(
+            self.support_window, text="Send message",
+            bg="grey", font=self.button_font,
+            bd=self.button_border, cursor="hand2",
+            command=self.process_message_from_entry
+        )
+        message_sending_button.place(
+            relx=self.button_rel_x,
+            rely=0.88,
+            relheight=self.button_rel_height,
+            relwidth=self.button_rel_width
+        )
 
         self.render_smiley_icons_to_be_clicked()
 
@@ -208,13 +258,13 @@ class SupportWindow:
 
         for index, smiley in enumerate(smileys_first_row):
             relx = positions[index]
-            rely = 0.63
+            rely = 0.61
             smile_type = smiley
             render_smiley(relx, rely, smile_type)
 
         for index, smiley in enumerate(smileys_second_row):
             relx = positions[index]
-            rely = 0.75
+            rely = 0.71
             smile_type = smiley
             render_smiley(relx, rely, smile_type)
 
@@ -223,6 +273,7 @@ class SupportWindow:
         self.message_sending_queue = queue.Queue()
         actions.SmileSending(
             queue=self.message_sending_queue,
+            ws=self.ws,
             user_name=self.user_name,
             ip_address=self.ip_address,
             smile_type=smile_type
@@ -250,6 +301,7 @@ class SupportWindow:
         self.picture_upload_queue = queue.Queue()
         actions.PictureUpload(
             queue=self.picture_upload_queue,
+            ws=self.ws,
             picture_path=picture_path,
             user_name=self.user_name,
             ip_address=self.ip_address,
@@ -280,6 +332,7 @@ class SupportWindow:
         self.file_upload_queue = queue.Queue()
         actions.FileUpload(
             queue=self.file_upload_queue,
+            ws=self.ws,
             file_path=file_path,
             user_name=self.user_name,
             ip_address=self.ip_address,
@@ -302,9 +355,7 @@ class SupportWindow:
     def start_getting_messages_in_the_background(self):
         self.log_info("Starting to get messages on the background")
         self.getting_message_data_thread = messages.GettingMessageData(
-            messages_frame=self.messages_frame,
-            support_window=self.support_window,
-            handle_file_download=self.handle_file_download,
+            parent=self
         )
         self.getting_message_data_thread.start()
 
@@ -335,6 +386,32 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_file_download)
 
+    def send_content_of_message_entry(self, event):
+        message = self.get_text_from_message_entry()
+        new_char = str(event.char)
+        backspace_identifier = "\x08"
+        if new_char != backspace_identifier:
+            message += new_char
+        else:
+            message = message[:-1]
+
+        self.send_message_entry_to_websocket(message)
+
+    def send_message_entry_to_websocket(self, message):
+        if not self.should_send_entry_updates.get():
+            if message:
+                message = "Writing..."
+
+        to_send = {
+            "message_type": "entry_update",
+            "ip_address": self.ip_address,
+            "message": message,
+            "update": True,
+        }
+
+        json_to_send = json.dumps(to_send)
+        self.ws.send(json_to_send)
+
     def process_message_from_entry(self):
         message = self.get_text_from_message_entry()
         self.log_info(f"Processing message from entry - {message}")
@@ -342,6 +419,7 @@ class SupportWindow:
         if not message:
             return self.dialogs.handle_empty_message()
         else:
+            self.send_message_entry_to_websocket("")
             return self.handle_message_sending(message)
 
     def handle_message_sending(self, message):
@@ -351,6 +429,7 @@ class SupportWindow:
         self.message_sending_queue = queue.Queue()
         actions.MessageSending(
             queue=self.message_sending_queue,
+            ws=self.ws,
             user_name=self.user_name,
             ip_address=self.ip_address,
             message=message
@@ -411,6 +490,16 @@ class SupportWindow:
             elif new_name is None:
                 self.dialogs.name_change_cancelling()
 
+    def set_health_check(self, ok):
+        if ok:
+            bg = "lime green"
+            text = " OK  "
+        else:
+            bg = "tomato"
+            text = "ERROR"
+
+        self.health_check_label.configure(bg=bg, text=text)
+
     def get_text_from_message_entry(self):
         return self.message_entry.get()
 
@@ -419,7 +508,6 @@ class SupportWindow:
         self.message_entry.delete(0, "end")
 
     def focus_on_message_entry(self):
-        self.log_info("Focusing on message entry")
         self.message_entry.focus()
 
     def log_info(self, message):

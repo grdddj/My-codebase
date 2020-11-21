@@ -14,9 +14,10 @@ import chat_logger
 
 
 class ActionInDifferentThread(threading.Thread):
-    def __init__(self, queue, user_name="", ip_address=""):
+    def __init__(self, queue, ws=None, user_name="", ip_address=""):
         threading.Thread.__init__(self)
         self.queue = queue
+        self.ws = ws
         self.user_name = user_name
         self.ip_address = ip_address
 
@@ -28,7 +29,7 @@ class ActionInDifferentThread(threading.Thread):
         try:
             self.action_to_be_done()
             self.queue.put(self.final_message_to_the_queue)
-            self.log_info("Different thread has finished successfully")
+            self.log_info(f"Different thread has finished successfully - {type(self).__name__}")
         except Exception as err:
             self.log_exception(f"Different thread has problems - {err}")
             results = {"success": False, "reason": err}
@@ -38,17 +39,11 @@ class ActionInDifferentThread(threading.Thread):
         print("WILL BE IMPLEMENTED BY THE SUBCLASSES")
 
     def send_message_through_websocket_to_all_clients(self, message_data):
-        # TODO: consider the connection to be open all the time
-        self.log_info("Initializing websocket to send message through it")
-        ws = websocket.create_connection(Config.MESSAGES_WEBSOCKET_URL)
-
         message_data["ip_address"] = self.ip_address
         json_message_data = json.dumps(message_data)
 
         self.log_info(f"Sending message through websocket - {json_message_data}")
-        ws.send(json_message_data)
-
-        ws.close()
+        self.ws.send(json_message_data)
 
     def send_chat_data(self, message_type, message):
         message_data = {
@@ -74,11 +69,11 @@ class ActionInDifferentThread(threading.Thread):
 
 
 class FileUpload(ActionInDifferentThread):
-    def __init__(self, queue, file_path, user_name, ip_address):
-        ActionInDifferentThread.__init__(self, queue, user_name, ip_address)
+    def __init__(self, queue, ws, file_path, user_name, ip_address):
+        ActionInDifferentThread.__init__(self, queue, ws, user_name, ip_address)
         self.file_path = file_path
         self.file_name_saved = ""
-        self.log_info(f"FileUpload started - {self.file_path}")
+        self.log_info(f"{type(self).__name__} started - {self.file_path}")
 
     def action_to_be_done(self):
         self.upload_the_file_and_get_its_name()
@@ -99,7 +94,7 @@ class FileDownload(ActionInDifferentThread):
     def __init__(self, queue, file_name):
         ActionInDifferentThread.__init__(self, queue)
         self.file_name = file_name
-        self.log_info(f"FileDownload started - {self.file_name}")
+        self.log_info(f"{type(self).__name__} started - {self.file_name}")
 
     def action_to_be_done(self):
         if not os.path.isdir(Config.download_folder):
@@ -130,7 +125,7 @@ class FileDownload(ActionInDifferentThread):
 class LatestUpdateDownload(ActionInDifferentThread):
     def __init__(self, queue):
         ActionInDifferentThread.__init__(self, queue)
-        self.log_info("LatestUpdateDownload started")
+        self.log_info(f"{type(self).__name__} started")
 
     def action_to_be_done(self):
         timestamp = int(time.time())
@@ -141,30 +136,30 @@ class LatestUpdateDownload(ActionInDifferentThread):
 
 
 class SmileSending(ActionInDifferentThread):
-    def __init__(self, queue, user_name, smile_type, ip_address):
-        ActionInDifferentThread.__init__(self, queue, user_name, ip_address)
+    def __init__(self, queue, ws, user_name, smile_type, ip_address):
+        ActionInDifferentThread.__init__(self, queue, ws, user_name, ip_address)
         self.smile_type = smile_type
-        self.log_info(f"SmileSending started - {self.smile_type}")
+        self.log_info(f"{type(self).__name__} started - {self.smile_type}")
 
     def action_to_be_done(self):
         self.send_chat_data(message_type="smile", message=self.smile_type)
 
 
 class MessageSending(ActionInDifferentThread):
-    def __init__(self, queue, user_name, message, ip_address):
-        ActionInDifferentThread.__init__(self, queue, user_name, ip_address)
+    def __init__(self, queue, ws, user_name, message, ip_address):
+        ActionInDifferentThread.__init__(self, queue, ws, user_name, ip_address)
         self.message = message
-        self.log_info(f"MessageSending started - {self.message}")
+        self.log_info(f"{type(self).__name__} started - {self.message}")
 
     def action_to_be_done(self):
         self.send_chat_data(message_type="text", message=self.message)
 
 
 class PictureUpload(ActionInDifferentThread):
-    def __init__(self, queue, picture_path, user_name, ip_address):
-        ActionInDifferentThread.__init__(self, queue, user_name, ip_address)
+    def __init__(self, queue, ws, picture_path, user_name, ip_address):
+        ActionInDifferentThread.__init__(self, queue, ws, user_name, ip_address)
         self.picture_path = picture_path
-        self.log_info(f"PictureUpload started - {self.picture_path}")
+        self.log_info(f"{type(self).__name__} started - {self.picture_path}")
 
     def action_to_be_done(self):
         if not os.path.isdir(Config.picture_folder):
@@ -182,8 +177,11 @@ class PictureUpload(ActionInDifferentThread):
 
         if self.file_name_saved != picture_name:
             new_picture_save_path = os.path.join(Config.picture_folder, self.file_name_saved)
-            os.rename(picture_save_path, new_picture_save_path)
-            self.log_info(f"Renaming the file from '{picture_save_path}' to '{new_picture_save_path}'")
+            try:
+                os.rename(picture_save_path, new_picture_save_path)
+                self.log_info(f"Renaming the file from '{picture_save_path}' to '{new_picture_save_path}'")
+            except FileExistsError:
+                self.log_info(f"File already in place - '{new_picture_save_path}'")
 
         self.final_message_to_the_queue["file_name_saved"] = self.file_name_saved
 

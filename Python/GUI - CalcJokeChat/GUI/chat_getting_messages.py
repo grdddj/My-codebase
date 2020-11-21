@@ -8,7 +8,6 @@ from PIL import ImageTk, Image
 from tkinter import ttk
 from datetime import datetime
 
-import websocket
 from websocket import WebSocketConnectionClosedException
 
 from config import Config
@@ -17,12 +16,10 @@ import chat_logger
 
 
 class GettingMessageData(threading.Thread):
-    def __init__(self, messages_frame, handle_file_download, support_window):
+    def __init__(self, parent):
         threading.Thread.__init__(self)
 
-        self.messages_frame = messages_frame
-        self.handle_file_download = handle_file_download
-        self.support_window = support_window
+        self.parent = parent
 
         self.ip_address = helpers.get_ip_address()
 
@@ -32,9 +29,14 @@ class GettingMessageData(threading.Thread):
 
         self.log_identifier = "GETTING MESSAGES"
 
+        self._stop_event = threading.Event()
+
     def stop(self):
-        self.log_info("Stopping the messaging websocket thread")
-        self.ws.close()
+        self.log_info("Stopping the messaging thread")
+        self._stop_event.set()
+
+    def is_stopped(self):
+        return self._stop_event.is_set()
 
     def run(self):
         try:
@@ -55,24 +57,39 @@ class GettingMessageData(threading.Thread):
 
     def listen_on_the_websocket_and_render_incoming_messages(self):
         self.log_info("Starting to listen on the websocket for messages")
-        self.ws = websocket.create_connection(Config.MESSAGES_WEBSOCKET_URL)
 
         while True:
+            if self.is_stopped():
+                self.log_info("Stop event received. Breaking the websocket listening loop.")
+                break
+
             # When the websocket object is closed, the lookup can raise OSError
             try:
-                new_message = self.ws.recv()
+                new_message = self.parent.ws.recv()
                 if not new_message:
                     self.log_info("Websocket received an empty message. Ignoring")
                     continue
-                self.log_info(f"Websocket received a new message - {new_message}")
-                message_obj = json.loads(new_message)
-                self.process_message_and_include_it_in_frontend(message_obj)
+
+                try:
+                    message_obj = json.loads(new_message)
+                except json.decoder.JSONDecodeError:
+                    self.log_exception(f"Failed to parse websocket message - {new_message}")
+                    self.parent.set_health_check(ok=False)
+                    continue
+
+                if "update" in message_obj:
+                    self.handle_update_from_ws(message_obj)
+                else:
+                    self.log_info(f"Websocket received a new message - {new_message}")
+                    self.process_message_and_include_it_in_frontend(message_obj)
+
+                self.parent.set_health_check(ok=True)
             except (OSError, WebSocketConnectionClosedException) as err:
-                self.log_error(f"WS Close exception - {err}. Breaking from ws listening loop.")
-                break
+                self.log_error(f"Websocket Close exception - '{err}'")
+                self.parent.set_health_check(ok=False)
             except Exception as err:
-                print(traceback.format_exc())
-                self.log_exception(f"WS processing exception - {err}")
+                self.log_exception(f"Websocket processing exception - {err}")
+                self.parent.set_health_check(ok=False)
 
     def get_recent_chat_messages(self):
         parameters = {
@@ -104,6 +121,7 @@ class GettingMessageData(threading.Thread):
 
         self.move_scrollbar_to_the_bottom()
         self.force_focus_on_window()
+        self.parent.focus_on_message_entry()
 
     def get_the_background_color_and_anchor_side_for_message(self, message_object):
         if message_object.get("ip_address") == self.ip_address:
@@ -120,7 +138,7 @@ class GettingMessageData(threading.Thread):
         timestamp = message_object.get("timestamp", 0)
         time_to_show = self.get_time_to_show_in_message(timestamp)
         text_to_show = f"{user_name} ({time_to_show}): {message}\n"
-        ttk.Label(self.messages_frame.scrollable_frame, text=text_to_show,
+        ttk.Label(self.parent.messages_frame.scrollable_frame, text=text_to_show,
                   relief="solid", wraplengt=600, background=self.message_background,
                   font=self.message_text_font,
                   ).pack(anchor=self.message_anchor)
@@ -139,7 +157,7 @@ class GettingMessageData(threading.Thread):
         else:
             photo = ImageTk.PhotoImage(Image.open(file_path))
 
-            smiley_face = tk.Label(self.messages_frame.scrollable_frame, image=photo)
+            smiley_face = tk.Label(self.parent.messages_frame.scrollable_frame, image=photo)
             smiley_face.photo = photo
             smiley_face.pack(anchor=self.message_anchor)
 
@@ -161,7 +179,7 @@ class GettingMessageData(threading.Thread):
 
         photo = ImageTk.PhotoImage(Image.open(file_path))
 
-        photo_label = tk.Label(self.messages_frame.scrollable_frame, image=photo)
+        photo_label = tk.Label(self.parent.messages_frame.scrollable_frame, image=photo)
         photo_label.photo = photo
         photo_label.pack(anchor=self.message_anchor)
 
@@ -173,13 +191,13 @@ class GettingMessageData(threading.Thread):
         time_to_show = self.get_time_to_show_in_message(timestamp)
         text_to_show = f"{user_name} ({time_to_show}): FILE (click to download) - {file_name}\n"
         file_label = ttk.Label(
-            self.messages_frame.scrollable_frame, text=text_to_show,
+            self.parent.messages_frame.scrollable_frame, text=text_to_show,
             relief="solid", wraplengt=600, background=self.message_background,
             font=self.message_text_font, cursor="hand2"
             )
         file_label.pack(anchor=self.message_anchor)
 
-        file_label.bind('<Button-1>', lambda event: self.handle_file_download(file_name))
+        file_label.bind('<Button-1>', lambda event: self.parent.handle_file_download(file_name))
 
     def get_time_to_show_in_message(self, timestamp):
         if not timestamp or timestamp == 1:
@@ -195,14 +213,25 @@ class GettingMessageData(threading.Thread):
 
         return time_to_show
 
+    def handle_update_from_ws(self, message_object):
+        message_type = message_object.get("message_type", "")
+        if message_type == "entry_update":
+            self.update_is_other_writing_entry(message_object)
+
+    def update_is_other_writing_entry(self, message_object):
+        ip_address = message_object.get("ip_address", "") + "2"
+        if ip_address != self.ip_address:
+            message = message_object.get("message", "")
+            helpers.define_entry_content(self.parent.is_other_writing_entry, message)
+
     def force_focus_on_window(self):
         self.log_info("Focusing on the support window")
-        self.support_window.focus_force()
+        self.parent.support_window.focus_force()
 
     def move_scrollbar_to_the_bottom(self):
         self.log_info("Moving scrollbar to the bottom")
-        self.messages_frame.canvas.update_idletasks()
-        self.messages_frame.canvas.yview_moveto(1)
+        self.parent.messages_frame.canvas.update_idletasks()
+        self.parent.messages_frame.canvas.yview_moveto(1)
 
     def log_info(self, message):
         chat_logger.info(f"{self.log_identifier} - {message}")

@@ -41,6 +41,7 @@ import chat_logger as logger
 # TODO: when the message in entry is too long, the last character is sometimes not visible
 # TODO: make the text in labels being copyable
 # TODO: message area accepting drops of files
+# TODO: selfhealing of WS connection problems (reconnect in after() loop)
 
 
 if __name__ == "__main__":

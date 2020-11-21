@@ -219,7 +219,7 @@ class GettingMessageData(threading.Thread):
             self.update_is_other_writing_entry(message_object)
 
     def update_is_other_writing_entry(self, message_object):
-        ip_address = message_object.get("ip_address", "") + "2"
+        ip_address = message_object.get("ip_address", "")
         if ip_address != self.ip_address:
             message = message_object.get("message", "")
             helpers.define_entry_content(self.parent.is_other_writing_entry, message)

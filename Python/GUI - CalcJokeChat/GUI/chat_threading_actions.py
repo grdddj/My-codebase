@@ -6,7 +6,6 @@ import threading
 import urllib.request
 from PIL import Image
 
-import websocket
 import json
 
 from config import Config

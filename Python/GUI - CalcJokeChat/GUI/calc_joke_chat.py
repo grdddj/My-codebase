@@ -20,7 +20,6 @@ import chat_logger as logger
 # TODO: notification about incoming message
 #   - voice signal - play mp3 or wav, which can be packed together with app
 # TODO: "Seen" of the message
-# TODO: Show that somebody is typing
 # TODO: autocorrect, aka Grammarly
 # TODO: machine learning determining the tone of conversation (or topic)
 # TODO: predefined answers
@@ -36,7 +35,6 @@ import chat_logger as logger
 # TODO: button "Moving to Messenger"
 # TODO: think about the viability of web-version
 # TODO: simultaneous listening to music - websocket connection
-# TODO: real-time streaming of the other's content in message entry
 # TODO: some effect when clicking the smile labels and the buttons
 # TODO: when the message in entry is too long, the last character is sometimes not visible
 # TODO: make the text in labels being copyable

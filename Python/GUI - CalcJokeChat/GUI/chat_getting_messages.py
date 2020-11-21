@@ -85,6 +85,8 @@ class GettingMessageData(threading.Thread):
 
                 self.parent.set_health_check(ok=True)
             except (OSError, WebSocketConnectionClosedException) as err:
+                # TODO: could have some defence against a flood with these errors
+                # (store a timestamp and log only once per second)
                 self.log_error(f"Websocket Close exception - '{err}'")
                 self.parent.set_health_check(ok=False)
             except Exception as err:
@@ -135,13 +137,34 @@ class GettingMessageData(threading.Thread):
         self.log_info(f"Creating text label - {message_object}")
         user_name = message_object.get("user_name", "ghost")
         message = message_object.get("message", "")
+        answer_to_message = message_object.get("answer_to_message", "")
         timestamp = message_object.get("timestamp", 0)
         time_to_show = self.get_time_to_show_in_message(timestamp)
-        text_to_show = f"{user_name} ({time_to_show}): {message}\n"
-        ttk.Label(self.parent.messages_frame.scrollable_frame, text=text_to_show,
-                  relief="solid", wraplengt=600, background=self.message_background,
-                  font=self.message_text_font,
-                  ).pack(anchor=self.message_anchor)
+
+        answer_to_part = f"Answer to: {answer_to_message}\n\n" if answer_to_message else ""
+
+        text_to_show = f"{answer_to_part}{user_name} ({time_to_show})\n{message}\n"
+
+        text_label = ttk.Label(
+            self.parent.messages_frame.scrollable_frame, text=text_to_show,
+            relief="solid", wraplengt=600, background=self.message_background,
+            font=self.message_text_font, cursor="hand2"
+        )
+        text_label.pack(anchor=self.message_anchor)
+        text_label.bind('<Button-1>', lambda event: self.deal_with_asnwer_to(message_object))
+        text_label.bind('<Button-3>', lambda event: self.copy_message(message))
+
+    def deal_with_asnwer_to(self, message_object):
+        answer_to_message = message_object.get("message", "")
+        self.log_info(f"Answer to clicked - message - '{answer_to_message}'")
+        text_to_fill = f"Answer to: {answer_to_message}"
+        helpers.define_entry_content(self.parent.answer_to_message_entry, text_to_fill)
+        self.parent.show_answer_to_message_cancel_label(show=True)
+
+    def copy_message(self, message):
+        self.log_info(f"Message copied - '{message}'")
+        helpers.copy_into_clipboard(message)
+        self.parent.dialogs.message_copied_into_clipboard(message)
 
     def create_and_include_a_smile_label(self, message_object):
         self.log_info(f"Creating smile label - {message_object}")

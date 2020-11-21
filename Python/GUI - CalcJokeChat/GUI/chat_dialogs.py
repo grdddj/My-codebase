@@ -99,6 +99,12 @@ class Dialogs:
         message = "Did not come up with a good name? Try looking at the calendar."
         messagebox.showinfo(title, message, parent=self.parent.support_window)
 
+    def message_copied_into_clipboard(self, message):
+        self.log_info("message_copied_into_clipboard")
+        title = "Copied into clipboard"
+        message = f"Message coppied into clipboard - {message}."
+        messagebox.showinfo(title, message, parent=self.parent.support_window)
+
     def should_the_latest_version_really_be_downloaded(self, last_update):
         self.log_info("should_the_latest_version_really_be_downloaded")
         title = 'Get latest version'

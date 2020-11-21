@@ -44,11 +44,12 @@ class ActionInDifferentThread(threading.Thread):
         self.log_info(f"Sending message through websocket - {json_message_data}")
         self.ws.send(json_message_data)
 
-    def send_chat_data(self, message_type, message):
+    def send_chat_data(self, message_type, message, answer_to_message=""):
         message_data = {
             "message_type": message_type,
             "user_name": self.user_name,
             "message": message,
+            "answer_to_message": answer_to_message,
             "timestamp": time.time(),
             "details": ""
         }
@@ -145,13 +146,15 @@ class SmileSending(ActionInDifferentThread):
 
 
 class MessageSending(ActionInDifferentThread):
-    def __init__(self, queue, ws, user_name, message, ip_address):
+    def __init__(self, queue, ws, user_name, message, ip_address, answer_to_message):
         ActionInDifferentThread.__init__(self, queue, ws, user_name, ip_address)
         self.message = message
+        self.answer_to_message = answer_to_message
         self.log_info(f"{type(self).__name__} started - {self.message}")
 
     def action_to_be_done(self):
-        self.send_chat_data(message_type="text", message=self.message)
+        self.send_chat_data(message_type="text", message=self.message,
+                            answer_to_message=self.answer_to_message)
 
 
 class PictureUpload(ActionInDifferentThread):

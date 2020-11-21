@@ -1,3 +1,4 @@
+import time
 import queue
 import json
 from PIL import ImageTk, Image
@@ -94,6 +95,9 @@ class SupportWindow:
         # The message getting thread in the background must be killed
         self.getting_message_data_thread.stop()
 
+        # To be sure the stop event is processed, before closing the WS
+        time.sleep(0.1)
+
         self.log_info("Closing websocket connection")
         self.ws.close()
 
@@ -138,10 +142,17 @@ class SupportWindow:
         self.set_health_check(ok=True)
 
         self.message_entry = tk.Entry(self.support_window, bg="orange", font=("Calibri", 25), bd=5)
-        self.message_entry.place(relx=0, rely=0.88, relheight=0.1, relwidth=0.7)
+        self.message_entry.place(relx=0, rely=0.88, relheight=0.08, relwidth=0.7)
         self.message_entry.focus_set()
         self.message_entry.bind("<Return>", (lambda event: self.process_message_from_entry()))
         self.message_entry.bind("<Key>", (lambda event: self.send_content_of_message_entry(event)))
+
+        self.answer_to_message_entry = tk.Entry(
+            self.support_window, bg="yellow", font=("Calibri", 13),
+            disabledbackground="yellow", disabledforeground="black",
+            bd=0, state="disabled"
+        )
+        self.answer_to_message_entry.place(relx=0, rely=0.96, relheight=0.04, relwidth=0.7)
 
         block_support_button = tk.Button(
             self.support_window, text="Block support",
@@ -419,10 +430,11 @@ class SupportWindow:
         if not message:
             return self.dialogs.handle_empty_message()
         else:
-            self.send_message_entry_to_websocket("")
             return self.handle_message_sending(message)
 
     def handle_message_sending(self, message):
+        self.send_message_entry_to_websocket("")
+
         self.clean_message_entry()
         self.focus_on_message_entry()
 
@@ -432,9 +444,49 @@ class SupportWindow:
             ws=self.ws,
             user_name=self.user_name,
             ip_address=self.ip_address,
-            message=message
+            message=message,
+            answer_to_message=self.get_answer_to_message()
         ).start()
         self.parent.after(100, self.process_queue_for_message_sending)
+
+        self.empty_answer_to_message_entry()
+        self.show_answer_to_message_cancel_label(show=False)
+
+    def get_answer_to_message(self):
+        entry_content = self.answer_to_message_entry.get()
+        string_at_beginning = "Answer to: "
+        if entry_content.startswith(string_at_beginning):
+            length_to_cut = len(string_at_beginning)
+            return entry_content[length_to_cut:]
+        else:
+            return entry_content
+
+    def handle_click_on_answer_to_cancelling_label(self):
+        self.empty_answer_to_message_entry()
+        self.show_answer_to_message_cancel_label(show=False)
+
+    def empty_answer_to_message_entry(self):
+        helpers.define_entry_content(self.answer_to_message_entry, "")
+
+    def show_answer_to_message_cancel_label(self, show):
+        label_name = "answer_to_message_cancel_label"
+        if show:
+            already_is_shown = hasattr(self, label_name)
+            if already_is_shown:
+                return
+
+            label = tk.Label(
+                self.support_window, bg="red", font=("Calibri", 15),
+                bd=0, text="X", cursor="hand2"
+            )
+            label.bind('<Button-1>',
+                lambda event: self.handle_click_on_answer_to_cancelling_label())
+            label.place(relx=0.7, rely=0.96, relheight=0.04, relwidth=0.03)
+            setattr(self, label_name, label)
+        else:
+            if hasattr(self, label_name):
+                getattr(self, label_name).destroy()
+                delattr(self, label_name)
 
     def process_queue_for_message_sending(self):
         try:

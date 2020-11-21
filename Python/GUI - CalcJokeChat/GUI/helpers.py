@@ -2,6 +2,7 @@ import os
 import sys
 import requests
 from datetime import datetime
+import pyperclip
 
 from config import Config
 import chat_logger as logger
@@ -51,8 +52,8 @@ def is_date_from_today(dt_object):
 #   "append" - just appending the specified content to already existing one
 def define_text_content(text_component, content_to_fill, mode="rewrite"):
     text_component["state"] = "normal"  # enabling to manipulate the content
-    # if mode == "rewrite":
-    #     text_component.delete("1.0", "end")  # deleting the whole previous content
+    if mode == "rewrite":
+        text_component.delete("1.0", "end")  # deleting the whole previous content
     text_component.insert("insert", content_to_fill)  # inserting completely new content
     text_component["state"] = "disabled"  # disabling the content for user manipulation
 
@@ -62,3 +63,7 @@ def define_entry_content(entry_component, content_to_fill):
     entry_component.delete(0, "end")
     entry_component.insert(0, content_to_fill)
     entry_component["state"] = "disabled"
+
+
+def copy_into_clipboard(message):
+    pyperclip.copy(message)

@@ -44,7 +44,9 @@ class CalculatorGUI(tk.Frame):
 
     def on_destroy(self):
         self.log_info("Destroying itself and the support window")
-        self.support_window.on_destroy()
+        if self.support_window.support_window_shown:
+            self.support_window.on_destroy()
+        self.parent.destroy()
 
     def show_gui(self):
         self.log_info("Showing the calculator GUI")

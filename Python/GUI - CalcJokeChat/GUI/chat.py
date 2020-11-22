@@ -65,6 +65,8 @@ class SupportWindow:
         self.parent = parent
         self.root_gui = parent.parent
 
+        self.support_window_shown = False
+
         self.log_identifier = "GUI"
 
         self.dialogs = Dialogs(
@@ -110,6 +112,8 @@ class SupportWindow:
 
         self.support_window.destroy()
 
+        self.support_window_shown = False
+
         if Config.DEBUG_MODE:
             self.root_gui.destroy()
 
@@ -117,6 +121,9 @@ class SupportWindow:
 
     def show_support_window(self):
         self.log_info("Showing the support window")
+
+        self.support_window_shown = True
+
         self.support_window = tk.Toplevel(self.parent)
         self.support_window.title("Support")
         self.support_window.state("zoomed")

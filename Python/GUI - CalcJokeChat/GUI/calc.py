@@ -35,6 +35,9 @@ class CalculatorGUI(tk.Frame):
 
         self.show_gui()
 
+        if Config.DEBUG_MODE:
+            self.show_support_window()
+
     def show_gui(self):
         logger.info("CALC - Showing the calculator GUI")
         expression_field = tk.Entry(self.parent, bg="white", font=("Calibri", 20),

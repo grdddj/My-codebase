@@ -72,7 +72,31 @@ def copy_into_clipboard(message):
 
 class SpellChecker:
     def __init__(self):
-        self.speller = Speller()
+        try:
+            self.speller = Speller()
+        except Exception as err:
+            self.log_exception("Initializing spell checker failed - " + str(err))
+        self.previous_message = ""
+        self.current_message = ""
+
+    def check_message_only_if_necessary(self, message):
+        self.previous_message = self.current_message
+        self.current_message = message
+
+        new_is_at_the_end = self.something_new_is_at_the_end()
+        same_amount_of_words = self.same_amount_of_full_words()
+
+        if new_is_at_the_end and same_amount_of_words:
+            return {"ignored": True}
+        else:
+            return self.check_the_text_for_errors(self.current_message)
+
+    def same_amount_of_full_words(self):
+        space_char = " "
+        return self.previous_message.count(space_char) == self.current_message.count(space_char)
+
+    def something_new_is_at_the_end(self):
+        return self.previous_message == self.current_message[:-1]
 
     def check_the_text_for_errors(self, text):
         correct_text = self.speller(text)

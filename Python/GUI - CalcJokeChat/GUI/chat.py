@@ -63,18 +63,22 @@ class ScrollableFrameForMessages(ttk.Frame):
 class SupportWindow:
     def __init__(self, parent):
         self.parent = parent
+        self.root_gui = parent.parent
+
+        self.log_identifier = "GUI"
 
         self.dialogs = Dialogs(
             parent=self,
-            root_gui=self.parent.parent
+            root_gui=self.root_gui
         )
 
         # TODO: consider moving this to a separate thread, to have zero latency
         # TODO: improve the spellchecking logic - if the result is negative,
         #   check for every change probably, to give feedback that all is OK
         self.spell_checker = helpers.SpellChecker()
-
-        self.confirmation_sent = False
+        self.spell_check_icon_ok = None
+        self.schedule_spell_check_id = ""
+        self.miliseconds_to_wait_before_spell_check = 500
 
         self.ip_address = helpers.get_ip_address()
 
@@ -85,8 +89,6 @@ class SupportWindow:
         self.button_rel_x = 0.77
         self.button_rel_width = 0.2
         self.button_rel_height = 0.1
-
-        self.log_identifier = "GUI"
 
         self.log_info("Initializing websocket connection")
         # TODO: create some error handling, when the connection goes down
@@ -107,6 +109,9 @@ class SupportWindow:
         self.ws.close()
 
         self.support_window.destroy()
+
+        if Config.DEBUG_MODE:
+            self.root_gui.destroy()
 
         self.log_info("Support window successfully destroyed")
 
@@ -146,12 +151,15 @@ class SupportWindow:
         self.health_check_label.place(relx=0.97, rely=0.01, relheight=0.04, relwidth=0.03)
         self.set_health_check(ok=True)
 
-        self.message_entry = tk.Entry(self.support_window, bg="orange", font=("Calibri", 25), bd=5)
+        self.message_in_entry = tk.StringVar()
+        self.message_in_entry.trace("w", self.handle_change_in_message_entry_text)
+
+        self.message_entry = tk.Entry(
+            self.support_window, textvariable=self.message_in_entry,
+            bg="orange", font=("Calibri", 25), bd=5)
         self.message_entry.place(relx=0, rely=0.88, relheight=0.08, relwidth=0.7)
         self.message_entry.focus_set()
         self.message_entry.bind("<Return>", (lambda event: self.process_message_from_entry()))
-        self.message_entry.bind("<Key>", (lambda event: self.send_content_of_message_entry(event)))
-        self.message_entry.bind("<space>", lambda event: self.spell_check_the_message_from_entry())
 
         self.spell_check_label = tk.Label(
             self.support_window, width=64, height=64, cursor="hand2")
@@ -409,16 +417,22 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_file_download)
 
-    def spell_check_the_message_from_entry(self):
-        message = self.get_text_from_message_entry()
-
-        self.log_info(f"Starting the spellcheck - {message}")
+    def spell_check_the_message(self, message):
         result = self.spell_checker.check_the_text_for_errors(message)
-        self.log_info(f"Finished spellcheck - {'SUCCESS' if result['success'] else 'FAILURE'}")
+        if result['success']:
+            self.log_info(f"Finished spellcheck - SUCCESS - '{message}'")
+        else:
+            corrections = result["corrected_words"]
+            self.log_info(f"Finished spellcheck - FAILURE - '{message}' - '{corrections}'")
 
-        self.set_spell_check_icon(result["success"])
+        self.set_spell_check_icon(ok=result["success"])
 
     def set_spell_check_icon(self, ok=True):
+        if self.spell_check_icon_ok == ok:
+            return
+        else:
+            self.spell_check_icon_ok == ok
+
         if ok:
             file_name = "icons/grammarly_icon_green.png"
         else:
@@ -438,15 +452,19 @@ class SupportWindow:
         else:
             self.dialogs.spell_check_uncovered_problems(result["corrected_words"])
 
-    def send_content_of_message_entry(self, event):
-        message = self.get_text_from_message_entry()
-        new_char = str(event.char)
-        backspace_identifier = "\x08"
-        if new_char != backspace_identifier:
-            message += new_char
-        else:
-            message = message[:-1]
+    def schedule_spell_check(self, message):
+        try:
+            self.root_gui.after_cancel(self.schedule_spell_check_id)
+        except ValueError:
+            pass
+        self.schedule_spell_check_id = self.root_gui.after(
+            self.miliseconds_to_wait_before_spell_check,
+            lambda: self.spell_check_the_message(message)
+        )
 
+    def handle_change_in_message_entry_text(self, *args):
+        message = self.get_text_from_message_entry()
+        self.schedule_spell_check(message)
         self.send_message_entry_to_websocket(message)
 
     def send_message_entry_to_websocket(self, message):
@@ -474,8 +492,6 @@ class SupportWindow:
             return self.handle_message_sending(message)
 
     def handle_message_sending(self, message):
-        self.send_message_entry_to_websocket("")
-
         self.clean_message_entry()
         self.focus_on_message_entry()
 
@@ -492,6 +508,7 @@ class SupportWindow:
 
         self.empty_answer_to_message_entry()
         self.show_answer_to_message_cancel_label(show=False)
+        self.set_spell_check_icon(ok=True)
 
     def get_answer_to_message(self):
         entry_content = self.answer_to_message_entry.get()
@@ -594,14 +611,17 @@ class SupportWindow:
         self.health_check_label.configure(bg=bg, text=text)
 
     def get_text_from_message_entry(self):
-        return self.message_entry.get()
+        return self.message_in_entry.get()
 
     def clean_message_entry(self):
         self.log_info("Cleaning message entry")
-        self.message_entry.delete(0, "end")
+        self.message_in_entry.set("")
 
     def focus_on_message_entry(self):
         self.message_entry.focus()
 
     def log_info(self, message):
         chat_logger.info(f"{self.log_identifier} - {message}")
+
+    def log_exception(self, message):
+        chat_logger.exception(f"{self.log_identifier} - {message}")

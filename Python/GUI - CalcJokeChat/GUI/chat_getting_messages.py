@@ -212,7 +212,7 @@ class GettingMessageData(threading.Thread):
         file_name = message_object.get("message", "")
         timestamp = message_object.get("timestamp", 0)
         time_to_show = self.get_time_to_show_in_message(timestamp)
-        text_to_show = f"{user_name} ({time_to_show}): FILE (click to download) - {file_name}\n"
+        text_to_show = f"{user_name} ({time_to_show})\nFILE (click to download)\n{file_name}\n"
         file_label = ttk.Label(
             self.parent.messages_frame.scrollable_frame, text=text_to_show,
             relief="solid", wraplengt=600, background=self.message_background,

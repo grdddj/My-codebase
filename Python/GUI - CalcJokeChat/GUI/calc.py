@@ -5,13 +5,15 @@ from tkinter import font
 from tkinter import messagebox
 
 from config import Config
-import chat_logger as logger
+import chat_logger
 
 
 class CalculatorGUI(tk.Frame):
     def __init__(self, parent, jokes, support_window, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
+
+        self.log_identifier = "CALC"
 
         self.jokes = jokes()
         self.jokes_list = self.jokes.JOKES
@@ -38,8 +40,14 @@ class CalculatorGUI(tk.Frame):
         if Config.DEBUG_MODE:
             self.show_support_window()
 
+        self.parent.protocol("WM_DELETE_WINDOW", self.on_destroy)
+
+    def on_destroy(self):
+        self.log_info("Destroying itself and the support window")
+        self.support_window.on_destroy()
+
     def show_gui(self):
-        logger.info("CALC - Showing the calculator GUI")
+        self.log_info("Showing the calculator GUI")
         expression_field = tk.Entry(self.parent, bg="white", font=("Calibri", 20),
                                     bd=5, textvariable=self.equation)
         expression_field.grid(columnspan=4, ipadx=145)
@@ -113,11 +121,11 @@ class CalculatorGUI(tk.Frame):
     def press_equals(self):
         try:
             total = str(eval(self.expression))
-            logger.info(f"CALC - Calculation made - '{self.expression} = {total}'")
+            self.log_info(f"Calculation made - '{self.expression} = {total}'")
             self.equation.set(total)
             self.expression = total
         except Exception as err:
-            logger.error(f"CALC - Expression could not be evaluated - {err}. Expression - {self.expression}")
+            self.log_error(f"Expression could not be evaluated - {err}. Expression - {self.expression}")
             self.equation.set("error")
             self.expression = ""
 
@@ -127,7 +135,7 @@ class CalculatorGUI(tk.Frame):
 
     def tell_joke(self):
         joke = random.choice(self.jokes_list)
-        logger.info(f"CALC - Telling a joke - {joke}")
+        self.log_info(f"Telling a joke - {joke}")
         messagebox.showinfo("'Joke'", joke)
 
     def show_support_window(self):
@@ -154,3 +162,9 @@ class CalculatorGUI(tk.Frame):
                          font=self.button_font, bd=self.button_border,
                          height=self.height_of_buttons, width=self.width_of_buttons,
                          command=lambda: self.press_number_or_operator(operator))
+
+    def log_info(self, message):
+        chat_logger.info(f"{self.log_identifier} - {message}")
+
+    def log_error(self, message):
+        chat_logger.error(f"{self.log_identifier} - {message}")

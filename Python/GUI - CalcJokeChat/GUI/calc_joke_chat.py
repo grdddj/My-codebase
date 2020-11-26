@@ -37,6 +37,13 @@ import chat_logger as logger
 # TODO: when the message in entry is too long, the last character is sometimes not visible
 # TODO: message area accepting drops of files
 # TODO: selfhealing of WS connection problems (reconnect in after() loop)
+# TODO: colour matching Answer-To with a matching colour
+# TODO: have the messages exporteable into .txt or .csv or .json
+# TODO: game of each one writing one word in a sentence
+# TODO: when the message in entry is long, it cannot be seen by the other (focus on the end all the time)
+# TODO: FIX - reopen support fails to setup WS conn *- put it from init into show supp. w.
+# TODO: increase the error label
+# TODO: show last online time
 
 
 if __name__ == "__main__":

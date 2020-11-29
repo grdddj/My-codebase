@@ -19,8 +19,6 @@ user_agent = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
               " (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36")
 request_headers = {"User-Agent": user_agent}
 
-# TODO: create logging of info and errors
-
 
 def add_details_to_all_flats():
     logger.log_info("Starting to adding detail to all flats")
@@ -66,6 +64,9 @@ def include_new_information(results):
 
 
 def incorporate_new_info(info_dict, up_to_date_info):
+    info_dict["last_update_ts"] = helpers.get_current_ts()
+    info_dict["last_update_date"] = helpers.get_current_date()
+
     for new_key, new_info in up_to_date_info.items():
         if new_key not in info_dict:
             info_msg = "Filling new info (id {}): {}".format(
@@ -78,7 +79,7 @@ def incorporate_new_info(info_dict, up_to_date_info):
             if new_key == "last_edit":
                 info_dict[new_key] = new_info
                 continue
-                
+
             if info_dict[new_key] != new_info:
                 info_msg = "Info changed (id {}): key {} from {} to {}".format(
                     info_dict["flat_id"], new_key, info_dict[new_key], new_info)
@@ -125,6 +126,7 @@ def get_up_to_date_info(flat_id):
         "state_of_offer": "Stav",
         "owning_state": "Vlastnictví",
         "area_in_square_meters": "Užitná plocha",
+        "state_of_object": "Stav objektu",
     }
 
     captured_info = get_captured_info(content, names_and_identifier_to_capture)

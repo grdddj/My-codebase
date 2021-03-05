@@ -302,9 +302,15 @@ class Statistics:
             price = basic_info["price"]
 
             first_seen = flat["first_seen_date"]
-            link = flat["link"]
+            last_update = flat["last_update_date"]
 
-            data.append([info, price, first_seen, link])
+            link = flat["link"]
+            if last_update == helpers.get_current_date():
+                link_to_show = link
+            else:
+                link_to_show = f"SOLD on {last_update}!"
+
+            data.append([info, price, first_seen, link_to_show])
 
         headers = ["info", "price", "first_seen", "link"]
         table = tabulate(data, headers=headers, tablefmt='grid')

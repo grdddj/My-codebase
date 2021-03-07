@@ -2,3 +2,4 @@
 *credentials*
 google*
 *.log
+__pycache__

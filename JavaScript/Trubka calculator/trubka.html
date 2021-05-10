@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Calculating trubka">
+    <meta name="keywords" content="trubka">
+    <meta name="author" content="Jiří Musil">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script type="text/javascript" src="trubka.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="trubka.css">
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>Trubka calculator</h2>
+
+      <br>
+
+      <h4>Základní parametry</h4>
+
+      Délka polotovaru trubky [mm]
+      <input id="delka_polotovaru" type="number" value="6000" placeholder="Délka polotovaru trubky">
+
+      <br>
+
+      Délka odpadu [mm]
+      <input id="delka_odpadu" type="number" value="120" placeholder="Délka odpadu">
+
+      <br>
+
+      Délka odřezu [mm]
+      <input id="delka_odrezu" type="number" value="2" placeholder="Délka odřezu">
+
+      <br>
+      <hr>
+
+      <h4>Počty a velikosti trubek</h4>
+      <div id="pocty_a_velikosti">
+        <p id="trubka_1" class="pocet_a_velikost">
+          Délka trubky [mm]
+          <input id="trubka_1_delka" type="number" name="" value="3333" placeholder="Délka trubky">
+
+          Počet trubek
+          <input id="trubka_1_pocet" type="number" name="" value="2" placeholder="Počet trubek">
+
+          <button class="vymaz_trubku btn btn-primary red" name="trubka_1">Vymaž trubku!</button>
+        </p>
+
+        <p id="trubka_2" class="pocet_a_velikost">
+          Délka trubky [mm]
+          <input id="trubka_2_delka" type="number" name="" value="666" placeholder="Délka trubky">
+
+          Počet trubek
+          <input id="trubka_2_pocet" type="number" name="" value="3" placeholder="Počet trubek">
+
+          <button class="vymaz_trubku btn btn-primary red" name="trubka_2" type="button">Vymaž trubku!</button>
+        </p>
+      </div>
+
+
+      <button id="pridej_trubku" type="button" class="btn btn-primary green">Přidej novou trubku!</button>
+      <br>
+
+      <br>
+      <hr>
+
+      <button id="pocitej" type="button" class="btn btn-primary">Počítači, počítej!</button>
+
+      <hr>
+
+      <p><b>Celkový počet trubek:</b> <span id="pocet_trubek"></span></p>
+      <p><b>Celkový odpad [mm]:</b> <span id="celkovy_odpad"></span></p>
+
+
+      <p><b>Detaily trubek:</b> </p>
+
+      <table id="detaily_trubek" class="table table-striped">
+        <tr>
+          <th>Číslo trubky</th>
+          <th>Zbytek [mm]</th>
+          <th>Jednotlivé řezy [mm]</th>
+        </tr>
+      </table>
+    </div>
+  </body>
+</html>

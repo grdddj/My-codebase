@@ -32,8 +32,8 @@
 
       <br>
 
-      Délka odřezu [mm]
-      <input id="delka_odrezu" type="number" value="2" placeholder="Délka odřezu">
+      Délka prořezu [mm]
+      <input id="delka_prorezu" type="number" value="2" placeholder="Délka prořezu">
 
       <br>
       <hr>
@@ -72,19 +72,29 @@
 
       <hr>
 
-      <p><b>Celkový počet trubek:</b> <span id="pocet_trubek"></span></p>
-      <p><b>Celkový odpad [mm]:</b> <span id="celkovy_odpad"></span></p>
 
 
       <p><b>Detaily trubek:</b> </p>
 
       <table id="detaily_trubek" class="table table-striped">
         <tr>
-          <th>Číslo trubky</th>
+          <th>Číslo profilu</th>
           <th>Zbytek [mm]</th>
           <th>Jednotlivé řezy [mm]</th>
         </tr>
       </table>
+
+      <div id="zprava">
+        <h4>Zpráva</h4>
+        <p><b>Celkový počet trubek:</b> <span id="pocet_trubek"></span></p>
+        <p><b>Celkem polotovaru [mm]:</b> <span id="celkem_polotovaru"></span></p>
+        <p><b>Celkový odpad [mm]:</b> <span id="celkovy_odpad"></span></p>
+        <p><b>Detaily profilů:</b></p>
+        <p id="zprava_detaily">
+          
+        </p>
+      </div>
+
     </div>
   </body>
 </html>

@@ -20,6 +20,15 @@ function spocitej_vysledky() {
 
   let trubky_od_nejdelsi_po_nejkratsi = delky_vsech_trubek.sort(function(a,b) {return b - a;});
 
+  if (trubky_od_nejdelsi_po_nejkratsi[0] > produktivni_delka_polotovaru + delka_prorezu) {
+    error = `
+Nejdelší trubka (${trubky_od_nejdelsi_po_nejkratsi[0]}) je delší než
+produktivní polotovar (${produktivni_delka_polotovaru}) - to asi nepůjde.
+`
+    alert(error);
+    return;
+  }
+
 
   let vysledne_trubky_s_jejich_detaily = [];
   vysledne_trubky_s_jejich_detaily.push(

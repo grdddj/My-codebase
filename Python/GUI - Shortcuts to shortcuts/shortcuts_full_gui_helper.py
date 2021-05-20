@@ -7,6 +7,7 @@ It is mapping individual keys to customized keyboard shortcuts,
 from pynput.keyboard import Key, Listener
 import pyautogui
 
+
 class ShortcutsToShortcuts:
     """
     Defining the settings of which keys to listen for
@@ -25,7 +26,8 @@ class ShortcutsToShortcuts:
             "Alt+Tab": [Key.ctrl_r],
             "Ctrl+C": [Key.ctrl_r],
             "Ctrl+V": [Key.ctrl_r],
-            "Ctrl+W": [Key.ctrl_r]
+            "Ctrl+W": [Key.ctrl_r],
+            "Play+Pause": [Key.alt_r],
         }
 
         # Defining which action to perform in specified mode
@@ -33,7 +35,8 @@ class ShortcutsToShortcuts:
             "Alt+Tab": self.alt_tab,
             "Ctrl+C": self.ctrl_c,
             "Ctrl+V": self.ctrl_v,
-            "Ctrl+W": self.ctrl_w
+            "Ctrl+W": self.ctrl_w,
+            "Play+Pause": self.play_pause,
         }
 
         # List of all available modes
@@ -57,6 +60,9 @@ class ShortcutsToShortcuts:
     def ctrl_w(self):
         pyautogui.hotkey('ctrl', 'w')
 
+    def play_pause(self):
+        pyautogui.press("playpause")
+
     def on_release(self, key):
         """
         What to do when a key is released - listen to specified keys and
@@ -71,6 +77,7 @@ class ShortcutsToShortcuts:
     def start_listening_loop(self):
         with Listener(on_release=self.on_release) as listener:
             listener.join()
+
 
 # Listening for keyboard events
 if __name__ == "__main__":

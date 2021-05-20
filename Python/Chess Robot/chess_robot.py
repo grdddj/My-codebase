@@ -7,7 +7,6 @@ Is tuned for websites chess.com and playok.com, but can be relatively easily
     upgraded to handle almost any chessboard.
 
 Possible improvements:
-- having it more modular instead of one script
 - handling of promotion via image recognition
 
 - wait for some variable time before making a move, not to look suspicious
@@ -18,311 +17,190 @@ Possible improvements:
 """
 
 import pyautogui
-from pynput import mouse
 import time
 
 # Documentation here: https://python-chess.readthedocs.io/en/latest/
 import chess
 import chess.engine
 
-# Initializing the chessboard
-# Downloading stockfish engine at https://stockfishchess.org/download/
-board = chess.Board()
-engine = chess.engine.SimpleEngine.popen_uci("D:\stockfish-10-win\Windows\stockfish_10_x64")
-limit = chess.engine.Limit(time=0.2)
+from helpers import HelpersToAssignChessboard, HelpersToAnalyzeChessboard
+from config import Config
 
-# Getting the colour user will be playing with
-print("Please move the console to a second screen")
-our_colour = input("Choose the colour: ")
-if our_colour and our_colour[0] == "b":
-    our_colour = "black"
-else:
-    our_colour = "white"
-print("You chose {} pieces, good luck in the game!".format(our_colour))
 
-# Defining helper methods for this file
-class HelpersToAssignChessboard:
-    def stop_listening():
-        global left_top, right_bottom
-        if left_top is not None and right_bottom is not None:
-            print("stopping the assignment")
-            return True
-        return False
+class ChessRobot:
+    def __init__(self):
+        self.CHESSBOARD_ASSIGNER = HelpersToAssignChessboard()
+        self.board = chess.Board()
+        self.engine = chess.engine.SimpleEngine.popen_uci(Config.engine_location)
+        self.time_limit_to_analyze = chess.engine.Limit(time=Config.time_limit_to_think)
 
-    def on_click(x, y, button, pressed):
-        global left_top, right_bottom
-        if HelpersToAssignChessboard.stop_listening():
-            return False
-        if button == mouse.Button.right and pressed:
-            if left_top is None:
-                left_top = (x, y)
-                print("left_top assigned - {},{}".format(x, y))
-                print("Please rightlick the most bottomright corner of the chessboard")
-            elif right_bottom is None:
-                right_bottom = (x, y)
-                print("right_bottom assigned - {},{}".format(x, y))
+        self.our_colour = None
+        self.left_top_pixel_coords = None
+        self.right_bottom_pixel_coords = None
+        self.board_size = None
+        self.square_size = None
+        self.square_centers = None
 
-    def create_dict_of_square_centers(left_top, right_bottom, our_colour):
-        board_size = right_bottom[0] - left_top[0]
-        square_size = board_size // 8
+        self.colours_of_highlighted_moves = [
+            Config.white_field_highlight_colour,
+            Config.black_field_highlight_colour
+        ]
 
-        # Constructing the dictionary of square centers
-        # We must distinguish between playing white or black when doing that
-        rows = "12345678"
-        columns = "abcdefgh"
-        square_centers = {}
+        self.previously_highlighted_squares = []
+        self.our_last_move_from_and_to = []
 
-        for col_index, col in enumerate(columns):
-            for row_index, row in enumerate(rows):
-                coord = col + row
-                if our_colour == "white":
-                    center_x = left_top[0] + (square_size // 2 + col_index * square_size)
-                    center_y = right_bottom[1] - (square_size // 2 + row_index * square_size)
-                else:
-                    center_x = right_bottom[0] - (square_size // 2 + col_index * square_size)
-                    center_y = left_top[1] + (square_size // 2 + row_index * square_size)
-                square_centers[coord] = (center_x, center_y)
+    def start_the_game(self) -> None:
+        self.get_our_colour_from_user()
+        self.get_chessboard_boundaries_if_not_set()
+        self.get_chessboard_details()
+        self.start_observing_the_chessboard()
 
-        return square_centers
-
-class HelpersToAnalyzeChessboard:
-    def are_there_colours_in_a_PIL_image(PIL_image,
-                                           colours_to_locate: list) -> dict:
-        # Getting the list of all colours in that image
-        ocurrences_and_colours = PIL_image.getcolors(maxcolors=66666)
-
-        # Trying to locate our wanted colour there
-        for ocurrence, colour in ocurrences_and_colours:
-            if colour in colours_to_locate:
-                return {"is_there": True, "ocurrences": ocurrence}
+    def get_our_colour_from_user(self) -> None:
+        print("Be sure to play on your main screen. Please move the console to a second screen.")
+        colour_input = input("Choose the colour: WHITE/(b)lack")
+        if colour_input and colour_input[0].lower() == "b":
+            self.our_colour = "black"
         else:
-            return {"is_there": False, "ocurrences": None}
+            self.our_colour = "white"
+        print("You chose {} pieces, good luck in the game!".format(self.our_colour))
 
-    def get_highlighted_squares_from_picture(whole_screen, square_centers, square_size, highlighted_colours):
-        highlighted_squares = []
+    def get_chessboard_boundaries_if_not_set(self) -> None:
+        # Initializing the coordinates and below having the possibility of choosing
+        #   already known websites, where we know the coordinates of the chessboard
+        self.left_top = Config.left_top
+        self.right_bottom = Config.right_bottom
 
-        # Defining how big part of a square will be cut out to allow for some
-        #   inacurracies in square identification (so that the highlighted
-        #   colours are really found only on two squares)
-        square_boundary = 0.1
-        square_boundary_pixels = square_size * square_boundary
+        # Seeing if we have not already assigned the board, in that case find the coords
+        if self.left_top is None or self.right_bottom is None:
+            self.left_top, self.right_bottom = self.CHESSBOARD_ASSIGNER.get_left_top_and_right_bottom()
 
-        # Looping through all squares, and testing if they contain highlighted
-        #   colour
-        for key, value in square_centers.items():
-            left_top_x_square = value[0] - square_size // 2
-            left_top_y_square = value[1] - square_size // 2
-            square = whole_screen.crop((left_top_x_square + square_boundary_pixels,
-                                        left_top_y_square + square_boundary_pixels,
-                                        left_top_x_square + square_size - square_boundary_pixels,
-                                        left_top_y_square + square_size - square_boundary_pixels))
-            are_there = HelpersToAnalyzeChessboard.are_there_colours_in_a_PIL_image(square, highlighted_colours)
-            if are_there["is_there"]:
-                highlighted_squares.append(key)
+    def get_chessboard_details(self) -> None:
+        self.board_size = self.right_bottom[0] - self.left_top[0]
+        self.square_size = self.board_size // 8
+        self.square_centers = self.CHESSBOARD_ASSIGNER.create_dict_of_square_centers(
+            self.left_top, self.right_bottom, self.our_colour)
 
-        return highlighted_squares
+    def start_observing_the_chessboard(self) -> None:
+        # Serving as a convenient starter
+        input("After you press Enter, the play will begin!")
 
-    def get_highlighted_squares_from_picture_kurnik(whole_screen, square_centers, square_size, highlighted_colours):
-        highlighted_squares = []
+        # Making sure we play the first move when we are white
+        we_should_start_as_white = (
+            self.our_colour == "white"
+            and
+            self.board.fullmove_number == 1
+        )
+        if we_should_start_as_white:
+            print("Kicking the game by playing first")
+            self.do_a_move_by_ourselves()
 
-        # Defining how big part of a square will be cut out to allow for some
-        #   inacurracies in square identification (so that the highlighted
-        #   colours are really found only on two squares)
-        square_boundary = 0
-        square_boundary_pixels = square_size * square_boundary
+        # Start an infinite watching loop
+        print("Starting to observe the board")
+        while True:
+            time.sleep(Config.sleep_interval_between_screenshots)
 
-        # Looping through all squares, and testing if they contain highlighted
-        #   colour
-        for key, value in square_centers.items():
-            left_top_x_square = value[0] - square_size // 2
-            left_top_y_square = value[1] - square_size // 2
-            square = whole_screen.crop((left_top_x_square + square_boundary_pixels,
-                                        left_top_y_square + square_boundary_pixels,
-                                        left_top_x_square + square_size - square_boundary_pixels,
-                                        left_top_y_square + square_size - square_boundary_pixels))
+            # Making a screenshot of the whole screen
+            whole_screen = pyautogui.screenshot()
 
-            # Creating four sub-squares, to test if the colour is present in
-            #   at least three of them - which signs success
-            length = square.size[0]
-            step = length // 2
-            sub_squares = [
-                (0, 0, step , step),
-                (step, 0, step * 2 , step),
-                (0, step, step , step * 2),
-                (step, step, step * 2 , step * 2)
+            # Getting a list of (in most cases 2) squares that are highlighted
+            #   as a sign of previous move
+            if Config.website == "kurnik":
+                func = HelpersToAnalyzeChessboard.get_highlighted_squares_from_picture_kurnik
+            else:
+                func = HelpersToAnalyzeChessboard.get_highlighted_squares_from_picture
+            highlighted_squares = func(
+                whole_screen, self.square_centers, self.square_size, self.colours_of_highlighted_moves)
+
+            # When there is a new valid highlighted situation, determine what move
+            #   was played and also come up with a move
+            some_move_was_done = (
+                len(highlighted_squares) == 2
+                and
+                highlighted_squares != self.previously_highlighted_squares
+            )
+            if not some_move_was_done:
+                continue
+
+            self.previously_highlighted_squares = highlighted_squares
+
+            # It is opponent's turn
+            highlighted_move_is_ours = (
+                self.our_last_move_from_and_to == highlighted_squares
+                or
+                self.our_last_move_from_and_to == list(reversed(highlighted_squares))
+            )
+            if highlighted_move_is_ours:
+                print("Last move was ours, it is opponents's turn")
+                continue
+
+            print("We have identified a new move by opponent!!!")
+            move_done_by_opponent = None
+
+            possible_moves_from_highlight = [
+                highlighted_squares[0] + highlighted_squares[1],
+                highlighted_squares[1] + highlighted_squares[0]
             ]
 
-            found = 0
-            for sub_square in sub_squares:
-                smaller_square = square.crop(sub_square)
-                are_there = HelpersToAnalyzeChessboard.are_there_colours_in_a_PIL_image(
-                    smaller_square, highlighted_colours)
-                if are_there["is_there"]:
-                    found += 1
+            # Looping through all (2) possibilities of movement between the two
+            #   highlighted squares, and determining, which one of them is a valid move
+            for move in possible_moves_from_highlight:
+                if chess.Move.from_uci(move) in self.board.legal_moves:
+                    move_done_by_opponent = move
+                    break
 
-            if found > 2:
-                highlighted_squares.append(key)
+            if not move_done_by_opponent:
+                print("No move was done - please investigate, why")
+                print("possible_moves_from_highlight", possible_moves_from_highlight)
+                print("our_last_move_from_and_to", self.our_last_move_from_and_to)
+                print("highlighted_squares", highlighted_squares)
+                continue
 
-        return highlighted_squares
+            # Playing the opponent's move on an internal board
+            self.board.push(chess.Move.from_uci(move_done_by_opponent))
+            print("Move was done by opponent: {}".format(chess.Move.from_uci(move_done_by_opponent)))
 
-    def drag_mouse_from_square_to_square(from_square, to_square):
-        initial_position = pyautogui.position()
+            if self.board.is_game_over():
+                print("SEEMS WE HAVE LOST. MAYBE NEXT TIME!!")
+                break
 
-        try:
-            from_center = square_centers[from_square]
-        except KeyError:
-            print("Coordination '{}' does not exist!".format(from_square))
-            return
+            self.do_a_move_by_ourselves()
 
-        try:
-            to_center = square_centers[to_square]
-        except KeyError:
-            print("Coordination '{}' does not exist!".format(to_square))
-            return
+            if self.board.is_game_over():
+                print("YOU HAVE WON, CONGRATULATIONS!!")
+                break
 
-        pyautogui.click(*from_center)
-        pyautogui.click(*to_center)
-
-        pyautogui.moveTo(*initial_position)
-        pyautogui.click(*initial_position)
-
-# Initializing the coordinates and below having the possibility of choosing
-#   already known websites, where we know the coordinates of the chessboard
-left_top = None
-right_bottom = None
-
-# https://lichess.org/editor
-# left_top = (479, 291)
-# right_bottom = (1026, 837)
-
-# https://www.chess.com/cs/analysis
-# left_top = (351, 152)
-# right_bottom = (1206, 1007)
-
-# https://www.chess.com/cs/play/computer
-# left_top = (460, 170)
-# right_bottom = (1277, 982)
-
-# https://www.playok.com/cs/sachy/
-left_top = (425, 208)
-right_bottom = (1108, 889)
-
-
-# Seeing if we have not already assigned the board, in that case find the coords
-if left_top is None:
-    print("Please rightlick the most upperleft corner of the chessboard")
-    with mouse.Listener(
-            on_click=HelpersToAssignChessboard.on_click) as listener:
-        listener.join()
-
-
-# Getting the chessboard dimensions
-board_size = right_bottom[0] - left_top[0]
-square_size = board_size // 8
-square_centers = HelpersToAssignChessboard.create_dict_of_square_centers(left_top, right_bottom, our_colour)
-print("board_size", board_size)
-print("square_size", square_size)
-print("square_centers", square_centers)
-
-# Determining which colours are a sign of a piece movement
-# This info is specific to chess.com
-white_field_highlight_colour = (246, 246, 130)
-black_field_highlight_colour = (186, 202, 68)
-# highlighted_colours = [white_field_highlight_colour, black_field_highlight_colour]
-highlighted_colours = [(47, 66, 45), (17, 53, 20)]
-
-# Defining loop variables and parameters
-previously_highlighted_squares = []
-our_colour_chess = chess.WHITE if our_colour == "white" else chess.BLACK
-sleep_interval = 0.2
-first_move_played_as_white = False
-
-# Serving as a convenient starter
-input("After you press Enter, the recording will begin!")
-
-# Start an infinite watching loop
-print("Starting to observe the board")
-while True:
-    time.sleep(sleep_interval)
-    # Making sure we play the first move when we are white, and we do not response as black
-    if our_colour == "white" and board.fullmove_number == 1 and not first_move_played_as_white:
+    def do_a_move_by_ourselves(self) -> None:
         # Figuring out the current best move as a response
-        result = engine.play(board, limit)
+        result = self.engine.play(self.board, self.time_limit_to_analyze)
 
         # Parsing two squares that define the current move
         # Promoting a pawn has a structure of c2c1q
         move_string = str(result.move)
         from_square = move_string[0:2]
         to_square = move_string[2:4]
+        self.our_last_move_from_and_to = [from_square, to_square]
 
         # Playing the move on the screen chessboard
-        HelpersToAnalyzeChessboard.drag_mouse_from_square_to_square(from_square, to_square)
+        HelpersToAnalyzeChessboard.drag_mouse_from_square_to_square(
+            self.square_centers, from_square, to_square)
+
+        # If there is a promotion, presume we will have a queen, so click
+        #   the to_square once again
+        # TODO: add a picture of a promotion queen to the game
+        if len(move_string) > 4:
+            pyautogui.click(self.square_centers[to_square])
 
         # Playing the move on an internal board
-        board.push(result.move)
+        self.board.push(result.move)
 
         print("I AM PLAYING {}!!".format(result.move))
-        first_move_played_as_white = True
 
-    # Making a screenshot of the whole screen
-    whole_screen = pyautogui.screenshot()
 
-    # Getting a list of (in most cases 2) squares that are highlighted
-    #   as a sign of previous move
-    # highlighted_squares = HelpersToAnalyzeChessboard.get_highlighted_squares_from_picture(
-    #     whole_screen, square_centers, square_size, highlighted_colours)
-    highlighted_squares = HelpersToAnalyzeChessboard.get_highlighted_squares_from_picture_kurnik(
-        whole_screen, square_centers, square_size, highlighted_colours)
-
-    # When there is a new valid highlighted situation, determine what move
-    #   was played and also come up with a move
-    if len(highlighted_squares) == 2 and highlighted_squares != previously_highlighted_squares:
-        print("we should make a move!!!")
-        move_that_was_done = None
-
-        possible_moves_from_highlight = [highlighted_squares[0] + highlighted_squares[1], highlighted_squares[1] + highlighted_squares[0]]
-
-        # Looping through all (2) possibilities of movement between the two
-        #   highlighted squares, and determining, which one of them is a valid move
-        for move in possible_moves_from_highlight:
-            if chess.Move.from_uci(move) in board.legal_moves:
-                print("WE HAVE FOUND A MOVE!!! - {}".format(move))
-                move_that_was_done = move
-                break
-
-        if move_that_was_done:
-            if board.turn == our_colour_chess:
-                print("not our turn")
-                continue
-            # Playing the move on an internal board
-            board.push(chess.Move.from_uci(move_that_was_done))
-            print("move was done: {}".format(chess.Move.from_uci(move_that_was_done)))
-
-            # Figuring out the current best move as a response
-            result = engine.play(board, limit)
-
-            # Parsing two squares that define the current move
-            # Promoting a pawn has a structure of c2c1q
-            move_string = str(result.move)
-            from_square = move_string[0:2]
-            to_square = move_string[2:4]
-
-            # Playing the move on the screen chessboard
-            HelpersToAnalyzeChessboard.drag_mouse_from_square_to_square(from_square, to_square)
-            # If there is a promotion, presume we will have a queen, so click
-            #   the to_square once again
-            # TODO: add a picture of a promotion queen to the game
-            if len(move_string) > 4:
-                pyautogui.click(square_centers[to_square])
-
-            # Playing the move on an internal board
-            board.push(result.move)
-
-            print("I AM PLAYING {}!!".format(result.move))
-
-        previously_highlighted_squares = highlighted_squares
-
-    # When the game is over, terminate the loop
-    if board.is_game_over():
-        print("CONGRATULATIONS!!")
-        break
+if __name__ == "__main__":
+    while True:
+        try:
+            robot = ChessRobot()
+            robot.start_the_game()
+        except KeyboardInterrupt:
+            print("Thank you for the games!")
+            break

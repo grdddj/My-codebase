@@ -1,8 +1,14 @@
+from pynput import keyboard
+
+
 class Config:
     # Downloading stockfish engine at https://stockfishchess.org/download/
     engine_location = r"D:\stockfish-10-win\Windows\stockfish_10_x64"
-    time_limit_to_think = 0.33
-    sleep_interval_between_screenshots = 0.2
+    time_limit_to_think = 0.2
+    sleep_interval_between_screenshots = 0.1
+
+    wait_for_keyboard_trigger_to_play = True
+    keyboard_trigger = keyboard.Key.alt_r
 
     ###########################################
     # PART ABOUT THE COORDINATES

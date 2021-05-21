@@ -1,13 +1,16 @@
 from pynput import keyboard
+import os
+
+file_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 class Config:
-    # Downloading stockfish engine at https://stockfishchess.org/download/
-    engine_location = r"D:\stockfish-10-win\Windows\stockfish_10_x64"
+    # Stockfish engine downloaded at https://stockfishchess.org/download/
+    engine_location = os.path.join(file_dir, "stockfish_13_win_x64_bmi2")
     time_limit_to_think = 0.2
     sleep_interval_between_screenshots = 0.1
 
-    wait_for_keyboard_trigger_to_play = True
+    wait_for_keyboard_trigger_to_play = False
     keyboard_trigger = keyboard.Key.alt_r
 
     ###########################################

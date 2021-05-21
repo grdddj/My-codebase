@@ -3,8 +3,8 @@ This script is playing chess without any human intervention (almost).
 Just define the coordination of the chessboard and some identificator
     of the oponent moves, and it is ready to beat even the strongest
     grandmasters!
-Is tuned for websites chess.com and playok.com, but can be relatively easily
-    upgraded to handle almost any chessboard.
+Was developed mostly on chess.com, lichess.org and playok.com,
+    but can be relatively easily upgraded to handle almost any chessboard.
 
 Possible improvements:
 - listen for certain keys when being turned on and off, so we do not have

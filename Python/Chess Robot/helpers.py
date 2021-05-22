@@ -1,66 +1,78 @@
 import pyautogui
 from pynput import mouse
 
+# Making all pyautogui actions faster, default is 0.1 seconds
+pyautogui.PAUSE = 0.01
+
 
 class HelpersToAssignChessboard:
     def __init__(self):
-        self.left_top = None
-        self.right_bottom = None
+        self.chessboard_left_top_pixel = None
+        self.chessboard_right_bottom_pixel = None
 
-    def get_left_top_and_right_bottom(self) -> tuple:
+    def get_left_top_and_right_bottom_chessboard_pixels(self) -> tuple:
         print("Please rightlick the most upperleft corner of the chessboard")
         with mouse.Listener(
-                on_click=self.on_click) as listener:
+                on_click=self.assign_two_corners_on_click) as listener:
             listener.join()
 
-        return (self.left_top, self.right_bottom)
+        print("Boundaries assigned, you may want to save them into config.py")
 
-    def stop_listening_on_mouse_input(self):
-        if self.left_top is not None and self.right_bottom is not None:
+        return (self.chessboard_left_top_pixel, self.chessboard_right_bottom_pixel)
+
+    def stop_listening_on_mouse_input(self) -> bool:
+        if self.chessboard_left_top_pixel is not None and self.chessboard_right_bottom_pixel is not None:
             print("stopping the assignment")
             return True
         return False
 
-    def on_click(self, x, y, button, pressed):
-        if self.stop_listening_on_mouse_input():
-            return False
+    def assign_two_corners_on_click(self, x: int, y: int, button, pressed: bool) -> bool:
         if button == mouse.Button.right and pressed:
-            if self.left_top is None:
-                self.left_top = (x, y)
-                print("left_top assigned - {},{}".format(x, y))
+            if self.chessboard_left_top_pixel is None:
+                self.chessboard_left_top_pixel = (x, y)
+                print("chessboard_left_top_pixel assigned - {},{}".format(x, y))
                 print("Please rightlick the most bottomright corner of the chessboard")
-            elif self.right_bottom is None:
-                self.right_bottom = (x, y)
-                print("right_bottom assigned - {},{}".format(x, y))
+            elif self.chessboard_right_bottom_pixel is None:
+                self.chessboard_right_bottom_pixel = (x, y)
+                print("chessboard_right_bottom_pixel assigned - {},{}".format(x, y))
+
+        return not self.stop_listening_on_mouse_input()
 
     @staticmethod
-    def create_dict_of_square_centers(left_top, right_bottom, our_colour):
-        board_size = right_bottom[0] - left_top[0]
-        square_size = board_size // 8
+    def create_dict_of_square_centers(
+        chessboard_left_top_pixel: tuple,
+        chessboard_right_bottom_pixel: tuple,
+        our_colour: str
+    ) -> dict:
+        chessboard_size = chessboard_right_bottom_pixel[0] - chessboard_left_top_pixel[0]
+        square_size = chessboard_size // 8
 
         # Constructing the dictionary of square centers
         # We must distinguish between playing white or black when doing that
         rows = "12345678"
         columns = "abcdefgh"
-        square_centers = {}
+        square_centers_dict = {}
 
         for col_index, col in enumerate(columns):
             for row_index, row in enumerate(rows):
                 coord = col + row
                 if our_colour == "white":
-                    center_x = left_top[0] + (square_size // 2 + col_index * square_size)
-                    center_y = right_bottom[1] - (square_size // 2 + row_index * square_size)
+                    center_x = chessboard_left_top_pixel[0] + (square_size // 2 + col_index * square_size)
+                    center_y = chessboard_right_bottom_pixel[1] - (square_size // 2 + row_index * square_size)
                 else:
-                    center_x = right_bottom[0] - (square_size // 2 + col_index * square_size)
-                    center_y = left_top[1] + (square_size // 2 + row_index * square_size)
-                square_centers[coord] = (center_x, center_y)
+                    center_x = chessboard_right_bottom_pixel[0] - (square_size // 2 + col_index * square_size)
+                    center_y = chessboard_left_top_pixel[1] + (square_size // 2 + row_index * square_size)
+                square_centers_dict[coord] = (center_x, center_y)
 
-        return square_centers
+        return square_centers_dict
 
 
 class HelpersToAnalyzeChessboard:
-    def are_there_colours_in_a_PIL_image(PIL_image,
-                                         colours_to_locate: list) -> dict:
+    @staticmethod
+    def are_there_colours_in_a_PIL_image(
+        PIL_image,
+        colours_to_locate: list
+    ) -> dict:
         # Getting the list of all colours in that image
         ocurrences_and_colours = PIL_image.getcolors(maxcolors=66666)
 
@@ -71,7 +83,13 @@ class HelpersToAnalyzeChessboard:
         else:
             return {"is_there": False, "ocurrences": None}
 
-    def get_highlighted_squares_from_picture(whole_screen, square_centers, square_size, highlighted_colours):
+    @staticmethod
+    def get_highlighted_squares_from_picture(
+        whole_screen,
+        square_centers_dict: dict,
+        square_size: int,
+        highlighted_colours: list
+    ) -> list:
         highlighted_squares = []
 
         # Defining how big part of a square will be cut out to allow for some
@@ -82,20 +100,32 @@ class HelpersToAnalyzeChessboard:
 
         # Looping through all squares, and testing if they contain highlighted
         #   colour
-        for key, value in square_centers.items():
+        for key, value in square_centers_dict.items():
             left_top_x_square = value[0] - square_size // 2
             left_top_y_square = value[1] - square_size // 2
-            square = whole_screen.crop((left_top_x_square + square_boundary_pixels,
-                                        left_top_y_square + square_boundary_pixels,
-                                        left_top_x_square + square_size - square_boundary_pixels,
-                                        left_top_y_square + square_size - square_boundary_pixels))
-            are_there = HelpersToAnalyzeChessboard.are_there_colours_in_a_PIL_image(square, highlighted_colours)
+            corners_of_current_square = (
+                left_top_x_square + square_boundary_pixels,
+                left_top_y_square + square_boundary_pixels,
+                left_top_x_square + square_size - square_boundary_pixels,
+                left_top_y_square + square_size - square_boundary_pixels
+            )
+            square_image = whole_screen.crop(corners_of_current_square)
+            are_there = HelpersToAnalyzeChessboard.are_there_colours_in_a_PIL_image(
+                PIL_image=square_image,
+                colours_to_locate=highlighted_colours
+            )
             if are_there["is_there"]:
                 highlighted_squares.append(key)
 
         return highlighted_squares
 
-    def get_highlighted_squares_from_picture_kurnik(whole_screen, square_centers, square_size, highlighted_colours):
+    @staticmethod
+    def get_highlighted_squares_from_picture_kurnik(
+        whole_screen,
+        square_centers_dict: dict,
+        square_size: int,
+        highlighted_colours: list
+    ) -> list:
         highlighted_squares = []
 
         # Defining how big part of a square will be cut out to allow for some
@@ -106,19 +136,22 @@ class HelpersToAnalyzeChessboard:
 
         # Looping through all squares, and testing if they contain highlighted
         #   colour
-        for key, value in square_centers.items():
+        for key, value in square_centers_dict.items():
             left_top_x_square = value[0] - square_size // 2
             left_top_y_square = value[1] - square_size // 2
-            square = whole_screen.crop((left_top_x_square + square_boundary_pixels,
-                                        left_top_y_square + square_boundary_pixels,
-                                        left_top_x_square + square_size - square_boundary_pixels,
-                                        left_top_y_square + square_size - square_boundary_pixels))
+            corners_of_current_square = (
+                left_top_x_square + square_boundary_pixels,
+                left_top_y_square + square_boundary_pixels,
+                left_top_x_square + square_size - square_boundary_pixels,
+                left_top_y_square + square_size - square_boundary_pixels
+            )
+            square = whole_screen.crop(corners_of_current_square)
 
             # Creating four sub-squares, to test if the colour is present in
             #   at least three of them - which signs success
             length = square.size[0]
             step = length // 2
-            sub_squares = [
+            sub_squares_corners = [
                 (0, 0, step, step),
                 (step, 0, step * 2, step),
                 (0, step, step, step * 2),
@@ -126,10 +159,12 @@ class HelpersToAnalyzeChessboard:
             ]
 
             found = 0
-            for sub_square in sub_squares:
-                smaller_square = square.crop(sub_square)
+            for smaller_square_corners in sub_squares_corners:
+                smaller_square_image = square.crop(smaller_square_corners)
                 are_there = HelpersToAnalyzeChessboard.are_there_colours_in_a_PIL_image(
-                    smaller_square, highlighted_colours)
+                    PIL_image=smaller_square_image,
+                    colours_to_locate=highlighted_colours
+                )
                 if are_there["is_there"]:
                     found += 1
 
@@ -138,19 +173,24 @@ class HelpersToAnalyzeChessboard:
 
         return highlighted_squares
 
-    def drag_mouse_from_square_to_square(square_centers, from_square, to_square):
+    @staticmethod
+    def drag_mouse_from_square_to_square(
+        square_centers_dict: dict,
+        from_square: str,
+        to_square: str
+    ) -> None:
         initial_position = pyautogui.position()
 
         try:
-            from_center = square_centers[from_square]
+            from_center = square_centers_dict[from_square]
         except KeyError:
-            print("Coordination '{}' does not exist!".format(from_square))
+            print(f"Coordination '{from_square}' does not exist!")
             return
 
         try:
-            to_center = square_centers[to_square]
+            to_center = square_centers_dict[to_square]
         except KeyError:
-            print("Coordination '{}' does not exist!".format(to_square))
+            print(f"Coordination '{to_square}' does not exist!")
             return
 
         pyautogui.click(*from_center)

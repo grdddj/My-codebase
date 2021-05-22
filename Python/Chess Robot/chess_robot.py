@@ -18,7 +18,7 @@ Basic high-level flow:
 - Sets up the internal chess board connected with chess engine
     (self.board, self.engine)
 - Observes the screen chessboard in infinite loop:
-    (self.watch_on_the_chessboard)
+    (self.look_at_the_chessboard_and_react_on_new_moves)
     - Finds out if two squares are highlighted
     - Finds out if these squares form a valid opponent's move
     - Plays that move on the internal chess board
@@ -36,6 +36,8 @@ Useful to know (features):
 Possible improvements:
 - listen for certain keys when being turned on and off, so we do not have
     to leave the mouse from playing window (which is visible to oponent)
+- parse the time from the screen and reflect it in the time of analysis
+    (play faster when having less time)
 """
 
 import pyautogui
@@ -106,6 +108,7 @@ class ChessRobot:
         self.currently_highlighted_squares: List[str] = []
         self.our_last_move_from_and_to: List[str] = []
 
+        self.current_analysis_result: chess.engine.AnalysisResult = None
         self.current_best_move: chess.Move = None
         self.last_position_evaluation = 0.0
         self.last_position_situation = "normal"  # "losing", "normal", "winning", "mate soon"
@@ -154,13 +157,24 @@ class ChessRobot:
         while True:
             time.sleep(Config.sleep_interval_between_screenshots)
             try:
-                self.watch_on_the_chessboard()
+                self.look_at_the_chessboard_and_react_on_new_moves()
             except NoNewMoveFoundOnTheChessboard:
                 continue
             except TheGameHasFinished:
                 break
 
-    def watch_on_the_chessboard(self) -> None:
+    def play_first_move_as_white_if_necessary(self) -> None:
+        we_should_start_as_white = (
+            self.our_chess_colour == chess.WHITE
+            and
+            self.board.fullmove_number == 1
+        )
+        if we_should_start_as_white:
+            print("Kicking the game by playing first")
+            self.analyze_position_and_suggest_the_best_move()
+            self.perform_the_best_move_on_the_screen_and_internally()
+
+    def look_at_the_chessboard_and_react_on_new_moves(self) -> None:
         self.get_currently_highlighted_squares()
         self.check_if_some_new_move_was_done()
 
@@ -172,31 +186,19 @@ class ChessRobot:
 
         self.check_if_the_game_did_not_finish()
 
-        self.suggest_the_best_move()
+        self.analyze_position_and_suggest_the_best_move()
 
         if not self.observer_only_mode:
-            self.perform_the_best_move_on_the_screen_and_also_internally()
+            self.perform_the_best_move_on_the_screen_and_internally()
 
         self.check_if_the_game_did_not_finish()
-        self.evaluate_the_position()
-
-    def play_first_move_as_white_if_necessary(self) -> None:
-        we_should_start_as_white = (
-            self.our_chess_colour == chess.WHITE
-            and
-            self.board.fullmove_number == 1
-        )
-        if we_should_start_as_white:
-            print("Kicking the game by playing first")
-            self.suggest_the_best_move()
-            self.perform_the_best_move_on_the_screen_and_also_internally()
 
     def get_currently_highlighted_squares(self) -> None:
         # Making a screenshot of the whole screen
         whole_screen = pyautogui.screenshot()
 
         # Getting a list of (in most cases 2) squares that are highlighted
-        #   as a sign of previous move
+        #   as a sign of previous move (is website dependant)
         if Config.website == "kurnik":
             get_highlight_function = HelpersToAnalyzeChessboard.get_highlighted_squares_from_picture_kurnik
         else:
@@ -259,19 +261,7 @@ class ChessRobot:
             print("highlighted_squares", self.currently_highlighted_squares)
             raise NoNewMoveFoundOnTheChessboard("Something inconsistent happened")
 
-    def play_the_move_from_the_board_on_internal_board(self) -> None:
-        move = chess.Move.from_uci(self.move_done_on_the_board)
-        self.play_move_on_our_internal_board(move)
-
-    def play_move_on_our_internal_board(self, move: chess.Move) -> None:
-        # NOTE: we must first retrieve the move and only then push it one
-        #   the board, otherwise the SAN representation would fail
-        #   (it only takes valid moves in current situation)
-        move_human = self._translate_move_into_human_readable(move)
-        print(f"Move done on our internal board: {move_human}")
-        self.board.push(move)
-
-    def perform_the_best_move_on_the_screen_and_also_internally(self) -> None:
+    def perform_the_best_move_on_the_screen_and_internally(self) -> None:
         if Config.wait_for_keyboard_trigger_to_play:
             print("Waiting for trigger to play move: ", Config.keyboard_trigger)
             with keyboard.Listener(on_release=press_trigger_to_play_move) as listener:
@@ -281,32 +271,6 @@ class ChessRobot:
         #   as rarely it can fail, if the mouse is being used by user
         self.do_the_move_on_screen_chessboard(self.current_best_move)
         self.play_move_on_our_internal_board(self.current_best_move)
-
-    def suggest_the_best_move(self) -> None:
-        # Adjusting time to think according to the situation
-        if self.last_position_situation in ["winning", "mate soon"]:
-            time_to_think = Config.time_limit_to_think_when_already_winning
-        elif self.last_position_situation == "losing":
-            time_to_think = Config.time_limit_to_think_when_losing
-        else:
-            time_to_think = Config.time_limit_to_think_normal
-
-        self.current_best_move = self.engine.play(self.board, chess.engine.Limit(time_to_think)).move
-        best_move_human = self._translate_move_into_human_readable(self.current_best_move)
-        print(f"I would play ***** {best_move_human} *****")
-
-    def _translate_move_into_human_readable(self, move: chess.Move) -> str:
-        from_square, to_square = self.get_to_and_from_square_from_the_move(move)
-        classic_notation = self.board.san(move) if move else "None"
-        return f"{from_square} - {to_square} ({classic_notation})"
-
-    @staticmethod
-    def get_to_and_from_square_from_the_move(move: chess.Move) -> tuple:
-        move_string = str(move)
-        from_square = move_string[0:2]
-        to_square = move_string[2:4]
-
-        return from_square, to_square
 
     def do_the_move_on_screen_chessboard(self, move: chess.Move) -> None:
         from_square, to_square = self.get_to_and_from_square_from_the_move(move)
@@ -328,24 +292,50 @@ class ChessRobot:
         if len(str(move)) > 4:
             pyautogui.click(self.square_centers_dict[to_square])
 
-    def evaluate_the_position(self) -> None:
-        # Adjusting the depth according to the situation
-        if self.last_position_situation == "losing":
-            depth = Config.depth_of_analysis_when_losing
-        else:
-            depth = Config.depth_of_analysis_normal
+    def play_the_move_from_the_board_on_internal_board(self) -> None:
+        move = chess.Move.from_uci(self.move_done_on_the_board)
+        self.play_move_on_our_internal_board(move)
 
-        position_info = self.engine.analyse(self.board, chess.engine.Limit(depth=depth))
-        score_from_our_side = position_info["score"].pov(self.our_chess_colour)
-        if position_info["score"].is_mate():
+    def play_move_on_our_internal_board(self, move: chess.Move) -> None:
+        # NOTE: we must first retrieve the move and only then push it one
+        #   the board, otherwise the SAN representation would fail
+        #   (it only takes valid moves in current situation)
+        move_human = self._translate_move_into_human_readable(move)
+        print(f"Move done on our internal board: {move_human}")
+        self.board.push(move)
+
+    def analyze_position_and_suggest_the_best_move(self) -> None:
+        self.get_current_analysis_result()
+
+        self.get_position_evaluation_from_analysis_result()
+        self.reflect_evaluation_into_situation()
+
+        self.get_the_current_best_move_from_analysis_result()
+
+    def get_current_analysis_result(self) -> None:
+        time_to_think = self.get_time_to_think_according_to_the_last_position()
+        self.current_analysis_result = self.engine.analyse(
+            board=self.board,
+            limit=chess.engine.Limit(time=time_to_think),
+        )
+
+    def get_time_to_think_according_to_the_last_position(self) -> float:
+        if self.last_position_situation in ["winning", "mate soon"]:
+            return Config.time_limit_to_think_when_already_winning
+        elif self.last_position_situation == "losing":
+            return Config.time_limit_to_think_when_losing
+        else:
+            return Config.time_limit_to_think_normal
+
+    def get_position_evaluation_from_analysis_result(self) -> None:
+        score_from_our_side = self.current_analysis_result["score"].pov(self.our_chess_colour)
+        if self.current_analysis_result["score"].is_mate():
             self.last_position_evaluation = score_from_our_side
             print("Checkmate soon", score_from_our_side)
         else:
             pawn_points = int(str(score_from_our_side)) / 100
             self.last_position_evaluation = pawn_points
             print("Score:", pawn_points)
-
-        self.reflect_evaluation_into_situation()
 
     def reflect_evaluation_into_situation(self) -> None:
         self.last_position_situation = self.get_situation_from_the_evaluation()
@@ -362,6 +352,24 @@ class ChessRobot:
                 return "normal"
         except TypeError:
             return "mate soon"
+
+    def get_the_current_best_move_from_analysis_result(self) -> None:
+        self.current_best_move = self.current_analysis_result["pv"][0]
+        best_move_human = self._translate_move_into_human_readable(self.current_best_move)
+        print(f"I would play ***** {best_move_human} *****")
+
+    def _translate_move_into_human_readable(self, move: chess.Move) -> str:
+        from_square, to_square = self.get_to_and_from_square_from_the_move(move)
+        classic_notation = self.board.san(move) if move else "None"
+        return f"{from_square} - {to_square} ({classic_notation})"
+
+    @staticmethod
+    def get_to_and_from_square_from_the_move(move: chess.Move) -> tuple:
+        move_string = str(move)
+        from_square = move_string[0:2]
+        to_square = move_string[2:4]
+
+        return from_square, to_square
 
     def check_if_the_game_did_not_finish(self) -> None:
         if self.board.is_game_over():

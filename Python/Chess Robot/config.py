@@ -17,12 +17,6 @@ class Config:
     pawn_threshold_when_already_winning = 5
     pawn_threshold_when_losing = -0.5
 
-    # How deeply to evaluate the position
-    # Depth 20 takes more than a second
-    # Depth 15 takes around 0.1 - 0.2 seconds
-    depth_of_analysis_normal = 15
-    depth_of_analysis_when_losing = 20
-
     # How long to pause between watching again at the chessboard
     sleep_interval_between_screenshots = 0.1
 

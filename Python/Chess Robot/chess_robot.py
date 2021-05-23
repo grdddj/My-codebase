@@ -12,9 +12,11 @@ Basic high-level flow:
 - Gets the coordinates of the chessboard on the screen from config or from user input
     (self.chessboard_left_top_pixel, self.chessboard_right_bottom_pixel)
 - Maps all the 64 squares with the coordination of its center
-    (self.square_centers_dict)
+    (square_centers_dict)
 - Needs to know the colours that will mean highlighted square
     (self.colours_of_highlighted_moves)
+- Creates the chessboard object holding all important actions with the screen board
+    (self.CHESSBOARD)
 - Sets up the internal chess board connected with chess engine
     (self.board, self.engine)
 - Observes the screen chessboard in infinite loop:
@@ -22,9 +24,8 @@ Basic high-level flow:
     - Finds out if two squares are highlighted
     - Finds out if these squares form a valid opponent's move
     - Plays that move on the internal chess board
-    - Suggests the best continuation for our side
+    - Evaluates the position and suggests the best continuation for our side
     - Plays that best continuation on the screen and on internal board
-    - Evaluates the position
 
 Useful to know (features):
 - Lot of options in the config file
@@ -38,6 +39,12 @@ Possible improvements:
     to leave the mouse from playing window (which is visible to oponent)
 - parse the time from the screen and reflect it in the time of analysis
     (play faster when having less time)
+
+DISCLAIMER:
+- this project was done only for educational purposes, author has no
+    interest in actually using it against real human players to cheat
+- author bears no responsibility for the script being used for
+    any illicit purposes, other than learning programming in python
 """
 
 import pyautogui  # type: ignore
@@ -116,6 +123,7 @@ class ChessRobot:
         self.last_position_situation = "normal"  # "losing", "normal", "winning", "mate soon"
 
     def start_the_game(self) -> None:
+        print("Be sure to play on your main screen. Please move the console to a second screen.")
         self.get_our_colour_from_user()
         self.get_chessboard_boundaries_if_not_defined()
         self.get_chessboard_details_and_create_chessboard_object()
@@ -123,7 +131,6 @@ class ChessRobot:
         self.start_observing_the_chessboard()
 
     def get_our_colour_from_user(self) -> None:
-        print("Be sure to play on your main screen. Please move the console to a second screen.")
         colour_input = input("Choose the colour (WHITE/(b)lack): ")
         if colour_input and colour_input[0].lower() == "b":
             self.our_chess_colour = chess.BLACK
@@ -201,7 +208,7 @@ class ChessRobot:
         self.check_if_the_game_did_not_finish()
 
     def get_currently_highlighted_squares(self) -> None:
-        # Making a screenshot of the whole screen
+        # Making a screenshot of the whole screen to analyze it further
         whole_screen = pyautogui.screenshot()
 
         # Quick check if the previously highlighted squares are still
@@ -214,7 +221,7 @@ class ChessRobot:
             if highlight_did_not_change:
                 raise NoNewMoveFoundOnTheChessboard("Same highlight as before")
 
-        # Getting a list of (in most cases 2) squares that are highlighted
+        # Getting a list of two squares that are highlighted
         #   as a sign of previous move (is website dependant)
         if Config.website == "kurnik":
             self.currently_highlighted_squares = self.CHESSBOARD.get_highlighted_squares_from_picture_kurnik(
@@ -226,8 +233,6 @@ class ChessRobot:
             )
 
     def check_if_some_new_move_was_done(self) -> None:
-        # When there is a new valid highlighted situation, determine what move
-        #   was played and also come up with a move
         some_move_was_done = (
             len(self.currently_highlighted_squares) == 2
             and

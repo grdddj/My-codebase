@@ -1,5 +1,6 @@
 import pyautogui  # type: ignore
 from pynput import mouse  # type: ignore
+from PIL import Image  # type: ignore
 
 # Making all pyautogui actions faster, default is 0.1 seconds
 pyautogui.PAUSE = 0.01
@@ -20,23 +21,23 @@ class HelpersToAssignChessboard:
 
         return (self.chessboard_left_top_pixel, self.chessboard_right_bottom_pixel)
 
-    def stop_listening_on_mouse_input(self) -> bool:
-        if self.chessboard_left_top_pixel is not None and self.chessboard_right_bottom_pixel is not None:
-            print("stopping the assignment")
-            return True
-        return False
-
     def assign_two_corners_on_click(self, x: int, y: int, button, pressed: bool) -> bool:
         if button == mouse.Button.right and pressed:
             if self.chessboard_left_top_pixel is None:
                 self.chessboard_left_top_pixel = (x, y)
-                print("chessboard_left_top_pixel assigned - {},{}".format(x, y))
+                print(f"chessboard_left_top_pixel assigned - {x},{y}")
                 print("Please rightlick the most bottomright corner of the chessboard")
             elif self.chessboard_right_bottom_pixel is None:
                 self.chessboard_right_bottom_pixel = (x, y)
-                print("chessboard_right_bottom_pixel assigned - {},{}".format(x, y))
+                print(f"chessboard_right_bottom_pixel assigned - {x},{y}")
 
         return not self.stop_listening_on_mouse_input()
+
+    def stop_listening_on_mouse_input(self) -> bool:
+        if self.chessboard_left_top_pixel is not None and self.chessboard_right_bottom_pixel is not None:
+            print("Stopping the assignment")
+            return True
+        return False
 
     @staticmethod
     def create_dict_of_square_centers(
@@ -80,7 +81,7 @@ class HelpersToAnalyzeChessboard:
 
     def get_highlighted_squares_from_picture(
         self,
-        whole_screen,
+        whole_screen: Image,
     ) -> list:
         highlighted_squares = []
 
@@ -105,7 +106,7 @@ class HelpersToAnalyzeChessboard:
 
     def check_if_square_is_highlighted(
         self,
-        whole_screen,
+        whole_screen: Image,
         square_center_coords: tuple,
     ) -> bool:
         # Defining how big part of a square will be cut out to allow for some
@@ -132,7 +133,7 @@ class HelpersToAnalyzeChessboard:
 
     def check_if_squares_are_highlighted(
         self,
-        whole_screen,
+        whole_screen: Image,
         squares_to_check: list
     ) -> bool:
         square_centers_to_check = [
@@ -153,7 +154,7 @@ class HelpersToAnalyzeChessboard:
 
     def get_highlighted_squares_from_picture_kurnik(
         self,
-        whole_screen,
+        whole_screen: Image,
     ) -> list:
         highlighted_squares = []
 
@@ -245,7 +246,7 @@ class HelpersToAnalyzeChessboard:
 
     @staticmethod
     def are_there_colours_in_a_PIL_image(
-        PIL_image,
+        PIL_image: Image,
         colours_to_locate: list
     ) -> bool:
         # TODO: faster approach could be just to check every nth (5th) pixel

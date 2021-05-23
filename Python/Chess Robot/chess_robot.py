@@ -40,17 +40,19 @@ Possible improvements:
     (play faster when having less time)
 """
 
-import pyautogui
-from pynput import keyboard
+import pyautogui  # type: ignore
+from pynput import keyboard  # type: ignore
 import time
 
-from typing import Dict, List
+from typing import List, Union
 
 # Documentation here: https://python-chess.readthedocs.io/en/latest/
 import chess
 import chess.engine
 
-from helpers import HelpersToAssignChessboard, HelpersToAnalyzeChessboard
+from helpers import HelpersToAssignChessboard
+from helpers import HelpersToAnalyzeChessboard
+
 from config import Config
 
 # Making all pyautogui actions faster, default is 0.1 seconds
@@ -89,15 +91,14 @@ class ChessRobot:
         self.observer_only_mode = observer_only_mode
 
         self.CHESSBOARD_ASSIGNER = HelpersToAssignChessboard()
+        self.CHESSBOARD: HelpersToAnalyzeChessboard
         self.board = chess.Board()
         self.engine = chess.engine.SimpleEngine.popen_uci(Config.engine_location)
 
-        self.our_chess_colour: chess.Color = None
-        self.our_colour_string = ""
-        self.chessboard_left_top_pixel = (0, 0)
-        self.chessboard_right_bottom_pixel = (0, 0)
-        self.square_size = 0
-        self.square_centers_dict: Dict[str, str] = {}
+        self.our_chess_colour: chess.Color
+        self.our_colour_string: str
+        self.chessboard_left_top_pixel: tuple
+        self.chessboard_right_bottom_pixel: tuple
 
         self.colours_of_highlighted_moves = [
             Config.white_field_highlight_colour,
@@ -107,16 +108,17 @@ class ChessRobot:
         self.previously_highlighted_squares: List[str] = []
         self.currently_highlighted_squares: List[str] = []
         self.our_last_move_from_and_to: List[str] = []
+        self.move_done_on_the_board = ""
 
-        self.current_analysis_result: chess.engine.AnalysisResult = None
-        self.current_best_move: chess.Move = None
-        self.last_position_evaluation = 0.0
+        self.current_analysis_result: chess.engine.InfoDict
+        self.current_best_move: chess.Move
+        self.last_position_evaluation: Union[float, chess.engine.Score] = 0.0
         self.last_position_situation = "normal"  # "losing", "normal", "winning", "mate soon"
 
     def start_the_game(self) -> None:
         self.get_our_colour_from_user()
         self.get_chessboard_boundaries_if_not_defined()
-        self.get_chessboard_details()
+        self.get_chessboard_details_and_create_chessboard_object()
         input("After you press Enter, the play will begin!")
         self.start_observing_the_chessboard()
 
@@ -140,13 +142,18 @@ class ChessRobot:
             self.chessboard_left_top_pixel = boundaries[0]
             self.chessboard_right_bottom_pixel = boundaries[1]
 
-    def get_chessboard_details(self) -> None:
+    def get_chessboard_details_and_create_chessboard_object(self) -> None:
         chessboard_size = self.chessboard_right_bottom_pixel[0] - self.chessboard_left_top_pixel[0]
-        self.square_size = chessboard_size // 8
-        self.square_centers_dict = self.CHESSBOARD_ASSIGNER.create_dict_of_square_centers(
+        square_size = chessboard_size // 8
+        square_centers_dict = self.CHESSBOARD_ASSIGNER.create_dict_of_square_centers(
             chessboard_left_top_pixel=self.chessboard_left_top_pixel,
             chessboard_right_bottom_pixel=self.chessboard_right_bottom_pixel,
             our_colour=self.our_colour_string
+        )
+        self.CHESSBOARD = HelpersToAnalyzeChessboard(
+            square_centers_dict=square_centers_dict,
+            square_size=square_size,
+            highlighted_colours=self.colours_of_highlighted_moves,
         )
 
     def start_observing_the_chessboard(self) -> None:
@@ -197,19 +204,26 @@ class ChessRobot:
         # Making a screenshot of the whole screen
         whole_screen = pyautogui.screenshot()
 
+        # Quick check if the previously highlighted squares are still
+        #   highlighted - having to check only 2 squares instead of 64
+        if self.previously_highlighted_squares:
+            highlight_did_not_change = self.CHESSBOARD.check_if_squares_are_highlighted(
+                whole_screen=whole_screen,
+                squares_to_check=self.previously_highlighted_squares,
+            )
+            if highlight_did_not_change:
+                raise NoNewMoveFoundOnTheChessboard("Same highlight as before")
+
         # Getting a list of (in most cases 2) squares that are highlighted
         #   as a sign of previous move (is website dependant)
         if Config.website == "kurnik":
-            get_highlight_function = HelpersToAnalyzeChessboard.get_highlighted_squares_from_picture_kurnik
+            self.currently_highlighted_squares = self.CHESSBOARD.get_highlighted_squares_from_picture_kurnik(
+                whole_screen=whole_screen
+            )
         else:
-            get_highlight_function = HelpersToAnalyzeChessboard.get_highlighted_squares_from_picture
-
-        self.currently_highlighted_squares = get_highlight_function(
-            whole_screen=whole_screen,
-            square_centers_dict=self.square_centers_dict,
-            square_size=self.square_size,
-            highlighted_colours=self.colours_of_highlighted_moves
-        )
+            self.currently_highlighted_squares = self.CHESSBOARD.get_highlighted_squares_from_picture(
+                whole_screen=whole_screen
+            )
 
     def check_if_some_new_move_was_done(self) -> None:
         # When there is a new valid highlighted situation, determine what move
@@ -227,16 +241,16 @@ class ChessRobot:
 
     def check_if_last_move_was_not_done_by_us(self) -> None:
         highlighted_move_is_ours = (
-            self.our_last_move_from_and_to == self.currently_highlighted_squares
-            or
-            self.our_last_move_from_and_to == list(reversed(self.currently_highlighted_squares))
+            self.our_last_move_from_and_to[0] in self.currently_highlighted_squares
+            and
+            self.our_last_move_from_and_to[1] in self.currently_highlighted_squares
         )
         if highlighted_move_is_ours:
             print("Last move was ours, it is opponents's turn")
             raise NoNewMoveFoundOnTheChessboard("Last move was ours")
 
     def recognize_move_done_on_the_board(self) -> None:
-        self.move_done_on_the_board = None
+        self.move_done_on_the_board = ""
 
         possible_moves_from_highlight = [
             self.currently_highlighted_squares[0] + self.currently_highlighted_squares[1],
@@ -279,8 +293,9 @@ class ChessRobot:
         print(f"I AM PLAYING {human_readable}")
 
         # Playing the move on the screen chessboard
-        HelpersToAnalyzeChessboard.drag_mouse_from_square_to_square(
-            square_centers_dict=self.square_centers_dict,
+        # TODO: could have a check that the move was really performed
+        #   on the screen - and if not - try to do it again
+        self.CHESSBOARD.drag_mouse_from_square_to_square(
             from_square=from_square,
             to_square=to_square
         )
@@ -290,7 +305,7 @@ class ChessRobot:
         # If there is a promotion, presume we will have a queen, so click
         #   the to_square once again
         if len(str(move)) > 4:
-            pyautogui.click(self.square_centers_dict[to_square])
+            self.CHESSBOARD.click_on_square(to_square)
 
     def play_the_move_from_the_board_on_internal_board(self) -> None:
         move = chess.Move.from_uci(self.move_done_on_the_board)
@@ -377,6 +392,9 @@ class ChessRobot:
 
     def evaluate_winner_and_finish_the_game(self) -> None:
         outcome = self.board.outcome()
+        if not outcome:
+            return
+
         if outcome.winner is True:
             print("YOU HAVE WON, CONGRATULATIONS!!")
             raise TheGameHasFinished("You have won!")

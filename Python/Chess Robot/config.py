@@ -1,4 +1,4 @@
-from pynput import keyboard
+from pynput import keyboard  # type: ignore
 import os
 
 file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -9,16 +9,16 @@ class Config:
     engine_location = os.path.join(file_dir, "stockfish_13_win_x64_bmi2")
 
     # How many seconds to analyze before suggesting a move
-    time_limit_to_think_normal = 0.3
+    time_limit_to_think_normal = 0.1
     time_limit_to_think_when_already_winning = 0.05
     time_limit_to_think_when_losing = 1
 
     # When to consider we are winning or losing (to adjust think time)
-    pawn_threshold_when_already_winning = 5
+    pawn_threshold_when_already_winning = 3
     pawn_threshold_when_losing = -0.5
 
     # How long to pause between watching again at the chessboard
-    sleep_interval_between_screenshots = 0.1
+    sleep_interval_between_screenshots = 0.01
 
     # Allowing for keyboard-triggered moves (instead of automatic)
     wait_for_keyboard_trigger_to_play = False

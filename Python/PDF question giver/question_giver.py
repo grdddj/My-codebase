@@ -8,6 +8,7 @@ import fitz  # pip install PyMuPDF
 
 class QuestionGiver:
     pdf_file = "otazkysrc.pdf"
+    delimiter = "-"
 
     def __init__(self) -> None:
         self.text = self.load_text_from_pdf()
@@ -119,17 +120,16 @@ class QuestionGiver:
 
             buffer += line
 
-    @staticmethod
-    def get_q_and_a(buffer: str) -> Tuple[str, str]:
+    def get_q_and_a(self, buffer: str) -> Tuple[str, str]:
         # TODO: In translation questions, there is a special delimiter "Odpověď:"
 
         # In some cases, there is not a dash ("-", ASCII 45) symbol, but
         # end-dash (ASCII 8211) as a delimiter, so unifying it
-        buffer = buffer.replace(chr(8211), "-")
+        buffer = buffer.replace(chr(8211), self.delimiter)
 
         # There is an edge-case when there is no delimiter between question and answer,
         # then we assume the question is on one line and answer is the rest
-        if "-" not in buffer:
+        if self.delimiter not in buffer:
             lines = buffer.split("\n")
             return lines[0].strip(), " ".join(lines[1:]).strip()
 
@@ -141,9 +141,9 @@ class QuestionGiver:
                 continue
             part = part.strip()
 
-            if part.startswith("-"):
+            if part.startswith(self.delimiter):
                 delimiter_found = True
-                part = part.strip("- ")
+                part = part.strip(f"{self.delimiter} ")
 
             if not delimiter_found:
                 question_lines.append(part)
@@ -154,5 +154,4 @@ class QuestionGiver:
 
 
 if __name__ == "__main__":
-    question_giver = QuestionGiver()
-    question_giver.ask_questions()
+    QuestionGiver().ask_questions()

@@ -26,6 +26,10 @@ class QuestionGiver:
             "end": "Vyhodnocení písemné zkoušky ",
         }
 
+        self.question_substrings_to_skip = [
+            "hláskovací abeceda (mezinárodní)",
+        ]
+
     def load_text_from_pdf(self) -> str:
         with fitz.open(self.pdf_file) as doc:
             text = ""
@@ -74,7 +78,7 @@ class QuestionGiver:
 
         current_part = ""
         buffer = ""
-        for line in self.text.split("\n")[:]:
+        for line in self.text.split("\n"):
             line = line.strip() + "\n"
 
             # TODO: refactor
@@ -105,7 +109,9 @@ class QuestionGiver:
             if re.match(question_start, line):
                 # In case it is a first question, we do not need to add anything
                 # Also ignoring questions with special pattern
-                if buffer and "hláskovací abeceda (mezinárodní)" not in buffer:
+                if buffer and not any(
+                    [substr in buffer for substr in self.question_substrings_to_skip]
+                ):
                     q_and_a = self.get_q_and_a(buffer)
                     self.QUESTIONS[current_part].append(q_and_a)
                 buffer = line
@@ -116,6 +122,10 @@ class QuestionGiver:
     @staticmethod
     def get_q_and_a(buffer: str) -> Tuple[str, str]:
         # TODO: In translation questions, there is a special delimiter "Odpověď:"
+
+        # In some cases, there is not a dash ("-", ASCII 45) symbol, but
+        # end-dash (ASCII 8211) as a delimiter, so unifying it
+        buffer = buffer.replace(chr(8211), "-")
 
         # There is an edge-case when there is no delimiter between question and answer,
         # then we assume the question is on one line and answer is the rest
@@ -131,14 +141,9 @@ class QuestionGiver:
                 continue
             part = part.strip()
 
-            # In some rare cases, there is not a dash ("-", ASCII 45) symbol, but
-            # end-dash (ASCII 8211)
             if part.startswith("-"):
                 delimiter_found = True
                 part = part.strip("- ")
-            elif ord(part[0]) == 8211:
-                part = part[1:]
-                delimiter_found = True
 
             if not delimiter_found:
                 question_lines.append(part)

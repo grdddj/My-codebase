@@ -6,7 +6,7 @@ from config import Config
 WORKING_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
 
-def deploy_new_exe_file():
+def deploy_new_exe_file() -> None:
     # exe_file_name = "Casio_fx-85_CE_X.exe"
     # exe_file_path = os.path.join(WORKING_DIRECTORY, exe_file_name)
     exe_file_path = "Casio_fx-85_CE_X.exe"
@@ -20,13 +20,15 @@ def deploy_new_exe_file():
 
     server_folder = Config.server_folder
 
-    scp_sending_command = f"scp -P {scp_port} {exe_file_path} {server_user}@{server_ip}:{server_folder}"
+    scp_sending_command = (
+        f"scp -P {scp_port} {exe_file_path} {server_user}@{server_ip}:{server_folder}"
+    )
 
     print(scp_sending_command)
     os.system(scp_sending_command)
 
 
-def announce_new_version_old():
+def announce_new_version_old() -> None:
     key_to_save = "last_update"
     timestamp = int(time.time())
     data = {"key_to_save": key_to_save, "data": {"timestamp": timestamp}}
@@ -34,7 +36,7 @@ def announce_new_version_old():
     print(response)
 
 
-def announce_new_version():
+def announce_new_version() -> None:
     version_identifier = "0.1"
     timestamp = time.time()
     details = ""

@@ -14,7 +14,7 @@ class Config:
     NAME = "User"
     CHAT_NAME = "chat123"
 
-    SERVER_IP = '123.456.789.0'
+    SERVER_IP = "123.456.789.0"
     API_PORT = 5678
 
     SERVER_AND_PORT = f"http://{SERVER_IP}:{API_PORT}"
@@ -22,7 +22,7 @@ class Config:
     API_URL_IP = f"{SERVER_AND_PORT}/v1/ip_address"
 
     WEBSOCKET_PORT = 6789
-    MESSAGES_WEBSOCKET_URL = f'ws://{SERVER_IP}:{WEBSOCKET_PORT}'
+    MESSAGES_WEBSOCKET_URL = f"ws://{SERVER_IP}:{WEBSOCKET_PORT}"
 
     how_many_messages_to_load_at_startup = 10
 
@@ -34,7 +34,9 @@ class ScrollableFrameForMessages(ttk.Frame):
 
         # TODO: could request older messages automatically when the scrollbar
         #   would be at the top
-        scrollbar = tk.Scrollbar(self, orient="vertical", cursor="hand2", command=self.canvas.yview)
+        scrollbar = tk.Scrollbar(
+            self, orient="vertical", cursor="hand2", command=self.canvas.yview
+        )
         scrollbar.config(width=50)
         scrollbar.pack(side="right", fill="y")
 
@@ -42,26 +44,25 @@ class ScrollableFrameForMessages(ttk.Frame):
 
         self.scrollable_frame.bind(
             "<Configure>",
-            lambda e: self.canvas.configure(
-                scrollregion=self.canvas.bbox("all")
-            )
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
         )
 
         # There is a limit of labels that can accomodate to a tkinter Canvas (around 315)
         self.canvas_frame = self.canvas.create_window(
-            (0, 0), window=self.scrollable_frame, anchor="nw")
+            (0, 0), window=self.scrollable_frame, anchor="nw"
+        )
 
         self.canvas.configure(yscrollcommand=scrollbar.set)
 
         self.canvas.pack(side="left", fill="both", expand=True)
 
         self.scrollable_frame.bind("<Configure>", self.adjust_scrolling_region)
-        self.canvas.bind('<Configure>', self.adjust_frame_width)
+        self.canvas.bind("<Configure>", self.adjust_frame_width)
 
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
     def _on_mousewheel(self, event):
-        amount_of_units = int(-1*(event.delta/120))
+        amount_of_units = int(-1 * (event.delta / 120))
         self.canvas.yview_scroll(amount_of_units, "units")
 
     def adjust_frame_width(self, event):
@@ -114,32 +115,45 @@ class SupportWindow:
         messaging_area.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.messages_frame = ScrollableFrameForMessages(messaging_area)
-        self.messages_frame.place(relx=0, rely=0, relheight=0.87, relwidth=self.width_of_chat_part)
+        self.messages_frame.place(
+            relx=0, rely=0, relheight=0.87, relwidth=self.width_of_chat_part
+        )
 
         self.is_other_writing_entry = tk.Entry(
-            self.support_window, bg="light sea green",
+            self.support_window,
+            bg="light sea green",
             disabledbackground="light sea green",
             disabledforeground="black",
-            font=("Calibri", 7), bd=5, state="disabled"
+            font=("Calibri", 7),
+            bd=5,
+            state="disabled",
         )
-        self.is_other_writing_entry.place(relx=0, rely=0.87, relheight=0.05, relwidth=self.width_of_chat_part)
+        self.is_other_writing_entry.place(
+            relx=0, rely=0.87, relheight=0.05, relwidth=self.width_of_chat_part
+        )
 
         self.message_in_entry = tk.StringVar()
         self.message_in_entry.trace("w", self.handle_change_in_message_entry_text)
 
         self.message_entry = tk.Entry(
-            self.support_window, textvariable=self.message_in_entry,
-            bg="orange", font=("Calibri", 8), bd=5)
-        self.message_entry.place(relx=0, rely=0.92, relheight=0.08, relwidth=self.width_of_chat_part)
+            self.support_window,
+            textvariable=self.message_in_entry,
+            bg="orange",
+            font=("Calibri", 8),
+            bd=5,
+        )
+        self.message_entry.place(
+            relx=0, rely=0.92, relheight=0.08, relwidth=self.width_of_chat_part
+        )
         self.message_entry.focus_set()
-        self.message_entry.bind("<Return>", (lambda event: self.process_message_from_entry()))
+        self.message_entry.bind(
+            "<Return>", (lambda event: self.process_message_from_entry())
+        )
 
         self.start_getting_messages_in_the_background()
 
     def start_getting_messages_in_the_background(self):
-        self.getting_message_data_thread = GettingMessageData(
-            parent=self
-        )
+        self.getting_message_data_thread = GettingMessageData(parent=self)
         self.getting_message_data_thread.start()
 
     def handle_change_in_message_entry_text(self, *args):
@@ -172,7 +186,7 @@ class SupportWindow:
             user_name=self.user_name,
             ip_address=self.ip_address,
             message=message,
-            answer_to_message=""
+            answer_to_message="",
         ).start()
 
     def get_text_from_message_entry(self):
@@ -211,7 +225,7 @@ class ActionInDifferentThread(threading.Thread):
             "message": message,
             "answer_to_message": answer_to_message,
             "timestamp": time.time(),
-            "details": ""
+            "details": "",
         }
 
         self.send_message_through_websocket_to_all_clients(message_data)
@@ -228,8 +242,11 @@ class MessageSending(ActionInDifferentThread):
         self.answer_to_message = answer_to_message
 
     def action_to_be_done(self):
-        self.send_chat_data(message_type="text", message=self.message,
-                            answer_to_message=self.answer_to_message)
+        self.send_chat_data(
+            message_type="text",
+            message=self.message,
+            answer_to_message=self.answer_to_message,
+        )
 
 
 class GettingMessageData(threading.Thread):
@@ -288,7 +305,7 @@ class GettingMessageData(threading.Thread):
         parameters = {
             "chat_name": Config.CHAT_NAME,
             "last_message_timestamp": 0,
-            "max_result_size": Config.how_many_messages_to_load_at_startup
+            "max_result_size": Config.how_many_messages_to_load_at_startup,
         }
         response = requests.get(Config.API_URL_CHAT, params=parameters)
         new_chat_messages = response.json()
@@ -320,14 +337,20 @@ class GettingMessageData(threading.Thread):
         timestamp = message_object.get("timestamp", 0)
         time_to_show = self.get_time_to_show_in_message(timestamp)
 
-        answer_to_part = f"Answer to: {answer_to_message}\n\n" if answer_to_message else ""
+        answer_to_part = (
+            f"Answer to: {answer_to_message}\n\n" if answer_to_message else ""
+        )
 
         text_to_show = f"{answer_to_part}{user_name} ({time_to_show})\n{message}\n"
 
         text_label = ttk.Label(
-            self.parent.messages_frame.scrollable_frame, text=text_to_show,
-            relief="solid", wraplengt=600, background=self.message_background,
-            font=self.message_text_font, cursor="hand2"
+            self.parent.messages_frame.scrollable_frame,
+            text=text_to_show,
+            relief="solid",
+            wraplengt=600,
+            background=self.message_background,
+            font=self.message_text_font,
+            cursor="hand2",
         )
         text_label.pack(anchor=self.message_anchor)
 
@@ -339,9 +362,9 @@ class GettingMessageData(threading.Thread):
 
         message_is_from_today = is_date_from_today(dt_object)
         if not message_is_from_today:
-            time_to_show = dt_object.strftime('%d. %m. %H:%M')
+            time_to_show = dt_object.strftime("%d. %m. %H:%M")
         else:
-            time_to_show = dt_object.strftime('%H:%M')
+            time_to_show = dt_object.strftime("%H:%M")
 
         return time_to_show
 
@@ -372,8 +395,13 @@ def get_ip_address():
 
 def is_date_from_today(dt_object):
     today_dt_object = datetime.now()
-    today_morning = datetime(year=today_dt_object.year, month=today_dt_object.month,
-                             day=today_dt_object.day, hour=0, second=0)
+    today_morning = datetime(
+        year=today_dt_object.year,
+        month=today_dt_object.month,
+        day=today_dt_object.day,
+        hour=0,
+        second=0,
+    )
     message_is_from_today = today_morning < dt_object
     return message_is_from_today
 
@@ -386,5 +414,7 @@ def define_entry_content(entry_component, content_to_fill):
 
 
 if __name__ == "__main__":
-    assert Config.SERVER_IP != '123.456.789.0', "Please input a valid SERVER_IP in Config!"
+    assert (
+        Config.SERVER_IP != "123.456.789.0"
+    ), "Please input a valid SERVER_IP in Config!"
     SupportWindow()

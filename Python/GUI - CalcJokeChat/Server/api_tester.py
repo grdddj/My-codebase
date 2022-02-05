@@ -14,7 +14,10 @@ def send_message_old():
     message = "How can I help you?"
     key_to_save = "new_features"
     timestamp = int(time.time())
-    data = {"key_to_save": key_to_save, "data": {"name": name, "message": message, "timestamp": timestamp}}
+    data = {
+        "key_to_save": key_to_save,
+        "data": {"name": name, "message": message, "timestamp": timestamp},
+    }
     response = requests.post(endpoint, json=data)
     print(response)
 
@@ -108,7 +111,10 @@ def get_messages():
     last_message_timestamp = 0
     last_message_timestamp = 1604688619.0
     parameters = {"chat_name": chat_name}
-    parameters = {"chat_name": chat_name, "last_message_timestamp": last_message_timestamp}
+    parameters = {
+        "chat_name": chat_name,
+        "last_message_timestamp": last_message_timestamp,
+    }
     response = requests.get(chat_messages_endpoint, params=parameters)
     results = response.json()
     print(results)

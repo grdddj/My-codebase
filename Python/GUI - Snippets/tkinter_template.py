@@ -2,6 +2,7 @@ import tkinter as tk
 
 LARGE_FONT = ("Verdana", 12)
 
+
 class HeatTransfer(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
@@ -30,17 +31,23 @@ class HeatTransfer(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
+
 class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         label = tk.Label(self, text="Start Page", font=LARGE_FONT)
         label.pack(padx=10, pady=10)
 
-        button1 = tk.Button(self, text="Visit Page 1", command=lambda: controller.show_frame(PageOne))
+        button1 = tk.Button(
+            self, text="Visit Page 1", command=lambda: controller.show_frame(PageOne)
+        )
         button1.pack()
 
-        button2 = tk.Button(self, text="Visit Page 2", command=lambda: controller.show_frame(PageTwo))
+        button2 = tk.Button(
+            self, text="Visit Page 2", command=lambda: controller.show_frame(PageTwo)
+        )
         button2.pack()
+
 
 class PageOne(tk.Frame):
     def __init__(self, parent, controller):
@@ -48,11 +55,16 @@ class PageOne(tk.Frame):
         label = tk.Label(self, text="Page One", font=LARGE_FONT)
         label.pack(padx=10, pady=10)
 
-        button1 = tk.Button(self, text="Back to home", command=lambda: controller.show_frame(StartPage))
+        button1 = tk.Button(
+            self, text="Back to home", command=lambda: controller.show_frame(StartPage)
+        )
         button1.pack()
 
-        button2 = tk.Button(self, text="Visit Page 2", command=lambda: controller.show_frame(PageTwo))
+        button2 = tk.Button(
+            self, text="Visit Page 2", command=lambda: controller.show_frame(PageTwo)
+        )
         button2.pack()
+
 
 class PageTwo(tk.Frame):
     def __init__(self, parent, controller):
@@ -60,11 +72,16 @@ class PageTwo(tk.Frame):
         label = tk.Label(self, text="Page Two", font=LARGE_FONT)
         label.pack(padx=10, pady=10)
 
-        button1 = tk.Button(self, text="Back to home", command=lambda: controller.show_frame(StartPage))
+        button1 = tk.Button(
+            self, text="Back to home", command=lambda: controller.show_frame(StartPage)
+        )
         button1.pack()
 
-        button2 = tk.Button(self, text="Visit Page 1", command=lambda: controller.show_frame(PageOne))
+        button2 = tk.Button(
+            self, text="Visit Page 1", command=lambda: controller.show_frame(PageOne)
+        )
         button2.pack()
+
 
 app = HeatTransfer()
 app.mainloop()

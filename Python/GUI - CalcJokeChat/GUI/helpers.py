@@ -9,8 +9,8 @@ from config import Config
 import chat_logger as logger
 
 
-def get_resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
+def get_resource_path(relative_path: str) -> str:
+    """Get absolute path to resource, works for dev and for PyInstaller"""
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
@@ -20,14 +20,14 @@ def get_resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
-def get_ip_address():
+def get_ip_address() -> str:
     logger.info("HELPERS - Getting the IP address")
     response = requests.get(Config.API_URL_IP)
     ip_address_json = response.json()
     return ip_address_json["ip_address"]
 
 
-def get_the_time_of_last_update():
+def get_the_time_of_last_update() -> str:
     try:
         response = requests.get(Config.API_URL_LAST_UPDATE)
         last_update = response.json()
@@ -36,14 +36,19 @@ def get_the_time_of_last_update():
 
     last_update_ts = last_update.get("timestamp", 0)
     dt_object = datetime.fromtimestamp(last_update_ts)
-    time_to_show = dt_object.strftime('%d. %m. %Y at %H:%M:%S')
+    time_to_show = dt_object.strftime("%d. %m. %Y at %H:%M:%S")
     return time_to_show
 
 
-def is_date_from_today(dt_object):
+def is_date_from_today(dt_object: datetime) -> bool:
     today_dt_object = datetime.now()
-    today_morning = datetime(year=today_dt_object.year, month=today_dt_object.month,
-                             day=today_dt_object.day, hour=0, second=0)
+    today_morning = datetime(
+        year=today_dt_object.year,
+        month=today_dt_object.month,
+        day=today_dt_object.day,
+        hour=0,
+        second=0,
+    )
     message_is_from_today = today_morning < dt_object
     return message_is_from_today
 
@@ -51,7 +56,9 @@ def is_date_from_today(dt_object):
 # Helper function to fill a text component with a content in a safe way
 # Possible modes: "rewrite" - fill it completely from the scratch,
 #   "append" - just appending the specified content to already existing one
-def define_text_content(text_component, content_to_fill, mode="rewrite"):
+def define_text_content(
+    text_component, content_to_fill: str, mode: str = "rewrite"
+) -> None:
     text_component["state"] = "normal"  # enabling to manipulate the content
     if mode == "rewrite":
         text_component.delete("1.0", "end")  # deleting the whole previous content
@@ -59,27 +66,27 @@ def define_text_content(text_component, content_to_fill, mode="rewrite"):
     text_component["state"] = "disabled"  # disabling the content for user manipulation
 
 
-def define_entry_content(entry_component, content_to_fill):
+def define_entry_content(entry_component, content_to_fill: str) -> None:
     entry_component["state"] = "normal"
     entry_component.delete(0, "end")
     entry_component.insert(0, content_to_fill)
     entry_component["state"] = "disabled"
 
 
-def copy_into_clipboard(message):
+def copy_into_clipboard(message: str) -> None:
     pyperclip.copy(message)
 
 
 class SpellChecker:
-    def __init__(self):
+    def __init__(self) -> None:
         try:
             self.speller = Speller()
         except Exception as err:
-            self.log_exception("Initializing spell checker failed - " + str(err))
+            logger.exception(f"Initializing spell checker failed - {err}")
         self.previous_message = ""
         self.current_message = ""
 
-    def check_message_only_if_necessary(self, message):
+    def check_message_only_if_necessary(self, message: str) -> dict:
         self.previous_message = self.current_message
         self.current_message = message
 
@@ -91,14 +98,16 @@ class SpellChecker:
         else:
             return self.check_the_text_for_errors(self.current_message)
 
-    def same_amount_of_full_words(self):
+    def same_amount_of_full_words(self) -> bool:
         space_char = " "
-        return self.previous_message.count(space_char) == self.current_message.count(space_char)
+        return self.previous_message.count(space_char) == self.current_message.count(
+            space_char
+        )
 
-    def something_new_is_at_the_end(self):
+    def something_new_is_at_the_end(self) -> bool:
         return self.previous_message == self.current_message[:-1]
 
-    def check_the_text_for_errors(self, text):
+    def check_the_text_for_errors(self, text: str) -> dict:
         correct_text = self.speller(text)
 
         if text == correct_text:

@@ -1,20 +1,24 @@
-import pymongo
-import requests
 import json
-from bs4 import BeautifulSoup
-from datetime import datetime
-import re
 import math
+import re
+from datetime import datetime
+
+import requests
+
+import pymongo
+from bs4 import BeautifulSoup
 
 # Connection to the DB
-myclient = pymongo.MongoClient("mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true")
+myclient = pymongo.MongoClient(
+    "mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true"
+)
 mydb = myclient["Mall"]
 mycol = mydb["Powerbanks"]
 
 domain = "https://www.mall.cz"
-eshop_suffix = " - Mall.cz";
+eshop_suffix = " - Mall.cz"
 
-today = datetime.now().strftime('%d-%m-%Y')
+today = datetime.now().strftime("%d-%m-%Y")
 
 count_alltogether = 0
 count_one_page = 0
@@ -88,7 +92,11 @@ for page_number in range(1, 5):
 
         # Finding out whether USB-C is supported
         try:
-            text = parameters.get_text().strip() + description.get_text().strip() + short_description.get_text().strip()
+            text = (
+                parameters.get_text().strip()
+                + description.get_text().strip()
+                + short_description.get_text().strip()
+            )
             if re.search("USB(| |-| Typ- )C", text) is not None:
                 usb_c = True
         except:
@@ -104,12 +112,18 @@ for page_number in range(1, 5):
 
         # Transforming the fields
         try:
-            capacity = int(capacity[0:capacity.index("mAh")].replace('\xa0',' ').replace(" ", ""))
+            capacity = int(
+                capacity[0 : capacity.index("mAh")]
+                .replace("\xa0", " ")
+                .replace(" ", "")
+            )
         except Exception as e:
             print(e)
 
         try:
-            price = int(price[0:price.index("K")].replace('\xa0',' ').replace(" ", ""))
+            price = int(
+                price[0 : price.index("K")].replace("\xa0", " ").replace(" ", "")
+            )
         except Exception as e:
             print(e)
 
@@ -128,11 +142,10 @@ for page_number in range(1, 5):
                 "usb_c": usb_c,
                 "link": link,
                 "last_update": today,
-                "price_10000_mAh": price_10000_mAh
+                "price_10000_mAh": price_10000_mAh,
             }
         except Exception as e:
             print(e)
-
 
         # Saving everything to the DB
         try:
@@ -142,7 +155,13 @@ for page_number in range(1, 5):
         except Exception as e:
             try:
                 myquery = {"_id": newItem["_id"]}
-                newvalues = {"$set": {"price": price, "price_10000_mAh": price_10000_mAh, "last_update": today}}
+                newvalues = {
+                    "$set": {
+                        "price": price,
+                        "price_10000_mAh": price_10000_mAh,
+                        "last_update": today,
+                    }
+                }
                 mycol.update_one(myquery, newvalues)
                 print("Updated: " + newItem["name"])
             except:

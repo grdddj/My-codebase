@@ -16,13 +16,15 @@ import chat_logger
 
 
 class ScrollableFrameForMessages(ttk.Frame):
-    def __init__(self, container, *args, **kwargs):
+    def __init__(self, container, *args, **kwargs) -> None:
         super().__init__(container, *args, **kwargs)
         self.canvas = tk.Canvas(self)
 
         # TODO: could request older messages automatically when the scrollbar
         #   would be at the top
-        scrollbar = tk.Scrollbar(self, orient="vertical", cursor="hand2", command=self.canvas.yview)
+        scrollbar = tk.Scrollbar(
+            self, orient="vertical", cursor="hand2", command=self.canvas.yview
+        )
         scrollbar.config(width=50)
         scrollbar.pack(side="right", fill="y")
 
@@ -30,38 +32,37 @@ class ScrollableFrameForMessages(ttk.Frame):
 
         self.scrollable_frame.bind(
             "<Configure>",
-            lambda e: self.canvas.configure(
-                scrollregion=self.canvas.bbox("all")
-            )
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")),
         )
 
         # There is a limit of labels that can accomodate to a tkinter Canvas (around 315)
         self.canvas_frame = self.canvas.create_window(
-            (0, 0), window=self.scrollable_frame, anchor="nw")
+            (0, 0), window=self.scrollable_frame, anchor="nw"
+        )
 
         self.canvas.configure(yscrollcommand=scrollbar.set)
 
         self.canvas.pack(side="left", fill="both", expand=True)
 
         self.scrollable_frame.bind("<Configure>", self.adjust_scrolling_region)
-        self.canvas.bind('<Configure>', self.adjust_frame_width)
+        self.canvas.bind("<Configure>", self.adjust_frame_width)
 
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
-    def _on_mousewheel(self, event):
-        amount_of_units = int(-1*(event.delta/120))
+    def _on_mousewheel(self, event) -> None:
+        amount_of_units = int(-1 * (event.delta / 120))
         self.canvas.yview_scroll(amount_of_units, "units")
 
-    def adjust_frame_width(self, event):
+    def adjust_frame_width(self, event) -> None:
         canvas_width = event.width
         self.canvas.itemconfig(self.canvas_frame, width=canvas_width)
 
-    def adjust_scrolling_region(self, event):
+    def adjust_scrolling_region(self, event) -> None:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
 
 class SupportWindow:
-    def __init__(self, parent):
+    def __init__(self, parent) -> None:
         self.parent = parent
         self.root_gui = parent.parent
 
@@ -69,10 +70,7 @@ class SupportWindow:
 
         self.log_identifier = "GUI"
 
-        self.dialogs = Dialogs(
-            parent=self,
-            root_gui=self.root_gui
-        )
+        self.dialogs = Dialogs(parent=self, root_gui=self.root_gui)
 
         # TODO: consider moving this to a separate thread, to have zero latency
         # TODO: improve the spellchecking logic - if the result is negative,
@@ -98,7 +96,7 @@ class SupportWindow:
         #   recreate it and recreate the message sending object
         self.ws = websocket.create_connection(Config.MESSAGES_WEBSOCKET_URL)
 
-    def on_destroy(self):
+    def on_destroy(self) -> None:
         self.log_info("Destroying the support window")
 
         # The message getting thread in the background must be killed
@@ -119,7 +117,7 @@ class SupportWindow:
 
         self.log_info("Support window successfully destroyed")
 
-    def show_support_window(self):
+    def show_support_window(self) -> None:
         self.log_info("Showing the support window")
 
         self.support_window_shown = True
@@ -138,124 +136,167 @@ class SupportWindow:
         self.messages_frame.place(relx=0, rely=0, relheight=0.82, relwidth=0.70)
 
         self.is_other_writing_entry = tk.Entry(
-            self.support_window, bg="light sea green",
+            self.support_window,
+            bg="light sea green",
             disabledbackground="light sea green",
             disabledforeground="black",
-            font=("Calibri", 15), bd=5, state="disabled"
+            font=("Calibri", 15),
+            bd=5,
+            state="disabled",
         )
-        self.is_other_writing_entry.place(relx=0, rely=0.83, relheight=0.05, relwidth=0.7)
+        self.is_other_writing_entry.place(
+            relx=0, rely=0.83, relheight=0.05, relwidth=0.7
+        )
 
         self.should_send_entry_updates = tk.BooleanVar()
         self.should_send_entry_updates.set(True)
         self.entry_updates_checkbox = tk.Checkbutton(
-            self.support_window, text="Send real-time entry updates",
-            font=("Calibri", 15), bd=2,
-            variable=self.should_send_entry_updates
+            self.support_window,
+            text="Send real-time entry updates",
+            font=("Calibri", 15),
+            bd=2,
+            variable=self.should_send_entry_updates,
         )
         self.entry_updates_checkbox.place(relx=0.77, rely=0.81, relheight=0.05)
 
         self.health_check_label = tk.Label(self.support_window)
-        self.health_check_label.place(relx=0.97, rely=0.01, relheight=0.04, relwidth=0.03)
+        self.health_check_label.place(
+            relx=0.97, rely=0.01, relheight=0.04, relwidth=0.03
+        )
         self.set_health_check(ok=True)
 
         self.message_in_entry = tk.StringVar()
         self.message_in_entry.trace("w", self.handle_change_in_message_entry_text)
 
         self.message_entry = tk.Entry(
-            self.support_window, textvariable=self.message_in_entry,
-            bg="orange", font=("Calibri", 25), bd=5)
+            self.support_window,
+            textvariable=self.message_in_entry,
+            bg="orange",
+            font=("Calibri", 25),
+            bd=5,
+        )
         self.message_entry.place(relx=0, rely=0.88, relheight=0.08, relwidth=0.7)
         self.message_entry.focus_set()
-        self.message_entry.bind("<Return>", (lambda event: self.process_message_from_entry()))
+        self.message_entry.bind(
+            "<Return>", (lambda event: self.process_message_from_entry())
+        )
 
         self.spell_check_label = tk.Label(
-            self.support_window, width=64, height=64, cursor="hand2")
+            self.support_window, width=64, height=64, cursor="hand2"
+        )
         self.spell_check_label.place(relx=0.7, rely=0.87)
-        self.spell_check_label.bind('<Button-1>', lambda event: self.handle_spellcheck_window())
+        self.spell_check_label.bind(
+            "<Button-1>", lambda event: self.handle_spellcheck_window()
+        )
         self.set_spell_check_icon(ok=True)
 
         self.answer_to_message_entry = tk.Entry(
-            self.support_window, bg="yellow", font=("Calibri", 13),
-            disabledbackground="yellow", disabledforeground="black",
-            bd=0, state="disabled"
+            self.support_window,
+            bg="yellow",
+            font=("Calibri", 13),
+            disabledbackground="yellow",
+            disabledforeground="black",
+            bd=0,
+            state="disabled",
         )
-        self.answer_to_message_entry.place(relx=0, rely=0.96, relheight=0.04, relwidth=0.7)
+        self.answer_to_message_entry.place(
+            relx=0, rely=0.96, relheight=0.04, relwidth=0.7
+        )
 
         block_support_button = tk.Button(
-            self.support_window, text="Block support",
-            bg="tomato", bd=self.button_border, cursor="hand2",
-            font=self.button_font, command=self.dialogs.block_support
+            self.support_window,
+            text="Block support",
+            bg="tomato",
+            bd=self.button_border,
+            cursor="hand2",
+            font=self.button_font,
+            command=self.dialogs.block_support,
         )
         block_support_button.place(
             relx=self.button_rel_x,
             rely=0.01,
             relheight=self.button_rel_height,
-            relwidth=self.button_rel_width
+            relwidth=self.button_rel_width,
         )
 
         download_latest_version_button = tk.Button(
-            self.support_window, text="Get latest version",
-            bg="lime green", font=self.button_font,
-            bd=self.button_border, cursor="hand2",
-            command=self.get_latest_update
+            self.support_window,
+            text="Get latest version",
+            bg="lime green",
+            font=self.button_font,
+            bd=self.button_border,
+            cursor="hand2",
+            command=self.get_latest_update,
         )
         download_latest_version_button.place(
             relx=self.button_rel_x,
             rely=0.13,
             relheight=self.button_rel_height,
-            relwidth=self.button_rel_width
+            relwidth=self.button_rel_width,
         )
 
         change_name_button = tk.Button(
-            self.support_window, text="Change name",
-            bg="orange", font=self.button_font,
-            bd=self.button_border, cursor="hand2",
-            command=self.change_name
+            self.support_window,
+            text="Change name",
+            bg="orange",
+            font=self.button_font,
+            bd=self.button_border,
+            cursor="hand2",
+            command=self.change_name,
         )
         change_name_button.place(
             relx=self.button_rel_x,
             rely=0.25,
             relheight=self.button_rel_height,
-            relwidth=self.button_rel_width
+            relwidth=self.button_rel_width,
         )
 
         send_picture_button = tk.Button(
-            self.support_window, text="Send picture",
-            bg="MediumPurple1", font=self.button_font,
-            bd=self.button_border, cursor="hand2",
-            command=self.handle_picture_sending_dialog
+            self.support_window,
+            text="Send picture",
+            bg="MediumPurple1",
+            font=self.button_font,
+            bd=self.button_border,
+            cursor="hand2",
+            command=self.handle_picture_sending_dialog,
         )
         send_picture_button.place(
             relx=self.button_rel_x,
             rely=0.37,
             relheight=self.button_rel_height,
-            relwidth=self.button_rel_width
+            relwidth=self.button_rel_width,
         )
 
         send_file_button = tk.Button(
-            self.support_window, text="Send file",
-            bg="SteelBlue1", font=self.button_font,
-            bd=self.button_border, cursor="hand2",
-            command=self.handle_file_sending_dialog
+            self.support_window,
+            text="Send file",
+            bg="SteelBlue1",
+            font=self.button_font,
+            bd=self.button_border,
+            cursor="hand2",
+            command=self.handle_file_sending_dialog,
         )
         send_file_button.place(
             relx=self.button_rel_x,
             rely=0.49,
             relheight=self.button_rel_height,
-            relwidth=self.button_rel_width
+            relwidth=self.button_rel_width,
         )
 
         message_sending_button = tk.Button(
-            self.support_window, text="Send message",
-            bg="grey", font=self.button_font,
-            bd=self.button_border, cursor="hand2",
-            command=self.process_message_from_entry
+            self.support_window,
+            text="Send message",
+            bg="grey",
+            font=self.button_font,
+            bd=self.button_border,
+            cursor="hand2",
+            command=self.process_message_from_entry,
         )
         message_sending_button.place(
             relx=self.button_rel_x,
             rely=0.88,
             relheight=self.button_rel_height,
-            relwidth=self.button_rel_width
+            relwidth=self.button_rel_width,
         )
 
         self.render_smiley_icons_to_be_clicked()
@@ -264,21 +305,11 @@ class SupportWindow:
 
         self.start_getting_messages_in_the_background()
 
-    def render_smiley_icons_to_be_clicked(self):
+    def render_smiley_icons_to_be_clicked(self) -> None:
         self.log_info("Rendering smiley-icons")
-        smileys_first_row = [
-            "happy",
-            "smiling",
-            "wink",
-            "unhappy",
-        ]
+        smileys_first_row = ["happy", "smiling", "wink", "unhappy"]
 
-        smileys_second_row = [
-            "laughing",
-            "thinking",
-            "facepalm",
-            "thumb-up",
-        ]
+        smileys_second_row = ["laughing", "thinking", "facepalm", "thumb-up"]
 
         positions = [0.77, 0.83, 0.89, 0.95]
 
@@ -289,10 +320,13 @@ class SupportWindow:
             photo = ImageTk.PhotoImage(Image.open(file_path))
 
             smiley_face = tk.Label(
-                self.support_window, image=photo, width=64, height=64, cursor="hand2")
+                self.support_window, image=photo, width=64, height=64, cursor="hand2"
+            )
             smiley_face.photo = photo
             smiley_face.place(relx=relx, rely=rely)
-            smiley_face.bind('<Button-1>', lambda event: self.handle_smile_icon_click(smile_type))
+            smiley_face.bind(
+                "<Button-1>", lambda event: self.handle_smile_icon_click(smile_type)
+            )
 
         for index, smiley in enumerate(smileys_first_row):
             relx = positions[index]
@@ -306,7 +340,7 @@ class SupportWindow:
             smile_type = smiley
             render_smiley(relx, rely, smile_type)
 
-    def handle_smile_icon_click(self, smile_type):
+    def handle_smile_icon_click(self, smile_type: str) -> None:
         self.log_info(f"Smile clicked - {smile_type}")
         self.message_sending_queue = queue.Queue()
         actions.SmileSending(
@@ -314,11 +348,11 @@ class SupportWindow:
             ws=self.ws,
             user_name=self.user_name,
             ip_address=self.ip_address,
-            smile_type=smile_type
+            smile_type=smile_type,
         ).start()
         self.parent.after(100, self.process_queue_for_smile_sending)
 
-    def process_queue_for_smile_sending(self):
+    def process_queue_for_smile_sending(self) -> None:
         try:
             msg = self.message_sending_queue.get(0)
             success = msg["success"]
@@ -328,14 +362,14 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_smile_sending)
 
-    def handle_picture_sending_dialog(self):
+    def handle_picture_sending_dialog(self) -> None:
         picture_path = self.dialogs.get_file_path()
         if not picture_path:
             return
 
         self.handle_picture_upload(picture_path)
 
-    def handle_picture_upload(self, picture_path):
+    def handle_picture_upload(self, picture_path: str) -> None:
         self.picture_upload_queue = queue.Queue()
         actions.PictureUpload(
             queue=self.picture_upload_queue,
@@ -346,7 +380,7 @@ class SupportWindow:
         ).start()
         self.parent.after(100, self.process_queue_for_picture_upload)
 
-    def process_queue_for_picture_upload(self):
+    def process_queue_for_picture_upload(self) -> None:
         try:
             msg = self.picture_upload_queue.get(0)
             success = msg["success"]
@@ -359,14 +393,14 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_picture_upload)
 
-    def handle_file_sending_dialog(self):
+    def handle_file_sending_dialog(self) -> None:
         file_path = self.dialogs.get_file_path()
         if not file_path:
             return
 
         self.handle_file_upload(file_path)
 
-    def handle_file_upload(self, file_path):
+    def handle_file_upload(self, file_path: str) -> None:
         self.file_upload_queue = queue.Queue()
         actions.FileUpload(
             queue=self.file_upload_queue,
@@ -377,7 +411,7 @@ class SupportWindow:
         ).start()
         self.parent.after(100, self.process_queue_for_file_upload)
 
-    def process_queue_for_file_upload(self):
+    def process_queue_for_file_upload(self) -> None:
         try:
             msg = self.file_upload_queue.get(0)
             success = msg["success"]
@@ -390,28 +424,25 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_file_upload)
 
-    def start_getting_messages_in_the_background(self):
+    def start_getting_messages_in_the_background(self) -> None:
         self.log_info("Starting to get messages on the background")
-        self.getting_message_data_thread = messages.GettingMessageData(
-            parent=self
-        )
+        self.getting_message_data_thread = messages.GettingMessageData(parent=self)
         self.getting_message_data_thread.start()
 
-    def handle_file_download(self, file_name):
+    def handle_file_download(self, file_name: str) -> None:
         if not self.dialogs.should_the_file_really_be_downloaded(file_name):
             return
 
         self.download_file(file_name)
 
-    def download_file(self, file_name):
+    def download_file(self, file_name: str) -> None:
         self.file_download_queue = queue.Queue()
         actions.FileDownload(
-            queue=self.file_download_queue,
-            file_name=file_name
+            queue=self.file_download_queue, file_name=file_name
         ).start()
         self.parent.after(100, self.process_queue_for_file_download)
 
-    def process_queue_for_file_download(self):
+    def process_queue_for_file_download(self) -> None:
         try:
             msg = self.file_download_queue.get(0)
             success = msg["success"]
@@ -424,17 +455,19 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_file_download)
 
-    def spell_check_the_message(self, message):
+    def spell_check_the_message(self, message: str) -> None:
         result = self.spell_checker.check_the_text_for_errors(message)
-        if result['success']:
+        if result["success"]:
             self.log_info(f"Finished spellcheck - SUCCESS - '{message}'")
         else:
             corrections = result["corrected_words"]
-            self.log_info(f"Finished spellcheck - FAILURE - '{message}' - '{corrections}'")
+            self.log_info(
+                f"Finished spellcheck - FAILURE - '{message}' - '{corrections}'"
+            )
 
         self.set_spell_check_icon(ok=result["success"])
 
-    def set_spell_check_icon(self, ok=True):
+    def set_spell_check_icon(self, ok: bool = True) -> None:
         if self.spell_check_icon_ok == ok:
             return
         else:
@@ -451,7 +484,7 @@ class SupportWindow:
         self.spell_check_label.configure(image=photo)
         self.spell_check_label.photo = photo
 
-    def handle_spellcheck_window(self):
+    def handle_spellcheck_window(self) -> None:
         message = self.get_text_from_message_entry()
         result = self.spell_checker.check_the_text_for_errors(message)
         if result["success"]:
@@ -459,22 +492,22 @@ class SupportWindow:
         else:
             self.dialogs.spell_check_uncovered_problems(result["corrected_words"])
 
-    def schedule_spell_check(self, message):
+    def schedule_spell_check(self, message: str) -> None:
         try:
             self.root_gui.after_cancel(self.schedule_spell_check_id)
         except ValueError:
             pass
         self.schedule_spell_check_id = self.root_gui.after(
             self.miliseconds_to_wait_before_spell_check,
-            lambda: self.spell_check_the_message(message)
+            lambda: self.spell_check_the_message(message),
         )
 
-    def handle_change_in_message_entry_text(self, *args):
+    def handle_change_in_message_entry_text(self, *args) -> None:
         message = self.get_text_from_message_entry()
         self.schedule_spell_check(message)
         self.send_message_entry_to_websocket(message)
 
-    def send_message_entry_to_websocket(self, message):
+    def send_message_entry_to_websocket(self, message: str) -> None:
         if not self.should_send_entry_updates.get():
             if message:
                 message = "Writing..."
@@ -489,7 +522,7 @@ class SupportWindow:
         json_to_send = json.dumps(to_send)
         self.ws.send(json_to_send)
 
-    def process_message_from_entry(self):
+    def process_message_from_entry(self) -> None:
         message = self.get_text_from_message_entry()
         self.log_info(f"Processing message from entry - {message}")
 
@@ -498,7 +531,7 @@ class SupportWindow:
         else:
             return self.handle_message_sending(message)
 
-    def handle_message_sending(self, message):
+    def handle_message_sending(self, message: str) -> None:
         self.clean_message_entry()
         self.focus_on_message_entry()
 
@@ -509,7 +542,7 @@ class SupportWindow:
             user_name=self.user_name,
             ip_address=self.ip_address,
             message=message,
-            answer_to_message=self.get_answer_to_message()
+            answer_to_message=self.get_answer_to_message(),
         ).start()
         self.parent.after(100, self.process_queue_for_message_sending)
 
@@ -517,7 +550,7 @@ class SupportWindow:
         self.show_answer_to_message_cancel_label(show=False)
         self.set_spell_check_icon(ok=True)
 
-    def get_answer_to_message(self):
+    def get_answer_to_message(self) -> str:
         entry_content = self.answer_to_message_entry.get()
         string_at_beginning = "Answer to: "
         if entry_content.startswith(string_at_beginning):
@@ -526,14 +559,14 @@ class SupportWindow:
         else:
             return entry_content
 
-    def handle_click_on_answer_to_cancelling_label(self):
+    def handle_click_on_answer_to_cancelling_label(self) -> None:
         self.empty_answer_to_message_entry()
         self.show_answer_to_message_cancel_label(show=False)
 
-    def empty_answer_to_message_entry(self):
+    def empty_answer_to_message_entry(self) -> None:
         helpers.define_entry_content(self.answer_to_message_entry, "")
 
-    def show_answer_to_message_cancel_label(self, show):
+    def show_answer_to_message_cancel_label(self, show: bool) -> None:
         label_name = "answer_to_message_cancel_label"
         if show:
             already_is_shown = hasattr(self, label_name)
@@ -541,11 +574,17 @@ class SupportWindow:
                 return
 
             label = tk.Label(
-                self.support_window, bg="red", font=("Calibri", 15),
-                bd=0, text="X", cursor="hand2"
+                self.support_window,
+                bg="red",
+                font=("Calibri", 15),
+                bd=0,
+                text="X",
+                cursor="hand2",
             )
-            label.bind('<Button-1>',
-                lambda event: self.handle_click_on_answer_to_cancelling_label())
+            label.bind(
+                "<Button-1>",
+                lambda event: self.handle_click_on_answer_to_cancelling_label(),
+            )
             label.place(relx=0.7, rely=0.96, relheight=0.04, relwidth=0.03)
             setattr(self, label_name, label)
         else:
@@ -553,7 +592,7 @@ class SupportWindow:
                 getattr(self, label_name).destroy()
                 delattr(self, label_name)
 
-    def process_queue_for_message_sending(self):
+    def process_queue_for_message_sending(self) -> None:
         try:
             msg = self.message_sending_queue.get(0)
             success = msg["success"]
@@ -565,23 +604,21 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_message_sending)
 
-    def get_latest_update(self):
+    def get_latest_update(self) -> None:
         last_update = helpers.get_the_time_of_last_update()
         if not self.dialogs.should_the_latest_version_really_be_downloaded(last_update):
             return
 
         self.handle_latest_update_download()
 
-    def handle_latest_update_download(self):
+    def handle_latest_update_download(self) -> None:
         self.dialogs.last_update_downloading_start()
 
         self.latest_update_download_queue = queue.Queue()
-        actions.LatestUpdateDownload(
-            queue=self.latest_update_download_queue
-        ).start()
+        actions.LatestUpdateDownload(queue=self.latest_update_download_queue).start()
         self.parent.after(100, self.process_queue_for_latest_update_download)
 
-    def process_queue_for_latest_update_download(self):
+    def process_queue_for_latest_update_download(self) -> None:
         try:
             msg = self.latest_update_download_queue.get(0)
             success = msg["success"]
@@ -594,7 +631,7 @@ class SupportWindow:
         except queue.Empty:
             self.parent.after(100, self.process_queue_for_latest_update_download)
 
-    def change_name(self):
+    def change_name(self) -> None:
         new_name = self.dialogs.get_new_name(self.user_name)
         self.log_info(f"New name chosen - {new_name}")
 
@@ -607,7 +644,7 @@ class SupportWindow:
             elif new_name is None:
                 self.dialogs.name_change_cancelling()
 
-    def set_health_check(self, ok):
+    def set_health_check(self, ok: bool) -> None:
         if ok:
             bg = "lime green"
             text = " OK  "
@@ -617,18 +654,18 @@ class SupportWindow:
 
         self.health_check_label.configure(bg=bg, text=text)
 
-    def get_text_from_message_entry(self):
+    def get_text_from_message_entry(self) -> str:
         return self.message_in_entry.get()
 
-    def clean_message_entry(self):
+    def clean_message_entry(self) -> None:
         self.log_info("Cleaning message entry")
         self.message_in_entry.set("")
 
-    def focus_on_message_entry(self):
+    def focus_on_message_entry(self) -> None:
         self.message_entry.focus()
 
-    def log_info(self, message):
+    def log_info(self, message: str) -> None:
         chat_logger.info(f"{self.log_identifier} - {message}")
 
-    def log_exception(self, message):
+    def log_exception(self, message: str) -> None:
         chat_logger.exception(f"{self.log_identifier} - {message}")

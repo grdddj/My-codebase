@@ -15,19 +15,21 @@ in any exception they skip out current element - therefore this could be all
 done in just one block. This layout however leaves room for future custom
 error-handling of each possible exception.
 """
+import json
+import re
+from csv import writer
+
 # Imports for fetching and analysing the content from web
 # bs4 is not a native module, need to install it
 import requests
+
 from bs4 import BeautifulSoup
-import re
-from csv import writer
-import json
 
 # CONTROLLERS
 custom_file_name = "metals_properties"
 
 # Main funcion, responsible for fetching and analysing of the information
-def main():
+def main() -> None:
     # Initial page, from which we get the list of all elements
     initial_page = "https://en.wikipedia.org/wiki/List_of_chemical_elements"
 
@@ -36,7 +38,9 @@ def main():
     initial_soup = BeautifulSoup(initial_response.text, "html.parser")
 
     # Extracting the list of all the elements (all the individual rows)
-    all_elements = initial_soup.find("table", class_="wikitable").find("tbody").findAll("tr")
+    all_elements = (
+        initial_soup.find("table", class_="wikitable").find("tbody").findAll("tr")
+    )
 
     # Preparing a variable to store all the elements
     element_list = []
@@ -46,7 +50,9 @@ def main():
         try:
             element_name = element.findAll("td")[2].get_text().strip()
             # Locating the link of individual element
-            element_page = "https://en.wikipedia.org" + element.findAll("td")[2].find("a")["href"]
+            element_page = (
+                "https://en.wikipedia.org" + element.findAll("td")[2].find("a")["href"]
+            )
 
             # Loading the element_link
             element_response = requests.get(element_page)
@@ -64,7 +70,10 @@ def main():
         for row in element_info:
             try:
                 # It is strange, but "Element category" sometimes changes to something else
-                if row.find("th").find("a")["title"] in ["Element category", "Names for sets of chemical elements"]:
+                if row.find("th").find("a")["title"] in [
+                    "Element category",
+                    "Names for sets of chemical elements",
+                ]:
                     element_categories = row.find("td").get_text().strip()
                     break
             except Exception as e:
@@ -114,12 +123,14 @@ def main():
             element_melting_temp = int(float(element_melting_temp))
 
             element_density = take_first_numbers(element_density)
-            element_density = int(float(element_density)*1000)
+            element_density = int(float(element_density) * 1000)
 
-            element_thermal_conductivity = take_first_numbers(element_thermal_conductivity)
+            element_thermal_conductivity = take_first_numbers(
+                element_thermal_conductivity
+            )
             element_thermal_conductivity = int(float(element_thermal_conductivity))
 
-            element_thermal_capacity = int(float(element_thermal_capacity)*1000)
+            element_thermal_capacity = int(float(element_thermal_capacity) * 1000)
         except Exception as e:
             print("Element excluded : " + element_name)
             continue
@@ -144,22 +155,29 @@ def main():
     try:
         file_name = custom_file_name if custom_file_name != "" else "elements"
         with open(file_name + ".csv", "w") as csv_file:
-        	csv_writer = writer(csv_file)
-        	headers = ["NAME", "T_MELT [°C]", "RHO [kg/m3]", "C_P [J/(kg*K)]", "LAMBDA [W/(m*K)]"]
-        	csv_writer.writerow(headers)
+            csv_writer = writer(csv_file)
+            headers = [
+                "NAME",
+                "T_MELT [°C]",
+                "RHO [kg/m3]",
+                "C_P [J/(kg*K)]",
+                "LAMBDA [W/(m*K)]",
+            ]
+            csv_writer.writerow(headers)
 
-        	for element in element_list:
-        		element_row = []
-        		element_row.append(element["element_name"])
-        		element_row.append(element["element_melting_temp"])
-        		element_row.append(element["element_density"])
-        		element_row.append(element["element_thermal_capacity"])
-        		element_row.append(element["element_thermal_conductivity"])
-        		csv_writer.writerow(element_row)
+            for element in element_list:
+                element_row = []
+                element_row.append(element["element_name"])
+                element_row.append(element["element_melting_temp"])
+                element_row.append(element["element_density"])
+                element_row.append(element["element_thermal_capacity"])
+                element_row.append(element["element_thermal_conductivity"])
+                csv_writer.writerow(element_row)
     except Exception as e:
         pass
 
-def take_first_numbers(string: str):
+
+def take_first_numbers(string: str) -> str:
     """
     Processes a string that is beginning with a number, takes only the
     part from the beginning until the end of the number, and returns it
@@ -172,5 +190,6 @@ def take_first_numbers(string: str):
             return number
     return number
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

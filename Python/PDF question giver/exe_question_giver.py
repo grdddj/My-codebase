@@ -1,7 +1,6 @@
 import random
 import sys
 
-
 QUESTIONS = {
     "a": [
         (
@@ -48,10 +47,7 @@ QUESTIONS = {
             "11. mezinárodní volací značka lodní stanice u lodí zapsaných v námořním rejstříku ČR je",
             "OL a další dvě písmena (případně OL a čtyři číslice u jachet)",
         ),
-        (
-            "12. volací značka OL1234 v radiotelefonním provozu je",
-            "volací značka lodi",
-        ),
+        ("12. volací značka OL1234 v radiotelefonním provozu je", "volací značka lodi"),
         ("13.  SPE je volací značka", "pobřežní stanice"),
         ("14. falešné volací značky a falešné signály", "se nesmí používat"),
         ("15. pohyblivá stanice námořní pohyblivé služby je", "lodní stanice"),
@@ -316,46 +312,28 @@ QUESTIONS = {
             "47. správná zkratka pro „mezinárodní Úmluva o bezpečnosti lidského života na moři“",
             "SOLAS",
         ),
-        (
-            "48. správná zkratka pro „odpovídač pro účely pátrání a záchrany“",
-            "SART",
-        ),
+        ("48. správná zkratka pro „odpovídač pro účely pátrání a záchrany“", "SART"),
         ("49. správná zkratka pro „koordinovaný světový čas“", "UTC"),
         (
             "50. správná zkratka pro „poplatek za radiokomunikační služby poskytnuté na lodi“",
             "SC",
         ),
         ("51. správná zkratka pro „poplatek za služby pobřežní stanice“", "CC"),
-        (
-            "52. správná zkratka pro „částka za přenos po pozemních spojích“",
-            "LL",
-        ),
+        ("52. správná zkratka pro „částka za přenos po pozemních spojích“", "LL"),
         (
             "53. správná zkratka pro „identifikační číslo námořní pohyblivé služby",
             "MMSI",
         ),
-        (
-            "54. správná zkratka pro „rádiová bóje označující místo katastrofy“",
-            "EPIRB",
-        ),
-        (
-            "55. výraz „RIJEKA RADIO“ znamená",
-            "označení pobřežní stanice RIJEKA",
-        ),
+        ("54. správná zkratka pro „rádiová bóje označující místo katastrofy“", "EPIRB"),
+        ("55. výraz „RIJEKA RADIO“ znamená", "označení pobřežní stanice RIJEKA"),
         ("56. výraz „CALLSIGN“ znamená", "volací značku"),
         ("57. výraz „ACCOUNTING AUTHORITY“ znamená", "mezinárodní odúčtovna"),
         ("58. výraz „ROGER“ znamená", "„rozumím“ (při odpovědi na příkaz)"),
         ("59. výraz „LATITUDE“ znamená", "zeměpisná šířka"),
         ("60. výraz „LONGITUDE“ znamená", "zeměpisná délka"),
         ("61. výraz „DEGREE“ znamená", "stupeň"),
-        (
-            "62. Zprávy NAVTEX na kmitočtu 518 kHz jsou vysílány v jazyce",
-            "anglickém",
-        ),
-        (
-            "63. Dosah stanice systému NAVTEX na kmitočtu 518 kHz činí",
-            "200-400 NM",
-        ),
+        ("62. Zprávy NAVTEX na kmitočtu 518 kHz jsou vysílány v jazyce", "anglickém"),
+        ("63. Dosah stanice systému NAVTEX na kmitočtu 518 kHz činí", "200-400 NM"),
         (
             "64. Za účelem registrace EPIRBu COSPAS-SARSAT s naprogramovaným MMSI je třeba kontaktovat",
             "International Beacon Registration Database (IBRD)",
@@ -384,10 +362,7 @@ QUESTIONS = {
             "70. Tísňové volání DISTRESS ALERT vyslané omylem z EPIRBu v teritoriálních vodách zrušíme",
             "na kanálu 16 doporučenou radiotelefonní formulací “Cancel my distress alert of (time UTC)",
         ),
-        (
-            "71. Průkaz SRC opravňuje k obsluze zařízení pro kmitočty",
-            "pouze VHF",
-        ),
+        ("71. Průkaz SRC opravňuje k obsluze zařízení pro kmitočty", "pouze VHF"),
         (
             "72. přeložte do češtiny (pište čitelně):",
             "At 0517 UTC in position 36 degrees 55 minutes 26 seconds north 11 degrees 38 minutes 15 seconds west - we have been in collision with an unknown drifting object, ship seriously damaged - stop - we are in actual danger - stop - urgently request assistance Odpověď:  V čase 05:17 UTC, na pozici 36 stupňů, 55 minut, 26 vteřin severní šířky a 11 stupňů, 38 minut, 15 vteřin západní délky jsme narazili na neznámý plovoucí objekt, loď vážně poškozena stop jsme ve vážném ohrožení stop naléhavě žádáme pomoc.",
@@ -422,19 +397,13 @@ QUESTIONS = {
         ),
     ],
     "c": [
-        (
-            "1. vodivost pevných látek je způsobena",
-            "volnými elektrony v atomech látek",
-        ),
+        ("1. vodivost pevných látek je způsobena", "volnými elektrony v atomech látek"),
         (
             "2. provoz alternátoru bez připojení na akumulátor může způsobit",
             "zničení připojených zařízení",
         ),
         ("3. paralelně řazené akumulátory", "umožňují dodávat větší proud"),
-        (
-            "4. sériově řazené akumulátory",
-            "se zapojují pro zvýšení dodávaného napětí",
-        ),
+        ("4. sériově řazené akumulátory", "se zapojují pro zvýšení dodávaného napětí"),
         ("5. jmenovité napětí článku olověného akumulátoru je", "2 V"),
         ("6. jmenovité napětí článku alkalického akumulátoru je", "1,2 V"),
         ("7. jmenovité napětí suchého galvanického článku je", "1,5 V"),
@@ -496,18 +465,12 @@ QUESTIONS = {
         ("24. Údaj elektrické napětí 2 V lze také zapsat", "2000 mV"),
         ("25. Kmitočet 406 MHz lze také zapsat", "0,406 GHz"),
         ("26. délka rádiové vlny v pásmu 160 MHz (VHF) je", "cca. 2 m"),
-        (
-            "27. Vztah mezi napětím (U), proudem (I) a odporem (R) je:",
-            "U = R*I",
-        ),
+        ("27. Vztah mezi napětím (U), proudem (I) a odporem (R) je:", "U = R*I"),
         (
             "28. Vztah mezi výkonem (příkonem) (P), napětím (U) a proudem (I) je:",
             "P = U*I",
         ),
-        (
-            "29. Radiostanice odebírající z baterie 12 V proud 500 mA má příkon",
-            "6 W",
-        ),
+        ("29. Radiostanice odebírající z baterie 12 V proud 500 mA má příkon", "6 W"),
         ("30. Tři dobré vodiče elektřiny jsou", "měď, zlato, stříbro"),
         ("31. Čtyři dobré izolanty jsou", "sklo, vzduch, plast, porcelán"),
         (

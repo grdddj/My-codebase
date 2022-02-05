@@ -10,18 +10,22 @@ log_file_path = os.path.join(file_dir, log_file_name)
 logging.basicConfig(
     filename=log_file_path,
     level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(message)s'
+    format="%(asctime)s %(levelname)s %(message)s",
 )
 
 
 CLIENTS = set()
 
 
-async def send_message_to_all_clients(message):
+async def send_message_to_all_clients(message: str) -> None:
     if CLIENTS:  # asyncio.wait doesn't accept an empty list
         await asyncio.wait([client.send(message) for client in CLIENTS])
-        client_identifiers = ", ".join([str(client.remote_address[1]) for client in CLIENTS])
-        logging.info(f"Sending message to {len(CLIENTS)} clients ({client_identifiers}).")
+        client_identifiers = ", ".join(
+            [str(client.remote_address[1]) for client in CLIENTS]
+        )
+        logging.info(
+            f"Sending message to {len(CLIENTS)} clients ({client_identifiers})."
+        )
         logging.info(f"Message: '{message}'")
 
 

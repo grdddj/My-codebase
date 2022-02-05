@@ -1,8 +1,7 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, Text, Unicode, String
-from sqlalchemy.orm import sessionmaker
 from db_credentials import DBConfig
+from sqlalchemy import Column, Integer, String, Text, Unicode, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 
 def return_engine_and_session():
@@ -10,7 +9,11 @@ def return_engine_and_session():
     database = DBConfig.database
     user = DBConfig.user
     password = DBConfig.password
-    engine = create_engine('mysql+pymysql://{}:{}@{}/{}?charset=utf8'.format(user, password, host, database))
+    engine = create_engine(
+        "mysql+pymysql://{}:{}@{}/{}?charset=utf8".format(
+            user, password, host, database
+        )
+    )
 
     # Creating a session connected with our DB
     Session = sessionmaker(bind=engine)
@@ -25,7 +28,7 @@ Base = declarative_base()
 
 # Declaring a table as a custom class inheriting the Base class
 class Comment(Base):
-    __tablename__ = 'comments_idnes'
+    __tablename__ = "comments_idnes"
 
     id = Column(Integer, primary_key=True)
     article_id = Column(String(100))
@@ -36,12 +39,13 @@ class Comment(Base):
 
     def __repr__(self):
         return "<Comment(author='{}', plus='{}', minus='{}')>".format(
-            self.author, self.plus, self.minus)
+            self.author, self.plus, self.minus
+        )
 
 
 # Declaring a table as a custom class inheriting the Base class
 class Article(Base):
-    __tablename__ = 'articles_idnes'
+    __tablename__ = "articles_idnes"
 
     id = Column(String(100), primary_key=True)
     name = Column(Unicode(200))
@@ -49,8 +53,7 @@ class Article(Base):
     comment_amount = Column(Integer)
 
     def __repr__(self):
-        return "<Article(id={}, name='{}')>".format(
-            self.id, self.name)
+        return "<Article(id={}, name='{}')>".format(self.id, self.name)
 
 
 if __name__ == "__main__":

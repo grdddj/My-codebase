@@ -7,8 +7,8 @@ db_file_path = "db.json"
 db_file_path = os.path.join(WORKING_DIRECTORY, db_file_path)
 
 if not os.path.exists(db_file_path):
-    with open(db_file_path, 'w') as my_file:
-        my_file.write('{}')
+    with open(db_file_path, "w") as my_file:
+        my_file.write("{}")
 
 
 def get_results():
@@ -23,13 +23,13 @@ def process_post(request_data):
 
 
 def read_the_db():
-    with open(db_file_path, 'r', encoding='utf-8') as my_file:
+    with open(db_file_path, "r", encoding="utf-8") as my_file:
         results = json.load(my_file)
         return results
 
 
 def save_new_results_to_db(new_results):
-    with open(db_file_path, 'w', encoding='utf-8') as my_file:
+    with open(db_file_path, "w", encoding="utf-8") as my_file:
         json.dump(new_results, my_file, indent=4, ensure_ascii=False)
 
 

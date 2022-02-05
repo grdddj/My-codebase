@@ -4,8 +4,8 @@ It is mapping individual keys to customized keyboard shortcuts,
     or in general to customized python functions.
 """
 
-from pynput.keyboard import Key, Listener
 import pyautogui
+from pynput.keyboard import Key, Listener
 
 
 class ShortcutsToShortcuts:
@@ -16,7 +16,7 @@ class ShortcutsToShortcuts:
     Defining all the functions that are binded to key-events
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Whether to listen or not - way to control it from outside
         self.listen = True
 
@@ -45,25 +45,25 @@ class ShortcutsToShortcuts:
         # Mode we are currently in
         self.current_mode = self.all_modes_list[0]
 
-    def set_new_mode(self, new_mode):
+    def set_new_mode(self, new_mode: str) -> None:
         self.current_mode = new_mode
 
-    def alt_tab(self):
-        pyautogui.hotkey('alt', 'tab')
+    def alt_tab(self) -> None:
+        pyautogui.hotkey("alt", "tab")
 
-    def ctrl_c(self):
-        pyautogui.hotkey('ctrl', 'c')
+    def ctrl_c(self) -> None:
+        pyautogui.hotkey("ctrl", "c")
 
-    def ctrl_v(self):
-        pyautogui.hotkey('ctrl', 'v')
+    def ctrl_v(self) -> None:
+        pyautogui.hotkey("ctrl", "v")
 
-    def ctrl_w(self):
-        pyautogui.hotkey('ctrl', 'w')
+    def ctrl_w(self) -> None:
+        pyautogui.hotkey("ctrl", "w")
 
-    def play_pause(self):
+    def play_pause(self) -> None:
         pyautogui.press("playpause")
 
-    def on_release(self, key):
+    def on_release(self, key: Key) -> None:
         """
         What to do when a key is released - listen to specified keys and
             performing actions according to it
@@ -74,12 +74,11 @@ class ShortcutsToShortcuts:
                 to_do = self.actions_to_perform_in_certain_mode[self.current_mode]
                 to_do()
 
-    def start_listening_loop(self):
+    def start_listening_loop(self) -> None:
         with Listener(on_release=self.on_release) as listener:
             listener.join()
 
 
 # Listening for keyboard events
 if __name__ == "__main__":
-    shortcuts = ShortcutsToShortcuts()
-    shortcuts.start_listening_loop()
+    ShortcutsToShortcuts().start_listening_loop()

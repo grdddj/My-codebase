@@ -9,6 +9,7 @@ import time
 # Necessary for deployment on the server
 import os
 import sys
+
 MODULE_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, MODULE_DIR_PATH)
 
@@ -24,8 +25,8 @@ CORS(app)
 
 class DB_content_old(Resource):
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('key_to_save', type=str, location='json')
-    post_parser.add_argument('data', type=dict, location='json')
+    post_parser.add_argument("key_to_save", type=str, location="json")
+    post_parser.add_argument("data", type=dict, location="json")
 
     def get(self):
         results = chat_logic_old.get_results()
@@ -46,11 +47,11 @@ class DB_content_old(Resource):
             "message": request_data["data"].get("message", ""),
             "answer_to_message": request_data["data"].get("answer_to_message", ""),
             "message_type": request_data["data"].get("message_type", "text"),
-            "details": ""
+            "details": "",
         }
-        chat_logic_new.save_new_message(chat_name=chat_name,
-                                        data=data,
-                                        ip_address_of_sender=ip_address_of_sender)
+        chat_logic_new.save_new_message(
+            chat_name=chat_name, data=data, ip_address_of_sender=ip_address_of_sender
+        )
 
         return "Processed"
 
@@ -65,13 +66,13 @@ class IPAddress(Resource):
 
 class Chat(Resource):
     get_parser = reqparse.RequestParser()
-    get_parser.add_argument('chat_name', type=str)
-    get_parser.add_argument('last_message_timestamp', type=float)
-    get_parser.add_argument('max_result_size', type=int)
+    get_parser.add_argument("chat_name", type=str)
+    get_parser.add_argument("last_message_timestamp", type=float)
+    get_parser.add_argument("max_result_size", type=int)
 
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('chat_name', type=str, location='json')
-    post_parser.add_argument('data', type=dict, location='json')
+    post_parser.add_argument("chat_name", type=str, location="json")
+    post_parser.add_argument("data", type=dict, location="json")
 
     def get(self):
         request_data = self.get_parser.parse_args()
@@ -103,16 +104,16 @@ class Chat(Resource):
 
         ip_address_of_sender = request.remote_addr
 
-        chat_logic_new.save_new_message(chat_name=chat_name,
-                                        data=data,
-                                        ip_address_of_sender=ip_address_of_sender)
+        chat_logic_new.save_new_message(
+            chat_name=chat_name, data=data, ip_address_of_sender=ip_address_of_sender
+        )
 
         return "Message saved"
 
 
 class LastUpdate(Resource):
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('data', type=dict, location='json')
+    post_parser.add_argument("data", type=dict, location="json")
 
     def get(self):
         results = chat_logic_new.get_last_update()
@@ -131,10 +132,12 @@ class LastUpdate(Resource):
 
 class FileStorage(Resource):
     get_parser = reqparse.RequestParser()
-    get_parser.add_argument('file_name', type=str)
+    get_parser.add_argument("file_name", type=str)
 
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files')
+    post_parser.add_argument(
+        "file", type=werkzeug.datastructures.FileStorage, location="files"
+    )
 
     def get(self):
         request_data = self.get_parser.parse_args()
@@ -148,7 +151,7 @@ class FileStorage(Resource):
     def post(self):
         request_data = self.post_parser.parse_args()
 
-        file = request_data['file']
+        file = request_data["file"]
         file_name = get_secure_unique_filename(file)
 
         folder_location = os.path.join(MODULE_DIR_PATH, "files")
@@ -161,10 +164,12 @@ class FileStorage(Resource):
 
 class PictureStorage(Resource):
     get_parser = reqparse.RequestParser()
-    get_parser.add_argument('file_name', type=str)
+    get_parser.add_argument("file_name", type=str)
 
     post_parser = reqparse.RequestParser()
-    post_parser.add_argument('file', type=werkzeug.datastructures.FileStorage, location='files')
+    post_parser.add_argument(
+        "file", type=werkzeug.datastructures.FileStorage, location="files"
+    )
 
     def get(self):
         request_data = self.get_parser.parse_args()
@@ -178,7 +183,7 @@ class PictureStorage(Resource):
     def post(self):
         request_data = self.post_parser.parse_args()
 
-        file = request_data['file']
+        file = request_data["file"]
         file_name = get_secure_unique_filename(file)
 
         folder_location = os.path.join(MODULE_DIR_PATH, "pictures")
@@ -194,13 +199,13 @@ def get_secure_unique_filename(file):
     return timestamp + "_" + secure_filename(file.filename)
 
 
-api.add_resource(DB_content_old, '/db_content')
-api.add_resource(IPAddress, '/v1/ip_address')
-api.add_resource(Chat, '/v1/chat')
-api.add_resource(LastUpdate, '/v1/last_update')
-api.add_resource(FileStorage, '/v1/file_storage')
-api.add_resource(PictureStorage, '/v1/picture_storage')
+api.add_resource(DB_content_old, "/db_content")
+api.add_resource(IPAddress, "/v1/ip_address")
+api.add_resource(Chat, "/v1/chat")
+api.add_resource(LastUpdate, "/v1/last_update")
+api.add_resource(FileStorage, "/v1/file_storage")
+api.add_resource(PictureStorage, "/v1/picture_storage")
 
 
-if __name__ == '__main__':
-    app.run(port='5678', debug=True)
+if __name__ == "__main__":
+    app.run(port="5678", debug=True)

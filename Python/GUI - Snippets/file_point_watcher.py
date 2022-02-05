@@ -2,33 +2,36 @@
 This script is watching a specific file for the presence of 2D points,
     and plots them in a live fashion.
 """
-import matplotlib
-matplotlib.use("TkAgg")
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.animation as animation
-from matplotlib import style
-
-import tkinter as tk
-
 import csv
 import os
 import random
+import tkinter as tk
+
+import matplotlib
+import matplotlib.animation as animation
+from matplotlib import style
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
+matplotlib.use("TkAgg")
+
 
 matplotlib.style.use("ggplot")
 
 file_location = "data.txt"
 
-f = Figure(figsize=(5,5), dpi=100)
+f = Figure(figsize=(5, 5), dpi=100)
 a = f.add_subplot(111)
+
 
 def create_a_file_and_input_random_data_to_it():
     with open(file_location, "w") as data_file:
-        x_values = [1,2,3,4,5,6,7,8,9,10]
-        y_values = [random.randint(0,10) for _ in range(10)]
+        x_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+        y_values = [random.randint(0, 10) for _ in range(10)]
         for x, y in zip(x_values, y_values):
             line = "{},{}\n".format(x, y)
             data_file.write(line)
+
 
 def animate(i):
     with open(file_location, "r") as data_file:
@@ -44,11 +47,12 @@ def animate(i):
         a.clear()
         a.plot(x_list, y_list)
 
+
 main_window = tk.Tk()
 main_window.state("zoomed")
 main_window.title("File point watcher")
 
-f = Figure(figsize=(5,5), dpi=100)
+f = Figure(figsize=(5, 5), dpi=100)
 a = f.add_subplot(111)
 
 a.clear()

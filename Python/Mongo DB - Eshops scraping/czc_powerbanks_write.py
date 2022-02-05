@@ -1,20 +1,24 @@
-import pymongo
-import requests
 import json
-from bs4 import BeautifulSoup
-from datetime import datetime
-import re
 import math
+import re
+from datetime import datetime
+
+import requests
+
+import pymongo
+from bs4 import BeautifulSoup
 
 # Connection to the DB
-myclient = pymongo.MongoClient("mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true")
+myclient = pymongo.MongoClient(
+    "mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true"
+)
 mydb = myclient["Czc"]
 mycol = mydb["Powerbanks"]
 
 domain = "https://www.czc.cz/"
-eshop_suffix = " - czc.cz";
+eshop_suffix = " - czc.cz"
 
-today = datetime.now().strftime('%d-%m-%Y')
+today = datetime.now().strftime("%d-%m-%Y")
 
 count_alltogether = 0
 count_one_page = 0
@@ -28,11 +32,15 @@ for x in range(5):
         response = requests.get(page)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        count_alltogether = int(soup.find("", {"class": "order-by-sum"}).get_text()[0:4].strip())
+        count_alltogether = int(
+            soup.find("", {"class": "order-by-sum"}).get_text()[0:4].strip()
+        )
         count_one_page = len(soup.findAll("div", {"class": "new-tile"}))
         number_of_pages = math.ceil(count_alltogether / count_one_page)
         message = """There is {} elements alltogether, {} on each page, therefore we will explore {} pages
-                    """.format(str(count_alltogether), str(count_one_page), str(number_of_pages))
+                    """.format(
+            str(count_alltogether), str(count_one_page), str(number_of_pages)
+        )
         print(message)
         break
     except:
@@ -46,7 +54,10 @@ for page_number in range(1, 1 + number_of_pages):
     for x in range(5):
         try:
             # Link to the page with a lot of goods
-            page = "https://www.czc.cz/powerbanky-baterie-a-nabijecky_3/produkty?q-first=" + str(number)
+            page = (
+                "https://www.czc.cz/powerbanky-baterie-a-nabijecky_3/produkty?q-first="
+                + str(number)
+            )
 
             response = requests.get(page)
             soup = BeautifulSoup(response.text, "html.parser")
@@ -73,7 +84,12 @@ for page_number in range(1, 1 + number_of_pages):
 
         try:
             name = soup.find("h1").get_text().strip()
-            price = soup.find("", {"class": "total-price"}).find("span", {"class": "price-vatin"}).get_text().strip()
+            price = (
+                soup.find("", {"class": "total-price"})
+                .find("span", {"class": "price-vatin"})
+                .get_text()
+                .strip()
+            )
         except Exception as e:
             print(e)
 
@@ -82,9 +98,21 @@ for page_number in range(1, 1 + number_of_pages):
             parameters = soup.find("", {"id": "pd-parameter"}).findAll("p")
             for entry in parameters:
                 if entry.find("span").get_text().startswith("Kapacita"):
-                    capacity = entry.find("strong").get_text().strip().replace(u'\xa0', ' ').replace(" ", "")
+                    capacity = (
+                        entry.find("strong")
+                        .get_text()
+                        .strip()
+                        .replace("\xa0", " ")
+                        .replace(" ", "")
+                    )
                 if entry.find("span").get_text().startswith("Hmotnost"):
-                    weight = entry.find("strong").get_text().strip().replace(u'\xa0', ' ').replace(" ", "")
+                    weight = (
+                        entry.find("strong")
+                        .get_text()
+                        .strip()
+                        .replace("\xa0", " ")
+                        .replace(" ", "")
+                    )
         except Exception as e:
             print(e)
 
@@ -97,7 +125,7 @@ for page_number in range(1, 1 + number_of_pages):
 
         # Transforming the fields
         try:
-            name = name[0:name.index("  ")]
+            name = name[0 : name.index("  ")]
         except Exception as e:
             print(e)
 
@@ -107,15 +135,20 @@ for page_number in range(1, 1 + number_of_pages):
             print(e)
 
         try:
-            price = int(price[0:price.index("K")].replace('Â','').replace("\xa0", "").replace(" ", ""))
+            price = int(
+                price[0 : price.index("K")]
+                .replace("Â", "")
+                .replace("\xa0", "")
+                .replace(" ", "")
+            )
         except Exception as e:
-            print (price)
+            print(price)
             print(e)
 
         try:
             weight = int(weight.replace(" ", ""))
         except Exception as e:
-            print (weight)
+            print(weight)
             print(e)
 
         # Calculating the price of 10000 mAh
@@ -134,7 +167,7 @@ for page_number in range(1, 1 + number_of_pages):
                 "weight": weight,
                 "link": link,
                 "last_update": today,
-                "price_10000_mAh": price_10000_mAh
+                "price_10000_mAh": price_10000_mAh,
             }
         except Exception as e:
             print(e)

@@ -1,6 +1,7 @@
 # Necessary for deployment on the server
 import os
 import sys
+
 MODULE_DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, MODULE_DIR_PATH)
 
@@ -25,7 +26,7 @@ def save_new_message(chat_name, data, ip_address_of_sender):
         answer_to_message=answer_to_message,
         timestamp=timestamp,
         ip_address=ip_address_of_sender,
-        details=details
+        details=details,
     )
 
     session.add(new_message)
@@ -33,12 +34,14 @@ def save_new_message(chat_name, data, ip_address_of_sender):
 
 
 def get_chat_messages(chat_name, last_message_timestamp, max_result_size):
-    chat_messages = session.query(ChatMessage) \
-        .filter(ChatMessage.chat_name == chat_name) \
-        .filter(ChatMessage.timestamp > last_message_timestamp) \
-        .order_by(ChatMessage.id.desc()) \
-        .limit(max_result_size) \
+    chat_messages = (
+        session.query(ChatMessage)
+        .filter(ChatMessage.chat_name == chat_name)
+        .filter(ChatMessage.timestamp > last_message_timestamp)
+        .order_by(ChatMessage.id.desc())
+        .limit(max_result_size)
         .all()
+    )
 
     list_to_return = []
     for message in reversed(chat_messages):
@@ -62,9 +65,7 @@ def save_last_update(data):
     details = data.get("details", "")
 
     last_update = LastUpdate(
-        version_identifier=version_identifier,
-        timestamp=timestamp,
-        details=details
+        version_identifier=version_identifier, timestamp=timestamp, details=details
     )
 
     session.add(last_update)
@@ -72,9 +73,7 @@ def save_last_update(data):
 
 
 def get_last_update():
-    last_update = session.query(LastUpdate) \
-        .order_by(LastUpdate.id.desc()) \
-        .first()
+    last_update = session.query(LastUpdate).order_by(LastUpdate.id.desc()).first()
 
     last_update_object = {
         "version_identifier": last_update.version_identifier,

@@ -14,11 +14,7 @@ class QuestionGiver:
         self.text = self.load_text_from_pdf()
         # self.save_text_into_file()
 
-        self.QUESTIONS = {
-            "a": [],
-            "b": [],
-            "c": [],
-        }
+        self.QUESTIONS = {"a": [], "b": [], "c": []}
 
         self.part_delimiters = {
             "a": "a) radiokomunikační předpisy:",
@@ -27,9 +23,7 @@ class QuestionGiver:
             "end": "Vyhodnocení písemné zkoušky ",
         }
 
-        self.question_substrings_to_skip = [
-            "hláskovací abeceda (mezinárodní)",
-        ]
+        self.question_substrings_to_skip = ["hláskovací abeceda (mezinárodní)"]
 
     def load_text_from_pdf(self) -> str:
         with fitz.open(self.pdf_file) as doc:
@@ -50,6 +44,8 @@ class QuestionGiver:
     def ask_questions(self) -> None:
         self.fill_questions()
 
+        names = ["Jiří", "Martin", "Mireček"]
+        index = 0
         while True:
             print(
                 {
@@ -65,10 +61,12 @@ class QuestionGiver:
             for q_and_a in random.sample(
                 self.QUESTIONS[section], k=len(self.QUESTIONS[section])
             ):
-                print(q_and_a[0])
+                print(re.sub(r"\A\d+\.\s+", "", q_and_a[0]))
+                print(f"Odpovídá              {names[index%len(names)]}")
                 input("Enter...")
                 print(q_and_a[1])
                 print(80 * "-")
+                index += 1
 
             print(
                 f"You have finished all {len(self.QUESTIONS[section])} questions in section {section}. Congratulations!"

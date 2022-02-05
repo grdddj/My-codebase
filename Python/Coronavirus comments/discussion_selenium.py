@@ -3,16 +3,17 @@ This script is supposed to fetch comments from articles on the Czech
     news server Novinky.cz.
 """
 
-import os
 import glob
-import traceback
 import json
+import os
 import time
-import requests
-from selenium import webdriver
-from bs4 import BeautifulSoup
+import traceback
 
+import requests
+
+from bs4 import BeautifulSoup
 from element_classes_config import ElementClassesConfig
+from selenium import webdriver
 
 element_classes = ElementClassesConfig()
 
@@ -30,7 +31,9 @@ def fetch_comments(article_link, folder_name):
 
     # Trying to process the supplied link
     try:
-        discussion_link, article_name = get_discussion_link_and_article_name(article_link)
+        discussion_link, article_name = get_discussion_link_and_article_name(
+            article_link
+        )
     except Exception as e:
         print(e)
         print(traceback.format_exc())
@@ -51,14 +54,14 @@ def fetch_comments(article_link, folder_name):
 
     # Determining if we run the script on a laptop or on a server,
     #   and adjusting some important variables
-    if os.name == 'posix':
+    if os.name == "posix":
         print("we have linux")
         geckodriver = "/usr/local/bin/geckodriver"
-        options.add_argument('-headless')
+        options.add_argument("-headless")
     else:
         print("I wish we had linux")
-        geckodriver = 'D:\\geckodriver.exe'
-        options.add_argument('-headless')
+        geckodriver = "D:\\geckodriver.exe"
+        options.add_argument("-headless")
 
     driver = webdriver.Firefox(executable_path=geckodriver, options=options)
     driver.get(discussion_link)
@@ -111,23 +114,20 @@ def fetch_comments(article_link, folder_name):
         content = comment.find("div", class_=content_class).get_text().strip()
         name = comment.find("div", class_=name_class).get_text().strip()
 
-        comments.append({
-            "name": name,
-            "content": content,
-            "plus": plus_votes,
-            "minus": minus_votes
-        })
+        comments.append(
+            {"name": name, "content": content, "plus": plus_votes, "minus": minus_votes}
+        )
 
     # Sorting the comments according to their plus vote number
     comments.sort(key=lambda x: x["plus"], reverse=True)
 
     result = {
-              "article_id": article_id,
-              "article_name": article_name,
-              "article_link": article_link,
-              "comments": comments,
-              "amount": len(comments),
-            }
+        "article_id": article_id,
+        "article_name": article_name,
+        "article_link": article_link,
+        "comments": comments,
+        "amount": len(comments),
+    }
 
     # print(result)
     save_the_results(result, folder_name)
@@ -141,7 +141,9 @@ def get_all_files_with_given_extension(folder, extension):
     """
 
     path_of_the_file = os.path.dirname(os.path.realpath(__file__))
-    all_files = glob.glob(os.path.join(path_of_the_file, folder, "*.{}".format(extension)))
+    all_files = glob.glob(
+        os.path.join(path_of_the_file, folder, "*.{}".format(extension))
+    )
     return all_files
 
 
@@ -206,7 +208,7 @@ def fetch_comments_for_all_articles_from_file_into_a_folder(file_path, folder_na
     index = 0
     for article in all_articles:
         index += 1
-        print(80*"*")
+        print(80 * "*")
         print("{} / {}".format(index, len(all_articles)))
         print(article)
         fetch_comments(article_link=article, folder_name=folder_name)

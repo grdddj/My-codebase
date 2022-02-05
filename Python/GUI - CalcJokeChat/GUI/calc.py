@@ -3,13 +3,14 @@ import random
 import tkinter as tk
 from tkinter import font
 from tkinter import messagebox
+from typing import Callable, Optional, Union
 
 from config import Config
 import chat_logger
 
 
 class CalculatorGUI(tk.Frame):
-    def __init__(self, parent, jokes, support_window, *args, **kwargs):
+    def __init__(self, parent, jokes, support_window, *args, **kwargs) -> None:
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
 
@@ -42,19 +43,24 @@ class CalculatorGUI(tk.Frame):
 
         self.parent.protocol("WM_DELETE_WINDOW", self.on_destroy)
 
-    def on_destroy(self):
+    def on_destroy(self) -> None:
         self.log_info("Destroying itself and the support window")
         if self.support_window.support_window_shown:
             self.support_window.on_destroy()
         self.parent.destroy()
 
-    def show_gui(self):
+    def show_gui(self) -> None:
         self.log_info("Showing the calculator GUI")
-        expression_field = tk.Entry(self.parent, bg="white", font=("Calibri", 20),
-                                    bd=5, textvariable=self.equation)
+        expression_field = tk.Entry(
+            self.parent,
+            bg="white",
+            font=("Calibri", 20),
+            bd=5,
+            textvariable=self.equation,
+        )
         expression_field.grid(columnspan=4, ipadx=145)
 
-        self.equation.set('Enter your expression...')
+        self.equation.set("Enter your expression...")
 
         button1 = self.create_number_button(number=1)
         button1.grid(row=2, column=0)
@@ -102,71 +108,104 @@ class CalculatorGUI(tk.Frame):
         equal.grid(row=5, column=2)
 
         clear = self.create_button("Clear", command=self.clear_the_equation)
-        clear.grid(row=5, column='1')
+        clear.grid(row=5, column=1)
 
-        pi = self.create_button("pi", command=lambda: self.press_number_or_operator(3.141592653589793))
+        pi = self.create_button(
+            "pi", command=lambda: self.press_number_or_operator(3.141592653589793)
+        )
         pi.grid(row=6, column=0)
 
         Decimal = self.create_operator_button(operator=".")
         Decimal.grid(row=6, column=1)
 
-        support = self.create_button("SUPPORT", command=self.show_support_window, bg_color="orange")
+        support = self.create_button(
+            "SUPPORT", command=self.show_support_window, bg_color="orange"
+        )
         support.grid(row=6, column=2)
 
         joke = self.create_button("JOKE", command=self.tell_joke, bg_color="orange")
         joke.grid(row=6, column=3)
 
-    def press_number_or_operator(self, num):
+    def press_number_or_operator(self, num: Union[str, float, int]) -> None:
         self.expression = self.expression + str(num)
         self.equation.set(self.expression)
 
-    def press_equals(self):
+    def press_equals(self) -> None:
         try:
             total = str(eval(self.expression))
             self.log_info(f"Calculation made - '{self.expression} = {total}'")
             self.equation.set(total)
             self.expression = total
         except Exception as err:
-            self.log_error(f"Expression could not be evaluated - {err}. Expression - {self.expression}")
+            self.log_error(
+                f"Expression could not be evaluated - {err}. Expression - {self.expression}"
+            )
             self.equation.set("error")
             self.expression = ""
 
-    def clear_the_equation(self):
+    def clear_the_equation(self) -> None:
         self.expression = ""
         self.equation.set("")
 
-    def tell_joke(self):
+    def tell_joke(self) -> None:
         joke = random.choice(self.jokes_list)
         self.log_info(f"Telling a joke - {joke}")
         messagebox.showinfo("'Joke'", joke)
 
-    def show_support_window(self):
+    def show_support_window(self) -> None:
         self.support_window.show_support_window()
 
-    def create_button(self, text, command, bg_color=None, fg_color=None):
+    def create_button(
+        self,
+        text: str,
+        command: Callable[[], None],
+        bg_color: Optional[str] = None,
+        fg_color: Optional[str] = None,
+    ) -> tk.Button:
         if not fg_color:
             fg_color = self.fg_color
         if not bg_color:
             bg_color = self.bg_color
-        return tk.Button(self.parent, text=text, fg=fg_color, bg=bg_color,
-                         font=self.button_font, bd=self.button_border,
-                         height=self.height_of_buttons, width=self.width_of_buttons,
-                         command=command)
+        return tk.Button(
+            self.parent,
+            text=text,
+            fg=fg_color,
+            bg=bg_color,
+            font=self.button_font,
+            bd=self.button_border,
+            height=self.height_of_buttons,
+            width=self.width_of_buttons,
+            command=command,
+        )
 
-    def create_number_button(self, number):
-        return tk.Button(self.parent, text=str(number), fg=self.fg_color, bg=self.bg_color,
-                         font=self.button_font, bd=self.button_border,
-                         height=self.height_of_buttons, width=self.width_of_buttons,
-                         command=lambda: self.press_number_or_operator(number))
+    def create_number_button(self, number: int) -> tk.Button:
+        return tk.Button(
+            self.parent,
+            text=str(number),
+            fg=self.fg_color,
+            bg=self.bg_color,
+            font=self.button_font,
+            bd=self.button_border,
+            height=self.height_of_buttons,
+            width=self.width_of_buttons,
+            command=lambda: self.press_number_or_operator(number),
+        )
 
-    def create_operator_button(self, operator):
-        return tk.Button(self.parent, text=operator, fg=self.fg_color, bg=self.bg_color,
-                         font=self.button_font, bd=self.button_border,
-                         height=self.height_of_buttons, width=self.width_of_buttons,
-                         command=lambda: self.press_number_or_operator(operator))
+    def create_operator_button(self, operator: str) -> tk.Button:
+        return tk.Button(
+            self.parent,
+            text=operator,
+            fg=self.fg_color,
+            bg=self.bg_color,
+            font=self.button_font,
+            bd=self.button_border,
+            height=self.height_of_buttons,
+            width=self.width_of_buttons,
+            command=lambda: self.press_number_or_operator(operator),
+        )
 
-    def log_info(self, message):
+    def log_info(self, message: str) -> None:
         chat_logger.info(f"{self.log_identifier} - {message}")
 
-    def log_error(self, message):
+    def log_error(self, message: str) -> None:
         chat_logger.error(f"{self.log_identifier} - {message}")

@@ -1,7 +1,6 @@
+import logger
 from all_flats import fetch_and_update_all_new_flats
 from flat_details import add_details_to_all_flats
-
-import logger
 
 
 def aggregate_the_fetch():

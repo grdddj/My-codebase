@@ -1,6 +1,7 @@
 import requests
+
 from bs4 import BeautifulSoup
-from db_connection_idnes import return_engine_and_session, Comment, Article
+from db_connection_idnes import Article, Comment, return_engine_and_session
 
 engine, session = return_engine_and_session()
 
@@ -37,8 +38,11 @@ def return_all_articles_from_page(link_with_articles):
         article_name = result.find("h3").get_text().strip()
         articles_and_names.append((link_to_article, article_name))
 
-    return [a_and_n for a_and_n in articles_and_names if
-            _is_a_valid_article_link(a_and_n[0])]
+    return [
+        a_and_n
+        for a_and_n in articles_and_names
+        if _is_a_valid_article_link(a_and_n[0])
+    ]
 
 
 def return_discussion_link(article_link):
@@ -77,9 +81,16 @@ def analyze_one_page_with_comments(discussion_link, article_id):
         print(date)
         name = result.find(class_="name").get_text().strip()
         plus = int(score.split("/")[0].strip("+"))
-        minus = 0 if score.split("/")[1] == "0" else int("".join(score.split("/")[1][1:]))
-        comment = Comment(article_id=article_id, author=process_name(name),
-                          content=content, plus=plus, minus=minus)
+        minus = (
+            0 if score.split("/")[1] == "0" else int("".join(score.split("/")[1][1:]))
+        )
+        comment = Comment(
+            article_id=article_id,
+            author=process_name(name),
+            content=content,
+            plus=plus,
+            minus=minus,
+        )
         session.add(comment)
 
     session.commit()
@@ -92,15 +103,15 @@ def aggregate_the_pull():
         all_articles_and_names = return_all_articles_from_page(link)
         for article_link, article_name in all_articles_and_names:
             # Upserting the article, in case it already exists
-            article_entry = Article(id=article_name, name=article_name,
-                                    link=article_link, comment_amount=50)
+            article_entry = Article(
+                id=article_name, name=article_name, link=article_link, comment_amount=50
+            )
             upserted_article = session.merge(article_entry)
             session.add(upserted_article)
             session.commit()
 
             # Deleting all the previous comments, so that we have no duplicates
-            session.query(Comment) \
-                .filter(Comment.article_id == article_name).delete()
+            session.query(Comment).filter(Comment.article_id == article_name).delete()
 
             discussion_link = return_discussion_link(article_link)
 

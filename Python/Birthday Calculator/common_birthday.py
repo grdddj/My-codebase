@@ -25,12 +25,15 @@ Logic overview: We first calculate the right year by taking only the birth-years
     have "common birthday". Then we just parse it and display the result.
 """
 
+from typing import Any
+
+
 # Changeable input
-COMMON_BIRTHDAY = 100
+COMMON_BIRTHDAY = 108
 BIRTHDAYS_ARRAY = ["27. 1. 1995", "2. 8. 1993", "23. 7. 1969"]
 
 # The main part of the script
-def main():
+def main() -> None:
     # Finding the amount of people
     people_amount = len(BIRTHDAYS_ARRAY)
 
@@ -100,7 +103,7 @@ def main():
     count_of_days = 0
 
     for month_count in birth_months_array:
-        count_of_months += (month_count - 1)
+        count_of_months += month_count - 1
 
     for day_count in birth_days_array:
         count_of_days += day_count
@@ -123,15 +126,18 @@ def main():
     birthday_day = int(days_to_be_added % 30.5)
 
     # Printing the result:
-    print("These {} people have {} years together on the {}. {}. {}. Happy birthday!"
-         .format(people_amount, COMMON_BIRTHDAY, birthday_day, birthday_month, birthday_year))
+    print(
+        f"These {people_amount} people have {COMMON_BIRTHDAY} years together on the "
+        f"{birthday_day}. {birthday_month}. {birthday_year}. Happy birthday!"
+    )
+
 
 # Helper function to quickly print out the value of a variable
 # I did not find a way to omit the variable_name, and print the variable
 #   name as a string without it
-def _printvar(variable, variable_name="variable_name"):
-    print("{}: {}".format(variable_name, variable))
+def _printvar(variable: Any, variable_name: str = "variable_name") -> None:
+    print(f"{variable_name}: {variable}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

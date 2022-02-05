@@ -43,22 +43,25 @@ One strange thing I noticed is the script is reacting much more slowly
     (taking longer time to recognize the button and click it)
 """
 
-from pynput import mouse
-import pyautogui
-import time
 import logging
 import subprocess
+import time
 
+import pyautogui
 from helpers import Helpers
+from pynput import mouse
 
 # Using logging as a neat way to find out errors in production
 ERROR_FILENAME = "pdf_highlighter_clicking_ERRORS.log"
-logging.basicConfig(filename=ERROR_FILENAME,
-					level=logging.INFO,
-					format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(
+    filename=ERROR_FILENAME,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
 
 # Full path to the Notepad executable, to be able to open error logs in it
 NOTEPAD_PATH = r"C:\Windows\notepad.exe"
+
 
 class Global:
     # Specifying which mouse clicks to listen for, where is the picture
@@ -85,8 +88,7 @@ class Global:
     SHOW_NOTIFICATIONS = False
 
     # Instruction for the user that will be shown at the beginning
-    start_instructions = \
-    """
+    start_instructions = """
     This program is making PDF color highlighting and data copying a breeze.
 
     Just highlight the wanted text in PDF and click on it with a
@@ -99,14 +101,12 @@ class Global:
     """
 
     # Template for the message that will be shown after user ends the script
-    end_summary = "" + \
-        "Thank you for using the service!\n\n" + \
-        "You have used the function {} times!"
+    end_summary_template = (
+        "Thank you for using the service!\n\nYou have used the function {} times!"
+    )
 
-def on_click(x_coord: int,
-             y_coord: int,
-             button,
-             pressed: bool) -> bool:
+
+def on_click(x_coord: int, y_coord: int, button, pressed: bool) -> bool:
     """
     What should happen when a click event is registered
     Listening on release of the button - not on press, because pressed
@@ -120,9 +120,10 @@ def on_click(x_coord: int,
     if stop_listening(x_coord, y_coord, button, pressed):
         if Global.SHOW_NOTIFICATIONS:
             pyautogui.alert(
-                text=Global.end_summary.format(Global.amount_of_usage),
-                title='SEE YOU SOON!',
-                button='OK')
+                text=Global.end_summary_template.format(Global.amount_of_usage),
+                title="SEE YOU SOON!",
+                button="OK",
+            )
 
         return False
 
@@ -132,10 +133,8 @@ def on_click(x_coord: int,
 
     return True
 
-def stop_listening(x_coord: int,
-                   y_coord: int,
-                   button,
-                   pressed: bool) -> bool:
+
+def stop_listening(x_coord: int, y_coord: int, button, pressed: bool) -> bool:
     """
     Condition for which to stop listening (finish the script)
     Has the same arguments as on_click(), and can be arbitrary tuned
@@ -148,6 +147,7 @@ def stop_listening(x_coord: int,
         return True
 
     return False
+
 
 def copy_and_highlight() -> None:
     """
@@ -169,13 +169,15 @@ def copy_and_highlight() -> None:
     coords_and_square_size = {
         "x_coord": x_coord_original,
         "y_coord": y_coord_original,
-        "square_size": Global.square_size_where_to_look_for_button_first}
+        "square_size": Global.square_size_where_to_look_for_button_first,
+    }
 
     # Trying to locate the object on the current screen
     position_of_object = Helpers._get_position_of_object(
         object_image_location=Global.where_to_click_picture_location,
         confidence_of_locating=Global.confidence_of_locating,
-        coords_and_square_size=coords_and_square_size)
+        coords_and_square_size=coords_and_square_size,
+    )
 
     # If we receive valid answer, click at the center of the object
     #   and then move the mouse back to its original location
@@ -190,17 +192,21 @@ def copy_and_highlight() -> None:
     else:
         print("OBJECT NOT LOCATED!!!")
 
+
 if __name__ == "__main__":
     try:
         # Notifying the user and starting to listen
         if Global.SHOW_NOTIFICATIONS:
             pyautogui.alert(
                 text=Global.start_instructions,
-                title='PDF HIGLIGHTER - INSTRUCTIONS',
-                button='OK')
+                title="PDF HIGLIGHTER - INSTRUCTIONS",
+                button="OK",
+            )
         print(Global.start_instructions)
-        print("\nWARNING!\nThere needs to be a file 'highlight_button.png'" + \
-                "the picture of the highlighting button!")
+        print(
+            "\nWARNING!\nThere needs to be a file 'highlight_button.png'"
+            + "the picture of the highlighting button!"
+        )
         with mouse.Listener(on_click=on_click) as listener:
             listener.join()
     except Exception as e:
@@ -209,13 +215,14 @@ if __name__ == "__main__":
         logging.exception(e)
 
         # Showing that there was some unexpected error
-        error_text = "Exception ocurred - please look into the error log: {}".format(ERROR_FILENAME)
+        error_text = "Exception ocurred - please look into the error log: {}".format(
+            ERROR_FILENAME
+        )
         print(error_text)
 
         pyautogui.alert(
-            text=error_text,
-            title='ERROR HAPPENED!',
-            button='I will look there')
+            text=error_text, title="ERROR HAPPENED!", button="I will look there"
+        )
 
         # Showing the error log in the Notepad
         # There can be multiple errors, like notepad path not existing etc.
@@ -225,4 +232,4 @@ if __name__ == "__main__":
             print("UNABLE TO LAUNCH NOTEPAD IN LOCATION '{}'".format(NOTEPAD_PATH))
 
         # Raising the actual error, to be also visible in the terminal
-        raise(e)
+        raise (e)

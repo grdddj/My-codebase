@@ -3,13 +3,21 @@ This file stores hepler functions to enable PDF highlight scripts run smoothly
     without the main code being polluted with unnecessary logic.
 """
 
+from typing import Tuple
+
 import pyautogui
+from PIL import Image
+
+ColorValue = Tuple[int, int, int]
+
 
 class Helpers:
     @staticmethod
-    def _get_position_of_object(object_image_location: str,
-                               confidence_of_locating: float = 1,
-                               coords_and_square_size: dict = None) -> dict:
+    def _get_position_of_object(
+        object_image_location: str,
+        confidence_of_locating: float = 1,
+        coords_and_square_size: dict = None,
+    ) -> dict:
         """
         Determines the position of a certain object on the screen.
         When we suspect the object will be around a certain location,
@@ -28,12 +36,13 @@ class Helpers:
                 x_coord=coords_and_square_size["x_coord"],
                 y_coord=coords_and_square_size["y_coord"],
                 square_size=coords_and_square_size["square_size"],
-                screen_size=pyautogui.size())
+                screen_size=pyautogui.size(),
+            )
 
             # Trying to locate the object in a small region
             position_of_object = pyautogui.locateOnScreen(
-                object_image_location,
-                region=region_where_to_look)
+                object_image_location, region=region_where_to_look
+            )
 
             # If we managed to find the object in the smaller region, return it
             # Otherwise the object will be searched for on the whole screen
@@ -42,18 +51,18 @@ class Helpers:
 
         # Locating the object on the whole screen (after first trial failed
         #   or was not even wanted)
-        position_of_object = pyautogui.locateOnScreen(
-            object_image_location)
+        position_of_object = pyautogui.locateOnScreen(object_image_location)
 
-        return {"found": position_of_object is not None,
-                "coords": position_of_object}
+        return {"found": position_of_object is not None, "coords": position_of_object}
 
     @staticmethod
-    def __safely_create_square_region_on_the_screen(x_coord: int,
-                                                    y_coord: int,
-                                                    square_size: int,
-                                                    screen_size: tuple,
-                                                    region_type: str = "pyautogui") -> tuple:
+    def __safely_create_square_region_on_the_screen(
+        x_coord: int,
+        y_coord: int,
+        square_size: int,
+        screen_size: Tuple[int, int],
+        region_type: str = "pyautogui",
+    ) -> Tuple[int, int, int, int]:
         """
         Determines a square region on the screen, that has a defined square size
             and is surrounding the point with given x and y coordinates.
@@ -68,13 +77,13 @@ class Helpers:
         #   x_rectangle_length, y_rectangle_length), whereas PIL demands
         #   (x_upper_left_corner, y_upper_left_corner, x_bottom_right_corner,
         #   y_bottom_right_corner)
-        assert(region_type in ["pyautogui", "PIL"])
+        assert region_type in ["pyautogui", "PIL"]
 
         # Finding out the resolution of the screen, to righly construct the square
         x_screen_size, y_screen_size = screen_size
 
         # Guard against square sizes bigger than the whole screen
-        assert(square_size <= x_screen_size and square_size <= y_screen_size)
+        assert square_size <= x_screen_size and square_size <= y_screen_size
 
         # Calculating the coordinates of ideal top-left square corner
         x_corner = int(x_coord - square_size / 2)
@@ -93,22 +102,26 @@ class Helpers:
             y_corner = y_screen_size - square_size - 1
 
         # Last sanity check before returning
-        assert(0 <= x_corner < x_screen_size - square_size)
-        assert(0 <= y_corner < y_screen_size - square_size)
+        assert 0 <= x_corner < x_screen_size - square_size
+        assert 0 <= y_corner < y_screen_size - square_size
 
         if region_type == "pyautogui":
             return (x_corner, y_corner, square_size, square_size)
         elif region_type == "PIL":
-            return(x_corner, y_corner, x_corner + square_size, y_corner + square_size)
+            return (x_corner, y_corner, x_corner + square_size, y_corner + square_size)
+        else:
+            raise RuntimeError(f"Unknown region_type: {region_type}")
 
     @staticmethod
-    def _locate_pixel_in_the_image(PIL_image,
-                                   colour_to_match: tuple,
-                                   x_coord: int,
-                                   y_coord: int,
-                                   square_size: int,
-                                   pixels_to_skip_on_margin_if_possible: int,
-                                   grid_size_when_searching: int) -> dict:
+    def _locate_pixel_in_the_image(
+        PIL_image,
+        colour_to_match: ColorValue,
+        x_coord: int,
+        y_coord: int,
+        square_size: int,
+        pixels_to_skip_on_margin_if_possible: int,
+        grid_size_when_searching: int,
+    ) -> dict:
         """
         Searching the image for a certain pixel, according to supplied
             colour.
@@ -119,8 +132,8 @@ class Helpers:
         # First checking if the pixel colour to match really exists in the image
         # In the negative case immediately return that there is nothing
         is_there_my_colour = Helpers.__is_there_a_colour_in_a_PIL_image(
-            PIL_image=PIL_image,
-            colour_to_locate=colour_to_match)
+            PIL_image=PIL_image, colour_to_locate=colour_to_match
+        )
 
         if not is_there_my_colour["is_there"]:
             return {"should_i_click": False, "coords": None}
@@ -138,19 +151,22 @@ class Helpers:
             y_coord=y_coord,
             square_size=square_size,
             screen_size=PIL_image.size,
-            region_type="PIL")
+            region_type="PIL",
+        )
 
         # Trying to locate our colour in our region
         is_there_colour_in_region = Helpers.__is_there_a_colour_in_a_PIL_image(
             PIL_image=PIL_image.crop(box=region_where_to_look),
-            colour_to_locate=colour_to_match)
+            colour_to_locate=colour_to_match,
+        )
 
         # If we manage to locate it in our smaller region, locate it there
         if is_there_colour_in_region["is_there"]:
             x_values_list = Helpers.__generate_list_from_range_starting_in_the_middle(
                 lower_end=region_where_to_look[0],
                 higher_end=region_where_to_look[2],
-                step=grid_size_when_searching)
+                step=grid_size_when_searching,
+            )
 
             for x_value in x_values_list:
                 analyze_y_axis = Helpers._search_the_y_axis_for_pixel(
@@ -159,7 +175,8 @@ class Helpers:
                     x_coord=x_value,
                     y_coord_current=y_coord,
                     distance_to_search=square_size,
-                    pixels_to_skip_on_margin_if_possible=pixels_to_skip_on_margin_if_possible)
+                    pixels_to_skip_on_margin_if_possible=pixels_to_skip_on_margin_if_possible,
+                )
 
                 if analyze_y_axis["success"]:
                     return {"should_i_click": True, "coords": analyze_y_axis["coords"]}
@@ -171,7 +188,8 @@ class Helpers:
                 x_values_list = Helpers.__generate_list_from_range_starting_in_the_middle(
                     lower_end=0,
                     higher_end=PIL_image.size[0] - 1,
-                    step=grid_size_when_searching)
+                    step=grid_size_when_searching,
+                )
 
                 y_coord_in_the_middle = PIL_image.size[1] // 2
 
@@ -182,10 +200,14 @@ class Helpers:
                         x_coord=x_value,
                         y_coord_current=y_coord_in_the_middle,
                         distance_to_search=PIL_image.size[1],
-                        pixels_to_skip_on_margin_if_possible=pixels_to_skip_on_margin_if_possible)
+                        pixels_to_skip_on_margin_if_possible=pixels_to_skip_on_margin_if_possible,
+                    )
 
                     if analyze_y_axis["success"]:
-                        return {"should_i_click": True, "coords": analyze_y_axis["coords"]}
+                        return {
+                            "should_i_click": True,
+                            "coords": analyze_y_axis["coords"],
+                        }
 
                 grid_size_when_searching = grid_size_when_searching // 2
 
@@ -196,18 +218,19 @@ class Helpers:
 
     @staticmethod
     def __generate_list_from_range_starting_in_the_middle(
-            lower_end: int,
-            higher_end: int,
-            step: int,
-            first_direction_from_middle: str = None) -> list:
+        lower_end: int,
+        higher_end: int,
+        step: int,
+        first_direction_from_middle: str = None,
+    ) -> list:
         """
         Generates a list of numbers starting at the middle of the range
             and continuing gradually to the edges
         """
 
-        assert(lower_end < higher_end)
-        assert(step > 0)
-        assert(first_direction_from_middle in [None, "up", "down", "mixed"])
+        assert lower_end < higher_end
+        assert step > 0
+        assert first_direction_from_middle in [None, "up", "down", "mixed"]
 
         middle_point = int((lower_end + higher_end) / 2)
 
@@ -257,16 +280,22 @@ class Helpers:
                 except IndexError:
                     pass
             resulting_list = middle_part + mixed_list
+        else:
+            raise RuntimeError(
+                f"Unknown first_direction_from_middle - {first_direction_from_middle}"
+            )
 
         return resulting_list
 
     @staticmethod
-    def _search_the_y_axis_for_pixel(PIL_image,
-                                     colour_to_match: tuple,
-                                     x_coord: int,
-                                     y_coord_current: int,
-                                     distance_to_search: int,
-                                     pixels_to_skip_on_margin_if_possible: int = 0) -> dict:
+    def _search_the_y_axis_for_pixel(
+        PIL_image: Image.Image,
+        colour_to_match: ColorValue,
+        x_coord: int,
+        y_coord_current: int,
+        distance_to_search: int,
+        pixels_to_skip_on_margin_if_possible: int = 0,
+    ) -> dict:
         """
         Examining the given image for a certain pixel on a specific "x"
             coordination.
@@ -338,8 +367,9 @@ class Helpers:
         return {"success": False, "coords": None}
 
     @staticmethod
-    def __is_there_a_colour_in_a_PIL_image(PIL_image,
-                                           colour_to_locate: tuple) -> dict:
+    def __is_there_a_colour_in_a_PIL_image(
+        PIL_image: Image.Image, colour_to_locate: ColorValue
+    ) -> dict:
         """
         Determining whether colour is located in a PIL image
             (whether at least one pixel has this specific colour)
@@ -354,5 +384,5 @@ class Helpers:
         for ocurrence, colour in ocurrences_and_colours:
             if colour == colour_to_locate:
                 return {"is_there": True, "ocurrences": ocurrence}
-        else:
-            return {"is_there": False, "ocurrences": None}
+
+        return {"is_there": False, "ocurrences": None}

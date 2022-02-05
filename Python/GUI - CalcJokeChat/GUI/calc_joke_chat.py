@@ -50,7 +50,7 @@ if __name__ == "__main__":
     try:
         root = tk.Tk()
         CalculatorGUI(root, Jokes, SupportWindow)
-        root.eval('tk::PlaceWindow . center')
+        root.eval("tk::PlaceWindow . center")
         root.mainloop()
     except Exception as err:
         logger.exception(f"Could not spawn the program - {err}")

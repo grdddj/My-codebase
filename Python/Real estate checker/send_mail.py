@@ -1,10 +1,11 @@
 import smtplib
 import ssl
+from typing import List
 
 from config import Config
 
 
-def send_email(message_text, recipients):
+def send_email(message_text: str, recipients: List[str]) -> None:
     context = ssl.create_default_context()
 
     with smtplib.SMTP_SSL(Config.smtp_server, Config.port, context=context) as server:

@@ -3,7 +3,7 @@ import os
 import glob
 
 counter = 0
-pngs = glob.glob(os.path.join("smileys", '*.png'))
+pngs = glob.glob(os.path.join("smileys", "*.png"))
 print(pngs)
 
 for image in pngs:

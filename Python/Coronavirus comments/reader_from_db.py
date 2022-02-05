@@ -1,4 +1,4 @@
-from db_connection import return_engine_and_session, Comment, Article
+from db_connection import Article, Comment, return_engine_and_session
 
 engine, session = return_engine_and_session()
 
@@ -8,24 +8,32 @@ def get_comments(amount=20, best_or_worst="best", article_id=0):
     # Joining together both comment and article tables
     if article_id not in ["0", "", 0]:
         if best_or_worst == "best":
-            result = session.query(Comment, Article).\
-                filter(Comment.article_id == article_id).\
-                filter(Comment.article_id == Article.id).\
-                order_by(Comment.plus.desc())[:amount]
+            result = (
+                session.query(Comment, Article)
+                .filter(Comment.article_id == article_id)
+                .filter(Comment.article_id == Article.id)
+                .order_by(Comment.plus.desc())[:amount]
+            )
         else:
-            result = session.query(Comment, Article).\
-                filter(Comment.article_id == article_id).\
-                filter(Comment.article_id == Article.id).\
-                order_by(Comment.minus.desc())[:amount]
+            result = (
+                session.query(Comment, Article)
+                .filter(Comment.article_id == article_id)
+                .filter(Comment.article_id == Article.id)
+                .order_by(Comment.minus.desc())[:amount]
+            )
     else:
         if best_or_worst == "best":
-            result = session.query(Comment, Article).\
-                filter(Comment.article_id == Article.id).\
-                order_by(Comment.plus.desc())[:amount]
+            result = (
+                session.query(Comment, Article)
+                .filter(Comment.article_id == Article.id)
+                .order_by(Comment.plus.desc())[:amount]
+            )
         else:
-            result = session.query(Comment, Article).\
-                filter(Comment.article_id == Article.id).\
-                order_by(Comment.minus.desc())[:amount]
+            result = (
+                session.query(Comment, Article)
+                .filter(Comment.article_id == Article.id)
+                .order_by(Comment.minus.desc())[:amount]
+            )
 
     # Transforming the results into a dictionary, so it can be sent
     #   through JSON

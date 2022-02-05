@@ -1,9 +1,9 @@
 import os
-import traceback
 import time
-import pyautogui
+import traceback
 import winsound
 
+import pyautogui
 
 WORKING_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 
@@ -17,7 +17,7 @@ error_wav_location = "error.wav"
 error_full_wav_location = os.path.join(WORKING_DIRECTORY, error_wav_location)
 
 
-def is_there_a_kosik():
+def is_there_a_kosik() -> bool:
     """
     Finds out if there is a kosik on the screen
     """
@@ -28,7 +28,7 @@ def is_there_a_kosik():
     return position_of_object is not None
 
 
-def click_on_kosik():
+def click_on_kosik() -> None:
     """
     Clicks on kosik to add stuff into it
     """
@@ -36,12 +36,12 @@ def click_on_kosik():
     # Finding out the coordination of kosik and clicking it
     position_of_object = pyautogui.locateOnScreen(full_picture_location)
     if position_of_object:
-        center_of_object = pyautogui.center(position_of_object)
+        center_of_object = pyautogui.center(position_of_object)  # type: ignore
         pyautogui.click(center_of_object)
         print("clicked on kosik!!!")
 
 
-def refresh_the_page():
+def refresh_the_page() -> None:
     """
     Refreshes the page
     Waiting for some time for the page to fully load before continuing
@@ -54,7 +54,7 @@ def refresh_the_page():
     print("done refreshing")
 
 
-def success_action():
+def success_action() -> None:
     """
     Defines what to do when we locate the kosik
     """
@@ -69,7 +69,7 @@ def success_action():
         winsound.PlaySound(alarm_full_wav_location, winsound.SND_FILENAME)
 
 
-def handle_error():
+def handle_error() -> None:
     """
     Defines what to do when we encounter some unexpected error
     """

@@ -32,12 +32,12 @@ from shutil import copyfile
 #                 pass
 
 # Transforming all the files with .txt extension into .sol extension
-files = [f for f in os.listdir('.') if os.path.isfile(f)]
+files = [f for f in os.listdir(".") if os.path.isfile(f)]
 for f in files:
     filename, file_extension = os.path.splitext(f)
     if file_extension == ".txt":
         new_filename = filename + ".sol"
         os.remove(f)
-        if new_filename not in os.listdir('.'):
+        if new_filename not in os.listdir("."):
             with open(new_filename, "w"):
                 pass

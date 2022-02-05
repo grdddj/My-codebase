@@ -1,10 +1,10 @@
-import os
 import json
+import os
 import time
-from selenium import webdriver
-from bs4 import BeautifulSoup
 
+from bs4 import BeautifulSoup
 from element_classes_config import ElementClassesConfig
+from selenium import webdriver
 
 element_classes = ElementClassesConfig()
 
@@ -33,13 +33,13 @@ def save_links_into_file(file_path, amount_of_next_clicks=20):
 
     # Determining if we run the script on a laptop or on a server,
     #   and adjusting some important variables
-    if os.name == 'posix':
+    if os.name == "posix":
         print("we have linux")
         geckodriver = "/usr/local/bin/geckodriver"
-        options.add_argument('-headless')
+        options.add_argument("-headless")
     else:
         print("I wish we had linux")
-        geckodriver = 'D:\\geckodriver.exe'
+        geckodriver = "D:\\geckodriver.exe"
         # options.add_argument('-headless')
 
     driver = webdriver.Firefox(executable_path=geckodriver, options=options)

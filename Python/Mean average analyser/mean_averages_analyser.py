@@ -7,8 +7,9 @@ It offers quick and programmable way of getting mean averages of columns
     from a data file
 """
 
-import os
 import glob
+import os
+from typing import List, Tuple
 
 # Defining common data for all the files
 FILE_EXTENSION = "lvm"
@@ -19,17 +20,17 @@ EXPECTED_NUMBER_OF_LINES = 60000
 RESULTS_FILE = "results.txt"
 
 
-def get_all_files_with_given_extension(extension):
+def get_all_files_with_given_extension(extension: str) -> List[str]:
     """
     Returning all files with a given extension from the same directory as the script
     """
 
     path_of_the_file = os.path.dirname(os.path.realpath(__file__))
-    all_files = glob.glob(os.path.join(path_of_the_file, "*.{}".format(extension)))
+    all_files = glob.glob(os.path.join(path_of_the_file, f"*.{extension}".format()))
     return all_files
 
 
-def line_contains_valid_experiment_data(line):
+def line_contains_valid_experiment_data(line: str) -> bool:
     """
     Determining whether the data contains valid data to be analysed
     It is valid when the first "column" is parseable to a float (decimal number)
@@ -45,7 +46,9 @@ def line_contains_valid_experiment_data(line):
     return True
 
 
-def convert_list_from_string_to_float(list_of_values):
+def convert_list_from_string_to_float(
+    list_of_values: List[str],
+) -> Tuple[List[float], List[str]]:
     """
     Converts all the values from a text to a decimal number
     If not possible, notify about it, as it can mean a problem is there,
@@ -63,16 +66,16 @@ def convert_list_from_string_to_float(list_of_values):
             new_value = float(value)
         except ValueError:
             new_value = 0
-            error = "WARNING: impossible to parse a number: '{}'".format(value)
+            error = f"WARNING: impossible to parse a number: '{value}'"
             print(error)
             errors.append(error)
 
         list_of_numbers.append(new_value)
 
-    return (list_of_numbers, errors)
+    return list_of_numbers, errors
 
 
-def process_a_file(file_name):
+def process_a_file(file_name: str) -> None:
     """
     Analyses the data in a single file
     """
@@ -90,13 +93,15 @@ def process_a_file(file_name):
             if line_contains_valid_experiment_data(line):
                 # Extracting the individual data and converting them to numbers
                 delimited_info_in_text = line.strip().split(DELIMITER)
-                delimited_info_in_numbers, error = convert_list_from_string_to_float(
-                    delimited_info_in_text)
+                (
+                    delimited_info_in_numbers,
+                    new_errors,
+                ) = convert_list_from_string_to_float(delimited_info_in_text)
                 values.append(delimited_info_in_numbers)
 
                 # Logging the errors that may happen during the conversion
-                if error:
-                    errors.append(error)
+                if new_errors:
+                    errors.extend(new_errors)
 
             # Saving the units (kPa, C, Nm...)
             elif line.startswith(UNIT_LINE_IDENTIFIER):
@@ -109,28 +114,33 @@ def process_a_file(file_name):
         # Calculating the mean value in all the columns
         # We did not want to use numpy, so that script can run without libraries
         # https://stackoverflow.com/questions/15819980/calculate-mean-across-dimension-in-a-2d-array
-        mean_values = [float(sum(l))/len(l) for l in zip(*values)]
+        mean_values = [float(sum(l)) / len(l) for l in zip(*values)]
 
         # Aggregating the results and saving them into a text file
         # The content is being appended, so the old data in a file will persist
         with open(RESULTS_FILE, "a") as results_file:
-            results_file.write("file_name: {}\n".format(file_name))
+            results_file.write(f"file_name: {file_name}\n")
 
             # Validating if all the lines were parsed correctly and showing errors
-            results_file.write("number of expected lines: {}\n".format(EXPECTED_NUMBER_OF_LINES))
-            results_file.write("number of valid lines: {}\n".format(len(values)))
+            results_file.write(
+                f"number of expected lines: {EXPECTED_NUMBER_OF_LINES}\n"
+            )
+            results_file.write(f"number of valid lines: {len(values)}\n")
             if len(values) < EXPECTED_NUMBER_OF_LINES:
-                results_file.write(80*"x" + "\nWARNING: NOT ALL OF THE LINES WERE CORRECTLY PARSED!!\n")
+                results_file.write(
+                    80 * "x"
+                    + "\nWARNING: NOT ALL OF THE LINES WERE CORRECTLY PARSED!!\n"
+                )
             if len(errors) > 0:
-                results_file.write("{}\n{}\n{}\n".format(80*"x", str(errors), 80*"x"))
+                results_file.write(f"{80 * 'x'}\n{errors}\n{80 * 'x'}\n")
 
             # Writing the real results - mean values
             for quantity, mean_value, unit in zip(quantities, mean_values, units):
-                result = "Mean of {} [{}] = {}".format(quantity, unit, mean_value)
+                result = f"Mean of {quantity} [{unit}] = {mean_value}"
                 results_file.write(result + "\n")
                 print(result)
 
-            results_file.write(80*"*" + "\n")
+            results_file.write(80 * "*" + "\n")
 
 
 if __name__ == "__main__":

@@ -1,20 +1,24 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import pymongo
-import requests
 import json
 import math
-from bs4 import BeautifulSoup
 from datetime import datetime
 
+import requests
+
+import pymongo
+from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
 # Connection to the DB
-myclient = pymongo.MongoClient("mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true")
+myclient = pymongo.MongoClient(
+    "mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true"
+)
 mydb = myclient["Sauto"]
 mycol = mydb["JMK_cars"]
 
-today = datetime.now().strftime('%d-%m-%Y')
+today = datetime.now().strftime("%d-%m-%Y")
 
 
 # geckodriver = 'D:\\geckodriver.exe'
@@ -54,7 +58,9 @@ soup = BeautifulSoup(response.text, "html.parser")
 
 details_table_rows = soup.find("table", id="detailParams").findAll("tr")
 
-price = year_of_manufacture = tachometr = fuel = transmission = country_of_origin = power = volume = STK = ""
+price = (
+    year_of_manufacture
+) = tachometr = fuel = transmission = country_of_origin = power = volume = STK = ""
 
 for detail in details_table_rows:
     try:
@@ -103,24 +109,15 @@ try:
         "power": power,
         "volume": volume,
         "STK": STK,
-        "link": link
+        "link": link,
     }
 except:
     continue
 
 bulk = mycol.initialize_unordered_bulk_op()
 for car in list_of_cars:
-	bulk.find({'_id': car['_id']}).upsert().replace_one(car)
+    bulk.find({"_id": car["_id"]}).upsert().replace_one(car)
 bulk.execute()
-
-
-
-
-
-
-
-
-
 
 
 # for index in range (5):

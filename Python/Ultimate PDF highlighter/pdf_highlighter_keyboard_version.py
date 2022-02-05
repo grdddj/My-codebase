@@ -38,21 +38,25 @@ Possible improvements:
 - incorporating sounds - when it succeeds or fails, play some nice melody :)
 """
 
-from pynput.keyboard import Key, Listener
-import pyautogui
 import logging
 import subprocess
 
+import pyautogui
 from helpers import Helpers
+from PIL import Image
+from pynput.keyboard import Key, Listener
 
 # Using logging as a neat way to find out errors in production
 ERROR_FILENAME = "pdf_highlighter_keyboard_ERRORS.log"
-logging.basicConfig(filename=ERROR_FILENAME,
-					level=logging.INFO,
-					format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(
+    filename=ERROR_FILENAME,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
 
 # Full path to the Notepad executable, to be able to open error logs in it
 NOTEPAD_PATH = r"C:\Windows\notepad.exe"
+
 
 class Global:
     # Specifying which key to listen for, key for stopping,
@@ -115,8 +119,7 @@ class Global:
     SHOW_NOTIFICATIONS = False
 
     # Instruction for the user that will be shown at the beginning
-    start_instructions = \
-    """
+    start_instructions = """
     This program is making PDF color highlighting and data copying a breeze.
 
     Just highlight the wanted text in PDF and press right Control.
@@ -128,9 +131,10 @@ class Global:
     """
 
     # Template for the message that will be shown after user ends the script
-    end_summary = "" + \
-        "Thank you for using the service!\n\n" + \
-        "You have used the function {} times!"
+    end_summary_template = (
+        "Thank you for using the service!\n\nYou have used the function {} times!"
+    )
+
 
 def on_release(key) -> bool:
     """
@@ -145,9 +149,10 @@ def on_release(key) -> bool:
     if stop_listening(key):
         if Global.SHOW_NOTIFICATIONS:
             pyautogui.alert(
-                text=Global.end_summary.format(Global.amount_of_usage),
-                title='SEE YOU SOON!',
-                button='OK')
+                text=Global.end_summary_template.format(Global.amount_of_usage),
+                title="SEE YOU SOON!",
+                button="OK",
+            )
 
         return False
 
@@ -156,6 +161,7 @@ def on_release(key) -> bool:
         copy_and_highlight()
 
     return True
+
 
 def stop_listening(key) -> bool:
     """
@@ -168,6 +174,7 @@ def stop_listening(key) -> bool:
 
     Global.last_key_pressed = key
     return False
+
 
 def copy_and_highlight() -> None:
     """
@@ -182,7 +189,7 @@ def copy_and_highlight() -> None:
     if Global.VALIDATE_BEFORE_CLICKING:
         # Gathering information for the scree analysis
         x_coord_original, y_coord_original = pyautogui.position()
-        my_screen = pyautogui.screenshot()
+        my_screen: Image.Image = pyautogui.screenshot()
 
         # Contacting the helper function which will search for the
         #   right place where to click
@@ -193,13 +200,17 @@ def copy_and_highlight() -> None:
             y_coord=y_coord_original,
             square_size=Global.square_size_where_to_look_for_highlight_first,
             pixels_to_skip_on_margin_if_possible=Global.pixels_to_skip_on_margin_if_possible,
-            grid_size_when_searching=Global.grid_size_when_searching)
+            grid_size_when_searching=Global.grid_size_when_searching,
+        )
 
         # Performing the action only when we received positive results
         # Because the mouse could have to move to click, move it to its original
         #   position afterwards (also to show the user which powers we have)
         if where_should_i_click["should_i_click"]:
-            assert(my_screen.getpixel(where_should_i_click["coords"]) == Global.pdf_mouse_highlighting_colour)
+            assert (
+                my_screen.getpixel(where_should_i_click["coords"])
+                == Global.pdf_mouse_highlighting_colour
+            )
             pyautogui.hotkey(*Global.hotkeys_to_press)
             pyautogui.click(*where_should_i_click["coords"], button="right")
             pyautogui.typewrite("z")
@@ -215,14 +226,16 @@ def copy_and_highlight() -> None:
         pyautogui.click(button="right")
         pyautogui.typewrite("z")
 
+
 if __name__ == "__main__":
     try:
         # Notifying the user and starting to listen
         if Global.SHOW_NOTIFICATIONS:
             pyautogui.alert(
                 text=Global.start_instructions,
-                title='PDF HIGLIGHTER - INSTRUCTIONS',
-                button='OK')
+                title="PDF HIGLIGHTER - INSTRUCTIONS",
+                button="OK",
+            )
         print(Global.start_instructions)
         with Listener(on_release=on_release) as listener:
             listener.join()
@@ -232,13 +245,14 @@ if __name__ == "__main__":
         logging.exception(e)
 
         # Showing that there was some unexpected error
-        error_text = "Exception ocurred - please look into the error log: {}".format(ERROR_FILENAME)
+        error_text = "Exception ocurred - please look into the error log: {}".format(
+            ERROR_FILENAME
+        )
         print(error_text)
 
         pyautogui.alert(
-            text=error_text,
-            title='ERROR HAPPENED!',
-            button='I will look there')
+            text=error_text, title="ERROR HAPPENED!", button="I will look there"
+        )
 
         # Showing the error log in the Notepad
         # There can be multiple errors, like notepad path not existing etc.
@@ -248,4 +262,4 @@ if __name__ == "__main__":
             print("UNABLE TO LAUNCH NOTEPAD IN LOCATION '{}'".format(NOTEPAD_PATH))
 
         # Raising the actual error, to be also visible in the terminal
-        raise(e)
+        raise (e)

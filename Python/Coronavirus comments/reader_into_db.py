@@ -1,8 +1,8 @@
-import os
 import glob
 import json
+import os
 
-from db_connection import return_engine_and_session, Comment, Article
+from db_connection import Article, Comment, return_engine_and_session
 
 engine, session = return_engine_and_session()
 
@@ -13,7 +13,9 @@ def get_all_files_with_given_extension(folder, extension):
     """
 
     path_of_the_file = os.path.dirname(os.path.realpath(__file__))
-    all_files = glob.glob(os.path.join(path_of_the_file, folder, "*.{}".format(extension)))
+    all_files = glob.glob(
+        os.path.join(path_of_the_file, folder, "*.{}".format(extension))
+    )
     return all_files
 
 
@@ -28,8 +30,9 @@ def process_file(file_name):
         print("article_name", article_name)
         print("comment_amount", comment_amount)
 
-        already_there = session.query(Comment) \
-            .filter(Comment.article_id == article_id).count()
+        already_there = (
+            session.query(Comment).filter(Comment.article_id == article_id).count()
+        )
         print("already_there", already_there)
 
         # Making sure we are not "updating" with probably older comments
@@ -38,12 +41,15 @@ def process_file(file_name):
             return
 
         # Deleting all the previous comments, so that we have no duplicates
-        session.query(Comment) \
-            .filter(Comment.article_id == article_id).delete()
+        session.query(Comment).filter(Comment.article_id == article_id).delete()
 
         # Upserting the article, in case it already exists
-        article = Article(id=article_id, name=article_name, link=article_link,
-                          comment_amount=comment_amount)
+        article = Article(
+            id=article_id,
+            name=article_name,
+            link=article_link,
+            comment_amount=comment_amount,
+        )
         upserted_article = session.merge(article)
         session.add(upserted_article)
 
@@ -53,7 +59,13 @@ def process_file(file_name):
             plus = comment.get("plus")
             minus = comment.get("minus")
             content = comment.get("content")
-            comment = Comment(article_id=article_id, author=author, content=content, plus=plus, minus=minus)
+            comment = Comment(
+                article_id=article_id,
+                author=author,
+                content=content,
+                plus=plus,
+                minus=minus,
+            )
             session.add(comment)
 
     # Saving all the changes

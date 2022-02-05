@@ -9,17 +9,20 @@ Other possible use-cases:
 - keeping track of all the values in clipboard (for personal or spying purposes)
 """
 
-import pyperclip
-import pyautogui
-import time
 import logging
 import subprocess
+import time
+
+import pyautogui
+import pyperclip
 
 # Using logging as a neat way to find out errors in production
 ERROR_FILENAME = "clipboard_monitor_ERRORS.log"
-logging.basicConfig(filename=ERROR_FILENAME,
-					level=logging.INFO,
-					format='%(asctime)s %(levelname)s %(message)s')
+logging.basicConfig(
+    filename=ERROR_FILENAME,
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+)
 
 # Full path to the Notepad executable, to be able to open error logs in it
 NOTEPAD_PATH = r"C:\Windows\notepad.exe"
@@ -34,7 +37,8 @@ EMBRACE_BY_QUOTES = True
 # How frequently to check the clipboard
 CHECK_PERIOD_IN_SECONDS = 0.1
 
-def process_the_value(value_from_clipboard):
+
+def process_the_value(value_from_clipboard: str) -> str:
     """
     Defining what should happen with the new value that is found in
         the clipboard.
@@ -52,14 +56,15 @@ def process_the_value(value_from_clipboard):
     if processed_value:
         with open(SAVING_FILE, "a") as content_file:
             if EMBRACE_BY_QUOTES:
-                content_to_write = '"{}"\n'.format(processed_value)
+                content_to_write = f'"{processed_value}"\n'
             else:
-                content_to_write = '{}\n'.format(processed_value)
+                content_to_write = f"{processed_value}\n"
             content_file.write(content_to_write)
 
     return processed_value
 
-def clipboard_checking_loop():
+
+def clipboard_checking_loop() -> None:
     """
     Loop constantly checking the clipboard for new values.
     If it encounters new value, it will supply this value to
@@ -82,22 +87,28 @@ def clipboard_checking_loop():
             current_clipboard_content = new_content
             print("Value processed and saved!")
 
+
 if __name__ == "__main__":
     try:
-        welcome_text = "Welcome to the clipboard monitoring script!\n\n" + \
-            "Press CTRL+C in terminal to terminate the script.\n\n" + \
-            "Press CTRL+C anywhere else, and the content in clipboard will " + \
+        welcome_text = (
+            "Welcome to the clipboard monitoring script!\n\n"
+            "Press CTRL+C in terminal to terminate the script.\n\n"
+            "Press CTRL+C anywhere else, and the content in clipboard will "
             "be processed and saved into a file.\n"
+        )
 
         print(welcome_text)
 
         # Determining the filename to which save the results
-        input_text = "Please choose the filename into which to save the results.\n" + \
-                     "If no extension is specified, we will assume '.txt' file."
+        input_text = (
+            "Please choose the filename into which to save the results.\n"
+            "If no extension is specified, we will assume '.txt' file."
+        )
         SAVING_FILE = pyautogui.prompt(
-                    text=welcome_text + "\n" + input_text,
-                    title='WELCOME! + Filename input',
-                    default=SAVING_FILE_DEFAULT)
+            text=welcome_text + "\n" + input_text,
+            title="WELCOME! + Filename input",
+            default=SAVING_FILE_DEFAULT,
+        )
 
         # If user clicks "Cancel", None will be send as a response, so assign
         #   the default one.
@@ -111,17 +122,23 @@ if __name__ == "__main__":
         if not "." in SAVING_FILE:
             SAVING_FILE = SAVING_FILE + ".txt"
 
-        print("Fair enough, all the text you copy will be visible in ---'{}'---!".format(SAVING_FILE))
+        print(
+            f"Fair enough, all the text you copy will be visible in ---'{SAVING_FILE}'---!"
+        )
 
         # Determining if user wants to include quotes around the copied text
-        quotes_text = "Do you want the copied text to be embraced by quotes to \"signal copying\"?"
-        include_quotes = pyautogui.confirm(text=quotes_text,
-                                           title='Should we include quotes?',
-                                           buttons=['Yes', 'No'])
+        include_quotes = pyautogui.confirm(
+            text='Do you want the copied text to be embraced by quotes to "signal copying"?',
+            title="Should we include quotes?",
+            buttons=["Yes", "No"],
+        )
         EMBRACE_BY_QUOTES = include_quotes == "Yes"
 
-        print("Fair enough, all the text you copy will{} be embraced by qoutes!".format(
-            "" if EMBRACE_BY_QUOTES else " not"))
+        print(
+            "Fair enough, all the text you copy will{} be embraced by qoutes!".format(
+                "" if EMBRACE_BY_QUOTES else " not"
+            )
+        )
 
         print("\nListening for the clipboard changes....\n")
 
@@ -136,19 +153,20 @@ if __name__ == "__main__":
         logging.exception(e)
 
         # Showing that there was some unexpected error
-        error_text = "Exception ocurred - please look into the error log: {}".format(ERROR_FILENAME)
+        error_text = (
+            f"Exception ocurred - please look into the error log: {ERROR_FILENAME}"
+        )
         print(error_text)
         pyautogui.alert(
-            text=error_text,
-            title='ERROR HAPPENED!',
-            button='I will look there')
+            text=error_text, title="ERROR HAPPENED!", button="I will look there"
+        )
 
         # Showing the error log in the Notepad
         # There can be multiple errors, like notepad path not existing etc.
         try:
             subprocess.Popen([NOTEPAD_PATH, ERROR_FILENAME])
         except:
-            print("UNABLE TO LAUNCH NOTEPAD IN LOCATION '{}'".format(NOTEPAD_PATH))
+            print(f"UNABLE TO LAUNCH NOTEPAD IN LOCATION '{NOTEPAD_PATH}'")
 
         # Raising the actual error, to be also visible in the terminal
-        raise(e)
+        raise (e)

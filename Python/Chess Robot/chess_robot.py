@@ -1,7 +1,7 @@
 """
 This script is playing chess without any human intervention (almost).
 Just define the coordination of the chessboard and some identificator
-    of the oponent moves, and it is ready to beat even the strongest
+    of the opponent moves, and it is ready to beat even the strongest
     grandmasters!
 Was developed mostly on chess.com, lichess.org and playok.com,
     but can be relatively easily upgraded to handle almost any chessboard.
@@ -47,53 +47,55 @@ DISCLAIMER:
     any illicit purposes, other than learning programming in python
 """
 
-import pyautogui  # type: ignore
-from pynput import keyboard  # type: ignore
 import time
-
-from typing import List, Union
+from typing import List, Tuple, Union
 
 # Documentation here: https://python-chess.readthedocs.io/en/latest/
 import chess
 import chess.engine
-
-from helpers import HelpersToAssignChessboard
-from helpers import HelpersToAnalyzeChessboard
-
+import pyautogui  # type: ignore
 from config import Config
+from helpers import (
+    ColorValue,
+    HelpersToAnalyzeChessboard,
+    HelpersToAssignChessboard,
+    Pixel,
+)
+from PIL.Image import Image
+from pynput import keyboard  # type: ignore
 
 # Making all pyautogui actions faster, default is 0.1 seconds
 pyautogui.PAUSE = 0.01
 
 
 class NoNewMoveFoundOnTheChessboard(Exception):
-    '''
+    """
     Custom exception that will be thrown when we find out there
         is no new move, to quickly skip all other checks
-    '''
+    """
 
-    def __init__(self, description: str = ""):
+    def __init__(self, description: str = "") -> None:
         self.description = description
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"No new move found. Description: {self.description}"
 
 
 class TheGameHasFinished(Exception):
-    '''
+    """
     Custom exception that will be thrown when we find out
         the game has finished, to start a new game
-    '''
+    """
 
-    def __init__(self, result: str = ""):
+    def __init__(self, result: str = "") -> None:
         self.result = result
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"The game has finished. Result: {self.result}"
 
 
 class ChessRobot:
-    def __init__(self, observer_only_mode: bool = False):
+    def __init__(self, observer_only_mode: bool = False) -> None:
         # Do not play the moves on the screen, just suggest them
         self.observer_only_mode = observer_only_mode
 
@@ -104,12 +106,12 @@ class ChessRobot:
 
         self.our_chess_colour: chess.Color
         self.our_colour_string: str
-        self.chessboard_left_top_pixel: tuple
-        self.chessboard_right_bottom_pixel: tuple
+        self.chessboard_left_top_pixel: Pixel
+        self.chessboard_right_bottom_pixel: Pixel
 
-        self.colours_of_highlighted_moves = [
+        self.colours_of_highlighted_moves: List[ColorValue] = [
             Config.white_field_highlight_colour,
-            Config.black_field_highlight_colour
+            Config.black_field_highlight_colour,
         ]
 
         self.previously_highlighted_squares: List[str] = []
@@ -120,10 +122,14 @@ class ChessRobot:
         self.current_analysis_result: chess.engine.InfoDict
         self.current_best_move: chess.Move
         self.last_position_evaluation: Union[float, chess.engine.Score] = 0.0
-        self.last_position_situation = "normal"  # "losing", "normal", "winning", "mate soon"
+        self.last_position_situation = (
+            "normal"  # "losing", "normal", "winning", "mate soon"
+        )
 
     def start_the_game(self) -> None:
-        print("Be sure to play on your main screen. Please move the console to a second screen.")
+        print(
+            "Be sure to play on your main screen. Please move the console to a second screen."
+        )
         self.get_our_colour_from_user()
         self.get_chessboard_boundaries_if_not_defined()
         self.get_chessboard_details_and_create_chessboard_object()
@@ -136,7 +142,9 @@ class ChessRobot:
             self.our_chess_colour = chess.BLACK
         else:
             self.our_chess_colour = chess.WHITE
-        self.our_colour_string = "white" if self.our_chess_colour == chess.WHITE else "black"
+        self.our_colour_string = (
+            "white" if self.our_chess_colour == chess.WHITE else "black"
+        )
         print(f"You chose {self.our_colour_string} pieces, good luck in the game!")
 
     def get_chessboard_boundaries_if_not_defined(self) -> None:
@@ -145,17 +153,21 @@ class ChessRobot:
             self.chessboard_left_top_pixel = Config.chessboard_left_top_pixel
             self.chessboard_right_bottom_pixel = Config.chessboard_right_bottom_pixel
         except AttributeError:
-            boundaries = self.CHESSBOARD_ASSIGNER.get_left_top_and_right_bottom_chessboard_pixels()
+            boundaries = (
+                self.CHESSBOARD_ASSIGNER.get_left_top_and_right_bottom_chessboard_pixels()
+            )
             self.chessboard_left_top_pixel = boundaries[0]
             self.chessboard_right_bottom_pixel = boundaries[1]
 
     def get_chessboard_details_and_create_chessboard_object(self) -> None:
-        chessboard_size = self.chessboard_right_bottom_pixel[0] - self.chessboard_left_top_pixel[0]
+        chessboard_size = (
+            self.chessboard_right_bottom_pixel[0] - self.chessboard_left_top_pixel[0]
+        )
         square_size = chessboard_size // 8
         square_centers_dict = self.CHESSBOARD_ASSIGNER.create_dict_of_square_centers(
             chessboard_left_top_pixel=self.chessboard_left_top_pixel,
             chessboard_right_bottom_pixel=self.chessboard_right_bottom_pixel,
-            our_colour=self.our_colour_string
+            our_colour=self.our_colour_string,
         )
         self.CHESSBOARD = HelpersToAnalyzeChessboard(
             square_centers_dict=square_centers_dict,
@@ -179,9 +191,7 @@ class ChessRobot:
 
     def play_first_move_as_white_if_necessary(self) -> None:
         we_should_start_as_white = (
-            self.our_chess_colour == chess.WHITE
-            and
-            self.board.fullmove_number == 1
+            self.our_chess_colour == chess.WHITE and self.board.fullmove_number == 1
         )
         if we_should_start_as_white:
             print("Kicking the game by playing first")
@@ -209,7 +219,7 @@ class ChessRobot:
 
     def get_currently_highlighted_squares(self) -> None:
         # Making a screenshot of the whole screen to analyze it further
-        whole_screen = pyautogui.screenshot()
+        whole_screen: Image = pyautogui.screenshot()  # type: ignore
 
         # Quick check if the previously highlighted squares are still
         #   highlighted - having to check only 2 squares instead of 64
@@ -235,8 +245,8 @@ class ChessRobot:
     def check_if_some_new_move_was_done(self) -> None:
         some_move_was_done = (
             len(self.currently_highlighted_squares) == 2
-            and
-            self.currently_highlighted_squares != self.previously_highlighted_squares
+            and self.currently_highlighted_squares
+            != self.previously_highlighted_squares
         )
 
         if not some_move_was_done:
@@ -247,8 +257,7 @@ class ChessRobot:
     def check_if_last_move_was_not_done_by_us(self) -> None:
         highlighted_move_is_ours = (
             self.our_last_move_from_and_to[0] in self.currently_highlighted_squares
-            and
-            self.our_last_move_from_and_to[1] in self.currently_highlighted_squares
+            and self.our_last_move_from_and_to[1] in self.currently_highlighted_squares
         )
         if highlighted_move_is_ours:
             print("Last move was ours, it is opponents's turn")
@@ -258,8 +267,10 @@ class ChessRobot:
         self.move_done_on_the_board = ""
 
         possible_moves_from_highlight = [
-            self.currently_highlighted_squares[0] + self.currently_highlighted_squares[1],
-            self.currently_highlighted_squares[1] + self.currently_highlighted_squares[0]
+            self.currently_highlighted_squares[0]
+            + self.currently_highlighted_squares[1],
+            self.currently_highlighted_squares[1]
+            + self.currently_highlighted_squares[0],
         ]
 
         # Looping through all (2) possibilities of movement between the two
@@ -301,8 +312,7 @@ class ChessRobot:
         # TODO: could have a check that the move was really performed
         #   on the screen - and if not - try to do it again
         self.CHESSBOARD.drag_mouse_from_square_to_square(
-            from_square=from_square,
-            to_square=to_square
+            from_square=from_square, to_square=to_square
         )
 
         self.our_last_move_from_and_to = [from_square, to_square]
@@ -335,8 +345,7 @@ class ChessRobot:
     def get_current_analysis_result(self) -> None:
         time_to_think = self.get_time_to_think_according_to_the_last_position()
         self.current_analysis_result = self.engine.analyse(
-            board=self.board,
-            limit=chess.engine.Limit(time=time_to_think),
+            board=self.board, limit=chess.engine.Limit(time=time_to_think)
         )
 
     def get_time_to_think_according_to_the_last_position(self) -> float:
@@ -348,8 +357,10 @@ class ChessRobot:
             return Config.time_limit_to_think_normal
 
     def get_position_evaluation_from_analysis_result(self) -> None:
-        score_from_our_side = self.current_analysis_result["score"].pov(self.our_chess_colour)
-        if self.current_analysis_result["score"].is_mate():
+        score_from_our_side = self.current_analysis_result["score"].pov(  # type: ignore
+            self.our_chess_colour
+        )
+        if self.current_analysis_result["score"].is_mate():  # type: ignore
             self.last_position_evaluation = score_from_our_side
             print("Checkmate soon", score_from_our_side)
         else:
@@ -364,7 +375,10 @@ class ChessRobot:
         # self.last_position_evaluation will either be float or Mate object
         #   (throws TypeError in that case)
         try:
-            if self.last_position_evaluation > Config.pawn_threshold_when_already_winning:
+            if (
+                self.last_position_evaluation
+                > Config.pawn_threshold_when_already_winning
+            ):
                 return "winning"
             elif self.last_position_evaluation < Config.pawn_threshold_when_losing:
                 return "losing"
@@ -374,8 +388,10 @@ class ChessRobot:
             return "mate soon"
 
     def get_the_current_best_move_from_analysis_result(self) -> None:
-        self.current_best_move = self.current_analysis_result["pv"][0]
-        best_move_human = self._translate_move_into_human_readable(self.current_best_move)
+        self.current_best_move = self.current_analysis_result["pv"][0]  # type: ignore
+        best_move_human = self._translate_move_into_human_readable(
+            self.current_best_move
+        )
         print(f"I would play ***** {best_move_human} *****")
 
     def _translate_move_into_human_readable(self, move: chess.Move) -> str:
@@ -384,7 +400,7 @@ class ChessRobot:
         return f"{from_square} - {to_square} ({classic_notation})"
 
     @staticmethod
-    def get_to_and_from_square_from_the_move(move: chess.Move) -> tuple:
+    def get_to_and_from_square_from_the_move(move: chess.Move) -> Tuple[str, str]:
         move_string = str(move)
         from_square = move_string[0:2]
         to_square = move_string[2:4]
@@ -411,10 +427,12 @@ class ChessRobot:
             raise TheGameHasFinished("Draw!")
 
 
-def press_trigger_to_play_move(key):
+def press_trigger_to_play_move(key: keyboard.Key) -> bool:
     if key == Config.keyboard_trigger:
         print("Pressing trigger!")
         return False
+
+    return True
 
 
 if __name__ == "__main__":

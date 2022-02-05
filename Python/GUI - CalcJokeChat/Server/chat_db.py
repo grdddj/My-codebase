@@ -14,7 +14,7 @@ db_file_path = os.path.join(WORKING_DIRECTORY, db_file_path)
 
 
 def return_engine_and_session():
-    engine = create_engine(f'sqlite:///{db_file_path}?check_same_thread=False')
+    engine = create_engine(f"sqlite:///{db_file_path}?check_same_thread=False")
 
     Session = sessionmaker(bind=engine)
     session = Session()
@@ -26,7 +26,7 @@ Base = declarative_base()
 
 
 class ChatMessage(Base):
-    __tablename__ = 'chat_messages'
+    __tablename__ = "chat_messages"
 
     id = Column(Integer, primary_key=True)
     chat_name = Column(String)
@@ -48,7 +48,7 @@ class ChatMessage(Base):
 
 
 class LastUpdate(Base):
-    __tablename__ = 'last_update'
+    __tablename__ = "last_update"
 
     id = Column(Integer, primary_key=True)
     version_identifier = Column(String)
@@ -57,7 +57,8 @@ class LastUpdate(Base):
 
     def __repr__(self):
         return "<LastUpdate(version_identifier='{}', timestamp='{}', details='{}')>".format(
-            self.version_identifier, self.timestamp, self.details)
+            self.version_identifier, self.timestamp, self.details
+        )
 
 
 if __name__ == "__main__":

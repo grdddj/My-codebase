@@ -1,19 +1,23 @@
-import pymongo
-import requests
 import json
 import math
-from bs4 import BeautifulSoup
 from datetime import datetime
 
+import requests
+
+import pymongo
+from bs4 import BeautifulSoup
+
 # Connection to the DB
-myclient = pymongo.MongoClient("mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true")
+myclient = pymongo.MongoClient(
+    "mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true"
+)
 mydb = myclient["Alza"]
 mycol = mydb["Powerbanks2"]
 
 domain = "https://www.alza.cz"
-eshop_suffix = " - Alza.cz";
+eshop_suffix = " - Alza.cz"
 
-today = datetime.now().strftime('%d-%m-%Y')
+today = datetime.now().strftime("%d-%m-%Y")
 
 count_alltogether = 0
 count_one_page = 0
@@ -31,7 +35,9 @@ for x in range(5):
         count_one_page = len(soup.findAll(class_="canBuy"))
         number_of_pages = math.ceil(count_alltogether / count_one_page)
         message = """There is {} elements alltogether, {} on each page, therefore we will explore {} pages
-                    """.format(str(count_alltogether), str(count_one_page), str(number_of_pages))
+                    """.format(
+            str(count_alltogether), str(count_one_page), str(number_of_pages)
+        )
         print(message)
         break
     except Exception as e:
@@ -60,7 +66,9 @@ for number in range(1, 1 + number_of_pages):
     # In the end saving the info to DB
     for goods in all_goods:
         # Initializting fields we want
-        link = name = price = discount = capacity = width = depth = weight = price_10000_mAh = ""
+        link = (
+            name
+        ) = price = discount = capacity = width = depth = weight = price_10000_mAh = ""
         usb_c = False
 
         try:
@@ -78,7 +86,7 @@ for number in range(1, 1 + number_of_pages):
 
         try:
             high_price = soup.find(class_="crossPrice").get_text().strip()
-            high_price = int(high_price[0:-2].replace('\xa0',' ').replace(" ", ""))
+            high_price = int(high_price[0:-2].replace("\xa0", " ").replace(" ", ""))
         except:
             discount = 0
 
@@ -90,12 +98,30 @@ for number in range(1, 1 + number_of_pages):
         # Looping through all the fields in the goods and saving what we want
         for detail in goods_details:
             try:
-                if detail.find(class_="typeName").get_text().strip().startswith("Kapacita"):
+                if (
+                    detail.find(class_="typeName")
+                    .get_text()
+                    .strip()
+                    .startswith("Kapacita")
+                ):
                     capacity = detail.find(class_="value").get_text().strip()
-                if detail.find(class_="typeName").get_text().strip().startswith("Hmotnost"):
+                if (
+                    detail.find(class_="typeName")
+                    .get_text()
+                    .strip()
+                    .startswith("Hmotnost")
+                ):
                     weight = detail.find(class_="value").get_text().strip()
-                if detail.find(class_="typeName").get_text().strip().startswith("Výstupy"):
-                    if detail.find(class_="value").get_text().strip().find("USB-C") != -1:
+                if (
+                    detail.find(class_="typeName")
+                    .get_text()
+                    .strip()
+                    .startswith("Výstupy")
+                ):
+                    if (
+                        detail.find(class_="value").get_text().strip().find("USB-C")
+                        != -1
+                    ):
                         usb_c = True
             except Exception as e:
                 pass
@@ -103,17 +129,28 @@ for number in range(1, 1 + number_of_pages):
         # Processing the info to have consistency (parsing values)
         # Every value is processed in sigle try-statement, not to influence other
         try:
-            capacity = int(capacity[0:capacity.index("mAh")].replace('\xa0',' ').replace(" ", ""))
+            capacity = int(
+                capacity[0 : capacity.index("mAh")]
+                .replace("\xa0", " ")
+                .replace(" ", "")
+            )
         except Exception as e:
             print(e)
 
         try:
-            price = int(price[0:-2].replace('\xa0',' ').replace(" ", ""))
+            price = int(price[0:-2].replace("\xa0", " ").replace(" ", ""))
         except Exception as e:
             print(e)
 
         try:
-            weight = int(float(weight[0:weight.index("g")].replace('\xa0',' ').replace(" ", "").replace(",", ".")))
+            weight = int(
+                float(
+                    weight[0 : weight.index("g")]
+                    .replace("\xa0", " ")
+                    .replace(" ", "")
+                    .replace(",", ".")
+                )
+            )
         except Exception as e:
             print(e)
 
@@ -125,7 +162,7 @@ for number in range(1, 1 + number_of_pages):
 
         if discount != 0:
             try:
-                discount = round(100*(high_price - price) / high_price)
+                discount = round(100 * (high_price - price) / high_price)
             except Exception as e:
                 print(e)
 
@@ -140,7 +177,7 @@ for number in range(1, 1 + number_of_pages):
                 "weight": weight,
                 "link": link,
                 "last_update": today,
-                "price_10000_mAh": price_10000_mAh
+                "price_10000_mAh": price_10000_mAh,
             }
         except:
             continue

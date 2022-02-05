@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify
 import requests
-from bs4 import BeautifulSoup
 
+from bs4 import BeautifulSoup
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+
 
 @app.route("/", methods=["POST"])
 def get_comments():
@@ -41,23 +42,26 @@ def get_comments():
         # Processing the comments and extracting its votes and content
         for comment in contributions:
             votes_evaluation = comment.find("div", class_="infoDate").findAll("span")
-            plus_votes = int(votes_evaluation[-2].get_text()) # ("+2" will get parsed to 2)
-            minus_votes = abs(int(votes_evaluation[-1].get_text())) # we want the positive number from negative
+            plus_votes = int(
+                votes_evaluation[-2].get_text()
+            )  # ("+2" will get parsed to 2)
+            minus_votes = abs(
+                int(votes_evaluation[-1].get_text())
+            )  # we want the positive number from negative
 
             content = comment.find("div", class_="content").get_text().strip()
 
-            comments.append({
-                "content": content,
-                "plus": plus_votes,
-                "minus": minus_votes
-            })
+            comments.append(
+                {"content": content, "plus": plus_votes, "minus": minus_votes}
+            )
 
     print("Amount of comments:", len(comments))
 
     # Sorting the comments according to the amount of plus points
-    comments.sort(reverse=True, key=lambda x:x["plus"])
+    comments.sort(reverse=True, key=lambda x: x["plus"])
 
     return jsonify(comments)
 
-if __name__ == '__main__':
-     app.run(port='5002', debug=True)
+
+if __name__ == "__main__":
+    app.run(port="5002", debug=True)

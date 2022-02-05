@@ -4,9 +4,11 @@ ID number. The list of valid student ids is saved into CSV file.
 """
 
 import time
-import requests
-from bs4 import BeautifulSoup
 from csv import writer
+
+import requests
+
+from bs4 import BeautifulSoup
 
 prefix = "https://www.vutbr.cz/l/"
 
@@ -21,7 +23,7 @@ id_array = []
 start = time.time()
 
 # Loop through all the ids and deciding their student status
-for id in range (int(start_id), int(end_id)):
+for id in range(int(start_id), int(end_id)):
     try:
         link = prefix + str(id)
         response = requests.get(link)
@@ -36,29 +38,29 @@ for id in range (int(start_id), int(end_id)):
         except:
             pass
     except Exception as e:
-        print("Some problems occured: " + id)
+        print(f"Some problems occurred while processing {id}: {e}")
 
     # Printing semi-results every 10 id's
     if id % 10 == 0:
-        print(str(id) + " has so far " + str(amount))
+        print(f"{id} has so far {amount}")
 
 end = time.time()
 
 difference = str(round(end - start))
 
-result = "In the range from {} to {} we have found {} students. It took {} seconds".format(start_id, end_id, str(amount), difference)
+result = f"In the range from {start_id} to {end_id} we have found {amount} students. It took {difference} seconds"
 
 # Printing the result to the terminal
-print('-'*50)
+print("-" * 50)
 print(result)
-print('-'*50)
+print("-" * 50)
 
 # Saving the result as an CSV file
-file_name = "StudentsOfVUT({}-{}).csv".format(start_id, end_id)
+file_name = f"StudentsOfVUT({start_id}-{end_id}).csv"
 with open(file_name, "w") as csv_file:
-	csv_writer = writer(csv_file)
-	headers = ["ID"]
-	csv_writer.writerow(headers)
+    csv_writer = writer(csv_file)
+    headers = ["ID"]
+    csv_writer.writerow(headers)
 
-	for id in id_array:
-		csv_writer.writerow([id])
+    for id in id_array:
+        csv_writer.writerow([id])

@@ -4,7 +4,7 @@ Cloned robot that is just observing the board and evaluating
 
 Possible improvements:
 - listen for certain keys when being turned on and off, so we do not have
-    to leave the mouse from playing window (which is visible to oponent)
+    to leave the mouse from playing window (which is visible to opponent)
 - needs a protection against "premove" - when the opponent fires a move
     immediately after we play - and program cannot recognize two moves
     happened at once

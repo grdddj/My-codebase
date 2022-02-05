@@ -12,18 +12,21 @@ There are two possibilities (at least), how to get individual words from
 
 import re
 import time
+from typing import Callable, Dict, List
 
 
-def main():
+def main() -> None:
     # Comparing the two implementations after each other
     # Both measurements are an infinite loops, which have to be stopped
     #   after desired time by pressing Ctrl+C in the python console
-    print("To abort the test, please press Ctrl+C, the next test in the row will start automatically.")
+    print(
+        "To abort the test, please press Ctrl+C, the next test in the row will start automatically."
+    )
     measure_average_time(analyze_the_file_re_findall)
     measure_average_time(analyze_the_file_re_split)
 
 
-def analyze_the_file_re_findall():
+def analyze_the_file_re_findall() -> None:
     word_count = {}
     pattern = re.compile(r"\w+")
 
@@ -35,18 +38,20 @@ def analyze_the_file_re_findall():
     process_the_resulting_dictionary(word_count)
 
 
-def analyze_the_file_re_split():
+def analyze_the_file_re_split() -> None:
     word_count = {}
 
     with open("text.txt", "r") as file:
         for line in file.readlines():
-            matches = re.split("[ \n\r\t\.,!?:;\"\'\(\)\[\[\]\{\}] *", line)
+            matches = re.split("[ \n\r\t\.,!?:;\"'\(\)\[\[\]\{\}] *", line)
             include_words_from_array_to_dictionary(matches, word_count)
 
     process_the_resulting_dictionary(word_count)
 
 
-def include_words_from_array_to_dictionary(array, dictionary):
+def include_words_from_array_to_dictionary(
+    array: List[str], dictionary: Dict[str, int]
+) -> None:
     """
     Helper function to include words from an array to the existing dictionary.
     I was not sure this will work, but it turns out it is possible to
@@ -60,7 +65,7 @@ def include_words_from_array_to_dictionary(array, dictionary):
             dictionary[element] = 1
 
 
-def process_the_resulting_dictionary(dictionary):
+def process_the_resulting_dictionary(dictionary: Dict[str, int]) -> None:
     """
     Helper function to refactor all the common functionality for the
         processing of the result, which is same for every function.
@@ -72,7 +77,7 @@ def process_the_resulting_dictionary(dictionary):
     #   it will be erased and written from the scratch
     with open("result.txt", "w") as new_file:
         for key in dictionary:
-            new_file.write("Word: \"{}\" | count: {}\n".format(key, dictionary[key]))
+            new_file.write(f'Word: "{key}" | count: {dictionary[key]}\n')
 
     # Printing the results to the console, which has shown itself to be
     #   very ineffective and time-consuming
@@ -80,7 +85,7 @@ def process_the_resulting_dictionary(dictionary):
     #     print("Word: \"{}\" | count: {}".format(key, dictionary[key]))
 
 
-def measure_average_time(our_function):
+def measure_average_time(our_function: Callable[[], None]) -> None:
     """
     Function to measure the average time it takes for a specific function to run.
     Its creation was inspired by the Law of large numbers, and a basic
@@ -95,8 +100,8 @@ def measure_average_time(our_function):
         for example running the loop 10 times, or running it for a certain
         amount of time.
     """
-    print("*"*80)
-    print("We are testing \"{}\" function.".format(our_function.__name__))
+    print("*" * 80)
+    print(f'We are testing "{our_function.__name__}" function.')
     count = 0
     spent_time = 0
 
@@ -107,17 +112,17 @@ def measure_average_time(our_function):
             our_function()
 
             diff = time.time() - now
-            print("This loop took {} seconds.".format(diff))
+            print(f"This loop took {diff} seconds.")
 
             count += 1
             spent_time += diff
     except KeyboardInterrupt:
-        print("*"*80)
-        print("End of the test for \"{}\" function".format(our_function.__name__))
-        print("There were {} loops".format(count))
-        print("The average loop time was {} seconds".format(spent_time/count))
-        print("In one second it could run {} times".format(count/spent_time))
-        print("*"*80)
+        print("*" * 80)
+        print(f'End of the test for "{our_function.__name__}" function')
+        print(f"There were {count} loops")
+        print(f"The average loop time was {spent_time / count} seconds")
+        print(f"In one second it could run {count / spent_time} times")
+        print("*" * 80)
 
 
 if __name__ == "__main__":

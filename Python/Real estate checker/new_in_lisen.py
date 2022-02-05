@@ -1,13 +1,13 @@
-import re
 import json
 import os
+import re
 import traceback
-
 from statistics import Statistics
+
 import helpers
+from config import Config
 from send_mail import send_email
 from send_pushbullet import send_pushbullet_message
-from config import Config
 
 
 class NewInLisen:
@@ -20,9 +20,7 @@ class NewInLisen:
 
         self.STATUS_CHANGED = False
 
-        self.already_seen_flats_default = {
-            "ids": []
-        }
+        self.already_seen_flats_default = {"ids": []}
         self.already_seen_flats = {}
 
     def check_the_flats(self) -> None:
@@ -46,10 +44,10 @@ class NewInLisen:
                 json.dump(self.already_seen_flats_default, file, indent=4)
 
     def load_current_status_from_the_file(self) -> None:
-        with open(self.file_path, 'r') as file:
+        with open(self.file_path, "r") as file:
             self.already_seen_flats = json.load(file)
 
-    def load_all_existing_flats(self):
+    def load_all_existing_flats(self) -> None:
         stats = Statistics()
         self.all_existing_flats = stats._get_results()
 
@@ -64,17 +62,22 @@ class NewInLisen:
             print("NO NEW FLATS FOUND!")
 
     def get_all_nonreported_flats(self) -> list:
-        matching_flats = [flat for flat in self.all_existing_flats
-                          if self.matches_the_text_identifier(flat)]
-        available_flats = [flat for flat in matching_flats
-                           if self.is_still_available(flat)]
-        nonreported_flats = [flat for flat in available_flats
-                             if not self.was_already_reported(flat)]
+        matching_flats = [
+            flat
+            for flat in self.all_existing_flats
+            if self.matches_the_text_identifier(flat)
+        ]
+        available_flats = [
+            flat for flat in matching_flats if self.is_still_available(flat)
+        ]
+        nonreported_flats = [
+            flat for flat in available_flats if not self.was_already_reported(flat)
+        ]
 
         return nonreported_flats
 
     def matches_the_text_identifier(self, flat: dict) -> bool:
-        text_pattern = re.compile(r'{}'.format(self.text_identifier), re.IGNORECASE)
+        text_pattern = re.compile(r"{}".format(self.text_identifier), re.IGNORECASE)
         return bool(text_pattern.search(str(flat)))
 
     def was_already_reported(self, flat: dict) -> bool:
@@ -86,7 +89,9 @@ class NewInLisen:
         today_date = helpers.get_current_date()
         return last_update_date == today_date
 
-    def include_new_flat_ids_not_to_show_them_again(self, nonreported_flats: list) -> None:
+    def include_new_flat_ids_not_to_show_them_again(
+        self, nonreported_flats: list
+    ) -> None:
         for flat in nonreported_flats:
             self.already_seen_flats["ids"].append(flat["flat_id"])
 
@@ -104,7 +109,9 @@ class NewInLisen:
             price = flat["price"]
             link = flat["link"]
             try:
-                street = link.split("brno-lisen")[1].split("/")[0].strip("-").capitalize()
+                street = (
+                    link.split("brno-lisen")[1].split("/")[0].strip("-").capitalize()
+                )
             except Exception:
                 street = "neznama ulice"
             new_text = f"{type} - {price:,} - {street} - {link}\n"
@@ -117,7 +124,7 @@ class NewInLisen:
             with open(self.file_path, "w") as file:
                 json.dump(self.already_seen_flats, file, indent=4)
 
-    def handle_the_unexpected_exception(self, err):
+    def handle_the_unexpected_exception(self, err: Exception) -> None:
         print(err)
         title = "NOVE BYTY V LISNI - Unexpected error happened"
         body = f"{err}\n{traceback.format_exc()}"
@@ -125,5 +132,4 @@ class NewInLisen:
 
 
 if __name__ == "__main__":
-    checker = NewInLisen()
-    checker.check_the_flats()
+    NewInLisen().check_the_flats()

@@ -3,9 +3,11 @@ This script is fetching the signatures of all presidents of USA
 and saving them locally in the form of .png files
 """
 
-import requests
-from bs4 import BeautifulSoup
 import urllib.request
+
+import requests
+
+from bs4 import BeautifulSoup
 
 # Initial page, from which we get the list of presidents
 page = "https://en.wikipedia.org/wiki/List_of_Presidents_of_the_United_States"

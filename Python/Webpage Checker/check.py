@@ -3,12 +3,16 @@ This script is checking the availability of investment gin, and sending emails
     to specified recipients whenever it'S availability changes.
 """
 
-import smtplib, ssl
-import requests
 import os
+import smtplib
+import ssl
+from typing import List
+
+import requests
+
 from bs4 import BeautifulSoup
 
-page = 'https://www.lepsinalada.cz/gin/hvozd-gin/'
+page = "https://www.lepsinalada.cz/gin/hvozd-gin/"
 class_to_look_for = "availability-value"
 recipients = ["recipient@xxx.com", "recipient@yyy.com"]
 
@@ -16,19 +20,22 @@ WORKING_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 current_state_file_name = "current.txt"
 current_state_file_location = os.path.join(WORKING_DIRECTORY, current_state_file_name)
 
+
 def main():
     try:
         response = requests.get(page)
     except:
-        print("It was not possible to fetch data from the page {}".format(page))
+        print("It was not possible to fetch data from the page {page}")
         exit()
 
     soup = BeautifulSoup(response.text, "html.parser")
 
     try:
-        availability_text = soup.find(class_=class_to_look_for).get_text().strip()
+        availability_text = (
+            soup.find(class_=class_to_look_for).get_text().strip()
+        )  # type: ignore
     except AttributeError:
-        print("Class with name {} does not exist there!".format(class_to_look_for))
+        print(f"Class with name {class_to_look_for} does not exist there!")
         exit()
 
     try:
@@ -47,9 +54,10 @@ def main():
         else:
             print("There was no change from the previous run!")
 
-    print("Current availability text: {}".format(availability_text))
+    print(f"Current availability text: {availability_text}")
 
-def send_emails(recipients, availability_text):
+
+def send_emails(recipients: List[str], availability_text: str) -> None:
     """
     This function is sending emails to specified email addresses with a new
         update considering the availability of the goods.
@@ -66,11 +74,11 @@ def send_emails(recipients, availability_text):
             receiver_email = recipient  # Enter receiver address
             password = "+Scraper006+"
 
-            message = """\
+            message = f"""\
             Subject: Time to buy!
 
-            Current state of the availability: {}
-            """.format(availability_text.encode("utf-8"))
+            Current state of the availability: {availability_text.encode("utf-8")}
+            """
 
             context = ssl.create_default_context()
 
@@ -78,8 +86,9 @@ def send_emails(recipients, availability_text):
                 server.login(sender_email, password)
                 server.sendmail(sender_email, receiver_email, message)
         except Exception as e:
-            print("It looks like we could not send the email to {}".format(recipient))
-            print("Error message: {}".format(e))
+            print(f"It looks like we could not send the email to {recipient}")
+            print(f"Error message: {e}")
+
 
 if __name__ == "__main__":
     main()

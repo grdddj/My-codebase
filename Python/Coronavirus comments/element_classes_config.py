@@ -1,5 +1,5 @@
-import os
 import json
+import os
 
 WORKING_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 config_file = "element_classes_config.json"

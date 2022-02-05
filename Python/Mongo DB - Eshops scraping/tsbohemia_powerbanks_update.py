@@ -1,20 +1,24 @@
-import pymongo
-import requests
 import json
-from bs4 import BeautifulSoup
-from datetime import datetime
-import re
 import math
+import re
+from datetime import datetime
+
+import requests
+
+import pymongo
+from bs4 import BeautifulSoup
 
 # Connection to the DB
-myclient = pymongo.MongoClient("mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true")
+myclient = pymongo.MongoClient(
+    "mongodb+srv://grdddj:myFirstDB@cluster-l467y.mongodb.net/test?retryWrites=true"
+)
 mydb = myclient["TsBohemia"]
 mycol = mydb["Powerbanks"]
 
 domain = "https://www.tsbohemia.cz/"
-eshop_suffix = " - TsBohemia.cz";
+eshop_suffix = " - TsBohemia.cz"
 
-today = datetime.now().strftime('%Y-%m-%d')
+today = datetime.now().strftime("%Y-%m-%d")
 
 count_alltogether = 0
 count_one_page = 0
@@ -32,7 +36,9 @@ for x in range(5):
         count_one_page = len(soup.findAll("div", {"class": "prodbox"}))
         number_of_pages = math.ceil(count_alltogether / count_one_page)
         message = """There is {} elements alltogether, {} on each page, therefore we will explore {} pages
-                    """.format(str(count_alltogether), str(count_one_page), str(number_of_pages))
+                    """.format(
+            str(count_alltogether), str(count_one_page), str(number_of_pages)
+        )
         print(message)
         break
     except:
@@ -45,7 +51,11 @@ for page_number in range(1, 1 + number_of_pages):
     for x in range(5):
         try:
             # Link to the page with a lot of goods
-            page = "https://www.tsbohemia.cz/mobily-a-tablety-powerbanky_c15509.html?whisperstrword=powerbank&page=" + str(page_number) + "#prodlistanchor"
+            page = (
+                "https://www.tsbohemia.cz/mobily-a-tablety-powerbanky_c15509.html?whisperstrword=powerbank&page="
+                + str(page_number)
+                + "#prodlistanchor"
+            )
 
             response = requests.get(page)
             soup = BeautifulSoup(response.text, "html.parser")
@@ -67,7 +77,7 @@ for page_number in range(1, 1 + number_of_pages):
         except:
             continue
 
-        name = price = capacity =weight = price_10000_mAh = ""
+        name = price = capacity = weight = price_10000_mAh = ""
         usb_c = False
 
         try:
@@ -78,8 +88,12 @@ for page_number in range(1, 1 + number_of_pages):
 
         # Getting the parameters, to extract information from that
         try:
-            parameters = soup.find("", {"class": "parsets"}).findAll("div", {"class": "paramname"})
-            values = soup.find("", {"class": "parsets"}).findAll("div", {"class": "paramvalue"})
+            parameters = soup.find("", {"class": "parsets"}).findAll(
+                "div", {"class": "paramname"}
+            )
+            values = soup.find("", {"class": "parsets"}).findAll(
+                "div", {"class": "paramvalue"}
+            )
             for entry in parameters:
                 if entry.get_text().startswith("Kapacita"):
                     capacity = values[parameters.index(entry)].get_text()
@@ -104,7 +118,11 @@ for page_number in range(1, 1 + number_of_pages):
             print(e)
 
         try:
-            price = int(price.replace('Â',' ').replace('\xa0',' ').replace(" ", "")[0:price.index(",")])
+            price = int(
+                price.replace("Â", " ")
+                .replace("\xa0", " ")
+                .replace(" ", "")[0 : price.index(",")]
+            )
         except Exception as e:
             print(e)
 
@@ -124,7 +142,7 @@ for page_number in range(1, 1 + number_of_pages):
                 "weight": weight,
                 "link": link,
                 "last_update": today,
-                "price_10000_mAh": price_10000_mAh
+                "price_10000_mAh": price_10000_mAh,
             }
         except Exception as e:
             print(e)
@@ -137,7 +155,13 @@ for page_number in range(1, 1 + number_of_pages):
         except Exception as e:
             try:
                 myquery = {"_id": newItem["_id"]}
-                newvalues = {"$set": {"price": price, "price_10000_mAh": price_10000_mAh, "last_update": today}}
+                newvalues = {
+                    "$set": {
+                        "price": price,
+                        "price_10000_mAh": price_10000_mAh,
+                        "last_update": today,
+                    }
+                }
                 mycol.update_one(myquery, newvalues)
                 print("Updated: " + newItem["name"])
             except:

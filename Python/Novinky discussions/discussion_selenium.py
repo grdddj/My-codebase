@@ -3,13 +3,16 @@ This script is supposed to fetch comments from articles on the Czech
     news server Novinky.cz, sort them according to their vote points,
     and return the results as a python dictionary, together with 200 response.
 """
+import time
+
+import requests
+
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import requests
-from bs4 import BeautifulSoup
-import time
+from selenium.webdriver.support.ui import WebDriverWait
+
 
 def fetch_comments(news_link="", limit="", best_or_worst=""):
     """
@@ -41,30 +44,33 @@ def fetch_comments(news_link="", limit="", best_or_worst=""):
         discussion_link, article_name = get_discussion_link_and_article_name(news_link)
     except:
         try:
-            discussion_link, article_name = get_main_article_discussion_link_and_article_name()
+            (
+                discussion_link,
+                article_name,
+            ) = get_main_article_discussion_link_and_article_name()
             error = "Main article supplied."
         except Exception as err:
             print("Unable to extract the link from main article")
             import sys, traceback
+
             traceback.print_exc(file=sys.stdout)
             return {
-                      "article_name": "",
-                      "comments": [],
-                      "amount": 0,
-                      "error": "Unable to extract the link from main article."
-                    }
+                "article_name": "",
+                "comments": [],
+                "amount": 0,
+                "error": "Unable to extract the link from main article.",
+            }
 
-    now =time.time()
+    now = time.time()
 
     # geckodriver = '/var/www/geckodriver'
-    geckodriver = 'D:\\geckodriver.exe'
-
+    geckodriver = "D:\\geckodriver.exe"
 
     # Setting to only wait at most 2 seconds for the html content
     options = webdriver.FirefoxOptions()
     options.set_preference("http.response.timeout", 3)
     options.set_preference("dom.max_script_run_time", 3)
-    options.add_argument('-headless')
+    options.add_argument("-headless")
 
     driver = webdriver.Firefox(executable_path=geckodriver, options=options)
     print(time.time() - now)
@@ -76,12 +82,11 @@ def fetch_comments(news_link="", limit="", best_or_worst=""):
 
     driver.implicitly_wait(1)
 
-
     count = 0
     while True:
         try:
             print(time.time() - now)
-            count +=1
+            count += 1
             print(count)
             next_button = driver.find_element_by_class_name("g_f9")
             next_button.click()
@@ -91,7 +96,7 @@ def fetch_comments(news_link="", limit="", best_or_worst=""):
     time.sleep(0.5)
     soup = BeautifulSoup(driver.page_source, "html.parser")
 
-    driver.quit() 
+    driver.quit()
 
     # Continuing, only when we have acquired valid discussion link
     comments = []
@@ -100,7 +105,6 @@ def fetch_comments(news_link="", limit="", best_or_worst=""):
 
     contributions = soup.findAll("div", class_="f_eS")
     print(len(contributions))
-
 
     # Processing the comments, extracting its votes and content
     #   and saving them to a local variable
@@ -115,11 +119,7 @@ def fetch_comments(news_link="", limit="", best_or_worst=""):
 
         content = comment.find("div", class_="f_be").get_text().strip()
 
-        comments.append({
-            "content": content,
-            "plus": plus_votes,
-            "minus": minus_votes
-        })
+        comments.append({"content": content, "plus": plus_votes, "minus": minus_votes})
 
     best_or_worst = "best"
     limit = 10
@@ -128,24 +128,24 @@ def fetch_comments(news_link="", limit="", best_or_worst=""):
     # Sorting the comments according to the amount of plus points or the time,
     #   according the the supplied parameter
     if best_or_worst == "best":
-        comments.sort(reverse=True, key=lambda x:x["plus"])
+        comments.sort(reverse=True, key=lambda x: x["plus"])
     elif best_or_worst == "worst":
-        comments.sort(reverse=True, key=lambda x:x["minus"])
+        comments.sort(reverse=True, key=lambda x: x["minus"])
     elif best_or_worst == "oldest":
         comments.reverse()
     elif best_or_worst == "newest":
         pass
 
-
     result = {
-              "article_name": article_name,
-              "comments": comments[0:limit],
-              "amount": len(comments),
-              "error": error
-            }
+        "article_name": article_name,
+        "comments": comments[0:limit],
+        "amount": len(comments),
+        "error": error,
+    }
 
     print(result)
     return result
+
 
 def get_discussion_link_and_article_name(news_link):
     """
@@ -178,4 +178,6 @@ def get_main_article_discussion_link_and_article_name():
 
 
 if __name__ == "__main__":
-    fetch_comments(news_link="https://www.novinky.cz/zahranicni/evropa/clanek/velky-rusky-dron-kategorie-stealth-ma-za-sebou-prvni-let-40292460")
+    fetch_comments(
+        news_link="https://www.novinky.cz/zahranicni/evropa/clanek/velky-rusky-dron-kategorie-stealth-ma-za-sebou-prvni-let-40292460"
+    )

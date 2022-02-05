@@ -1,8 +1,7 @@
-from flask import Flask, request, jsonify
-from flask_restful import reqparse, Resource, Api
-from flask_cors import CORS
-
 import discussion
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from flask_restful import Api, Resource, reqparse
 
 app = Flask(__name__)
 api = Api(app)
@@ -12,9 +11,10 @@ CORS(app)
 
 # Initializting request parser and adding a key we will be using to transfer data
 parser = reqparse.RequestParser()
-parser.add_argument('news_link')
-parser.add_argument('limit')
-parser.add_argument('best_or_worst')
+parser.add_argument("news_link")
+parser.add_argument("limit")
+parser.add_argument("best_or_worst")
+
 
 class Novinky_discussion(Resource):
     def post(self):
@@ -30,8 +30,9 @@ class Novinky_discussion(Resource):
 
         return result
 
-api.add_resource(Novinky_discussion, '/novinky')
+
+api.add_resource(Novinky_discussion, "/novinky")
 
 
-if __name__ == '__main__':
-     app.run(port='5002', debug=True)
+if __name__ == "__main__":
+    app.run(port="5002", debug=True)

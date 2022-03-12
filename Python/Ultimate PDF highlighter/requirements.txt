@@ -1,6 +1,6 @@
 certifi==2019.11.28
 MouseInfo==0.1.2
-Pillow==6.2.1
+Pillow==9.0.1
 PyAutoGUI==0.9.48
 PyGetWindow==0.0.8
 PyMsgBox==1.0.7

@@ -19,6 +19,7 @@ class Config:
     pawn_threshold_when_losing = -0.5
 
     # How long to pause between watching again at the chessboard
+    should_sleep = False
     sleep_interval_between_screenshots = 0.01
 
     # Allowing for keyboard-triggered moves (instead of automatic)
@@ -31,8 +32,8 @@ class Config:
 
     # https://lichess.org/analysis/standard
     website = "lichess"
-    chessboard_left_top_pixel = (563, 232)
-    chessboard_right_bottom_pixel = (1218, 890)
+    chessboard_left_top_pixel = (542, 229)
+    chessboard_right_bottom_pixel = (1165, 854)
     white_field_highlight_colour = (205, 210, 106)
     black_field_highlight_colour = (170, 162, 58)
 

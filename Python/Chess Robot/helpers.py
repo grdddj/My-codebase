@@ -128,7 +128,7 @@ class HelpersToAnalyzeChessboard:
         self, whole_screen: Image.Image, square_center_coords: Pixel
     ) -> bool:
         # Defining how big part of a square will be cut out to allow for some
-        #   inacurracies in square identification (so that the highlighted
+        #   inaccuracies in square identification (so that the highlighted
         #   colours are really found only on two squares)
         square_boundary = 0.2
         square_boundary_pixels = int(self.square_size * square_boundary)
@@ -172,7 +172,7 @@ class HelpersToAnalyzeChessboard:
         highlighted_squares: List[str] = []
 
         # Defining how big part of a square will be cut out to allow for some
-        #   inacurracies in square identification (so that the highlighted
+        #   inaccuracies in square identification (so that the highlighted
         #   colours are really found only on two squares)
         square_boundary = 0
         square_boundary_pixels = self.square_size * square_boundary
@@ -260,10 +260,10 @@ class HelpersToAnalyzeChessboard:
         #   for being the colour we want, and return as soon as we find it
 
         # Getting the list of all colours in that image
-        ocurrences_and_colours = PIL_image.getcolors(maxcolors=1024)
+        occurrences_and_colours = PIL_image.getcolors(maxcolors=1024)
 
         # Trying to locate our wanted colour there
-        for ocurrence, colour in ocurrences_and_colours:
+        for _occurrence, colour in occurrences_and_colours:
             if colour in colours_to_locate:
                 return True
         else:

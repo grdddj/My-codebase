@@ -34,9 +34,17 @@ Useful to know (features):
 - When we find out we are already winning, we do not spend so much time
     thinking/evaluating to play faster
 
+Performance:
+- when waiting for a new move, with `Config.should_sleep = False`,
+    it analyzes the board every 50 ms (90 % of the time is 
+    taken by screenshotting the screen)
+- playing a move on the screen takes also around 50 ms
+- therefore, with `time_limit_to_think_normal = 0.1`, each move takes
+    around 200 ms
+
 Possible improvements:
 - listen for certain keys when being turned on and off, so we do not have
-    to leave the mouse from playing window (which is visible to oponent)
+    to leave the mouse from playing window (which is visible to opponent)
 - parse the time from the screen and reflect it in the time of analysis
     (play faster when having less time)
 
@@ -65,7 +73,7 @@ from PIL.Image import Image
 from pynput import keyboard  # type: ignore
 
 # Making all pyautogui actions faster, default is 0.1 seconds
-pyautogui.PAUSE = 0.01
+pyautogui.PAUSE = 0.001
 
 
 class NoNewMoveFoundOnTheChessboard(Exception):
@@ -181,7 +189,8 @@ class ChessRobot:
 
         print("Starting to observe the board")
         while True:
-            time.sleep(Config.sleep_interval_between_screenshots)
+            if Config.should_sleep:
+                time.sleep(Config.sleep_interval_between_screenshots)
             try:
                 self.look_at_the_chessboard_and_react_on_new_moves()
             except NoNewMoveFoundOnTheChessboard:
@@ -234,12 +243,16 @@ class ChessRobot:
         # Getting a list of two squares that are highlighted
         #   as a sign of previous move (is website dependant)
         if Config.website == "kurnik":
-            self.currently_highlighted_squares = self.CHESSBOARD.get_highlighted_squares_from_picture_kurnik(
-                whole_screen=whole_screen
+            self.currently_highlighted_squares = (
+                self.CHESSBOARD.get_highlighted_squares_from_picture_kurnik(
+                    whole_screen=whole_screen
+                )
             )
         else:
-            self.currently_highlighted_squares = self.CHESSBOARD.get_highlighted_squares_from_picture(
-                whole_screen=whole_screen
+            self.currently_highlighted_squares = (
+                self.CHESSBOARD.get_highlighted_squares_from_picture(
+                    whole_screen=whole_screen
+                )
             )
 
     def check_if_some_new_move_was_done(self) -> None:
@@ -255,6 +268,8 @@ class ChessRobot:
             self.previously_highlighted_squares = self.currently_highlighted_squares
 
     def check_if_last_move_was_not_done_by_us(self) -> None:
+        if not self.our_last_move_from_and_to:
+            return
         highlighted_move_is_ours = (
             self.our_last_move_from_and_to[0] in self.currently_highlighted_squares
             and self.our_last_move_from_and_to[1] in self.currently_highlighted_squares

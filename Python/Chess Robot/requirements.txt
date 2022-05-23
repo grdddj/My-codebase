@@ -1,3 +1,5 @@
 chess
 pynput
 pyautogui
+pytest
+pytest-cov

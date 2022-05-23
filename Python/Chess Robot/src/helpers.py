@@ -93,7 +93,7 @@ def wait_for_keyboard_trigger(key_trigger: keyboard.Key) -> None:
 
 
 def are_there_colours_in_a_PIL_image(
-    PIL_image: Image.Image, colours_to_locate: list["ColorValue"]
+    PIL_image: Image.Image, colours_to_locate: Sequence["ColorValue"]
 ) -> bool:
     """Check if PIL image contains any of the colours we are searching for"""
     # TODO: faster approach could be just to check every nth (5th) pixel

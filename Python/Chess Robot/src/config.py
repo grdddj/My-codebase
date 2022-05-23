@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 
@@ -11,24 +10,20 @@ root_dir = Path(__file__).resolve().parent.parent
 
 
 def get_config() -> "Config":
-    observer_only_mode = "observe" in sys.argv
+    observer_only_mode = _observer_only_mode()
     if observer_only_mode:
         print("Observer mode - not playing the moves")
 
-    force_boundaries_update = "force" in sys.argv
+    force_boundaries_update = _force_boundaries_update()
     if force_boundaries_update:
         print("Forcing the boundaries update")
 
-    trigger_moves_manually = "trigger" in sys.argv
+    trigger_moves_manually = _trigger_moves_manually()
     if trigger_moves_manually:
         print("Will wait with moves for the trigger")
 
-    website = check_for_option_in_cmdline(
-        ("lichess", "chess.com", "kurnik"), default="lichess"
-    )
-    mode = check_for_option_in_cmdline(
-        ("superblitz", "blitz", "slow"), default="superblitz"
-    )
+    website = _website()
+    mode = _mode()
 
     print(f"Loading config for website {website}, mode {mode}")
 
@@ -38,6 +33,30 @@ def get_config() -> "Config":
         trigger_moves_manually=trigger_moves_manually,
         website=website,
         mode=mode,
+    )
+
+
+def _observer_only_mode() -> bool:
+    return "observe" in sys.argv
+
+
+def _force_boundaries_update() -> bool:
+    return "force" in sys.argv
+
+
+def _trigger_moves_manually() -> bool:
+    return "trigger" in sys.argv
+
+
+def _mode() -> str:
+    return check_for_option_in_cmdline(
+        ("superblitz", "blitz", "slow"), default="superblitz"
+    )
+
+
+def _website() -> str:
+    return check_for_option_in_cmdline(
+        ("lichess", "chess.com", "kurnik"), default="lichess"
     )
 
 

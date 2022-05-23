@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 
 import pyautogui
 
-from api import ChessboardPlayingInterface
+from .api import ChessboardPlayingInterface
 
 if TYPE_CHECKING:
-    from api import ChessboardCoordinatesInterface, Move, Square
+    from .api import ChessboardCoordinatesInterface, Move, Square
 
 # Making all pyautogui actions faster, default is 0.1 seconds
 pyautogui.PAUSE = 0.0001

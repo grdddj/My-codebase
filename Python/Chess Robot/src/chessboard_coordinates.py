@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Iterable
 
-from api import ChessboardCoordinatesInterface, Square
+from .api import ChessboardCoordinatesInterface, Square
 
 if TYPE_CHECKING:
-    from helpers import PieceColour, Pixel
+    from .helpers import PieceColour, Pixel
 
 
 class ChessboardCoordinates(ChessboardCoordinatesInterface):

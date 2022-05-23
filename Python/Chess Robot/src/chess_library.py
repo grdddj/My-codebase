@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING
 import chess
 import chess.engine
 
-from api import AnalysisResult, ChessLibraryInterface, ChessResult, Move
+from .api import AnalysisResult, ChessLibraryInterface, ChessResult, Move
 
 if TYPE_CHECKING:
-    from helpers import PieceColour
+    from .helpers import PieceColour
 
 
 class ChessLibrary(ChessLibraryInterface):

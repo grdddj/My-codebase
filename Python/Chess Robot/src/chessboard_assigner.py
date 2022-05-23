@@ -4,10 +4,10 @@ from typing import TYPE_CHECKING
 
 from pynput import mouse
 
-from api import ChessboardAssignerInterface
+from .api import ChessboardAssignerInterface
 
 if TYPE_CHECKING:
-    from helpers import Pixel
+    from .helpers import Pixel
 
 
 class ChessboardAssigner(ChessboardAssignerInterface):

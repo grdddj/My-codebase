@@ -1,6 +1,6 @@
-from config import get_config
-from helpers import get_piece_colour, wait_to_trigger_the_game
-from object_builder import get_robot
+from src.config import get_config
+from src.helpers import get_piece_colour, wait_to_trigger_the_game
+from src.object_builder import get_robot
 
 if __name__ == "__main__":
     config = get_config()

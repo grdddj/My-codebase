@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING, Sequence
 import pyautogui
 from PIL import Image
 
-from api import ChessboardMonitoringInterface, Square
-from helpers import are_there_colours_in_a_PIL_image
+from .api import ChessboardMonitoringInterface, Square
+from .helpers import are_there_colours_in_a_PIL_image
 
 if TYPE_CHECKING:
-    from api import ChessboardCoordinatesInterface
-    from helpers import ColorValue, Pixel
+    from .api import ChessboardCoordinatesInterface
+    from .helpers import ColorValue, Pixel
 
 # Making all pyautogui actions faster, default is 0.1 seconds
 pyautogui.PAUSE = 0.0001

@@ -53,11 +53,11 @@ import time
 from enum import Enum
 from typing import TYPE_CHECKING
 
-from api import ChessResult, Square, Move
-from helpers import get_screenshot, wait_for_keyboard_trigger
+from .api import ChessResult, Square, Move
+from .helpers import get_screenshot, wait_for_keyboard_trigger
 
 if TYPE_CHECKING:
-    from api import (
+    from .api import (
         ChessboardMonitoringInterface,
         ChessboardPlayingInterface,
         ChessLibraryInterface,

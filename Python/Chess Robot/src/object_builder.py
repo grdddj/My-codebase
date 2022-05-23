@@ -8,17 +8,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from chess_library import ChessLibrary
-from chess_robot import ChessRobot
-from chessboard_assigner import ChessboardAssigner
-from chessboard_coordinates import ChessboardCoordinates
-from chessboard_monitor import ChessboardMonitor, ChessboardMonitorKurnik
-from chessboard_player import ChessboardPlayer
-from helpers import save_new_boundaries_into_config
+from .chess_library import ChessLibrary
+from .chess_robot import ChessRobot
+from .chessboard_assigner import ChessboardAssigner
+from .chessboard_coordinates import ChessboardCoordinates
+from .chessboard_monitor import ChessboardMonitor, ChessboardMonitorKurnik
+from .chessboard_player import ChessboardPlayer
+from .helpers import save_new_boundaries_into_config
 
 if TYPE_CHECKING:
-    from config import Config
-    from helpers import PieceColour, Pixel
+    from .config import Config
+    from .helpers import PieceColour, Pixel
 
 
 def get_robot(config: "Config", our_piece_colour: "PieceColour") -> ChessRobot:

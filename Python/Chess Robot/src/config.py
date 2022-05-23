@@ -1,12 +1,13 @@
 import os
 import sys
+from pathlib import Path
 
 from pynput import keyboard
 
-from api import ConfigInterface
-from helpers import check_for_option_in_cmdline
+from .api import ConfigInterface
+from .helpers import check_for_option_in_cmdline
 
-file_dir = os.path.dirname(os.path.realpath(__file__))
+root_dir = Path(__file__).resolve().parent.parent
 
 
 def get_config() -> "Config":
@@ -56,7 +57,7 @@ class Config(ConfigInterface):
         self.mode = mode
 
         # Stockfish engine downloaded at https://stockfishchess.org/download/
-        self.engine_location = os.path.join(file_dir, "stockfish_15_x64_bmi2")
+        self.engine_location = str(Path(root_dir / "engines" / "stockfish_15_x64_bmi2"))
 
         # How many seconds to analyze before suggesting a move
         if self.mode == "superblitz":

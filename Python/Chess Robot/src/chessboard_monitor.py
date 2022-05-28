@@ -6,7 +6,7 @@ from PIL import Image
 from .api import ChessboardMonitoringInterface, Square
 from .helpers import are_there_colours_in_a_PIL_image
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .api import ChessboardCoordinatesInterface
     from .helpers import ColorValue
 

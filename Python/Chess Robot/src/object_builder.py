@@ -18,7 +18,7 @@ from .chessboard_player import ChessboardPlayer
 from .config import Config
 from .helpers import check_for_option_in_cmdline, save_new_boundaries_into_config
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .helpers import PieceColour
 
 

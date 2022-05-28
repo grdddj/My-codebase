@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Sequence
 
@@ -12,7 +12,7 @@ from pynput import keyboard
 # Making all pyautogui actions faster, default is 0.1 seconds
 pyautogui.PAUSE = 0.0001
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     Pixel = tuple[int, int]
     ColorValue = tuple[int, int, int]
     PieceColour = Literal["white", "black"]
@@ -105,6 +105,16 @@ def wait_for_keyboard_trigger(key_trigger: keyboard.Key) -> None:
 
     with keyboard.Listener(on_release=_press_trigger) as listener:  # type: ignore
         listener.join()
+
+
+@contextmanager
+def move_mouse_back():
+    initial_cursor_position = pyautogui.position()
+    try:
+        yield
+    finally:
+        pyautogui.moveTo(*initial_cursor_position)
+        pyautogui.click(*initial_cursor_position)
 
 
 def are_there_colours_in_a_PIL_image(

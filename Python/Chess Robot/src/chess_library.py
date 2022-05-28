@@ -6,12 +6,13 @@ import chess.engine
 
 from .api import AnalysisResult, ChessLibraryInterface, ChessResult, Move
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .helpers import PieceColour
 
 
 class ChessLibrary(ChessLibraryInterface):
     def __init__(self, our_piece_colour: "PieceColour", engine_location: str) -> None:
+        assert our_piece_colour in ("white", "black"), "Invalid piece colour"
         self._our_color = chess.WHITE if our_piece_colour == "white" else chess.BLACK
         self._board = chess.Board()
         try:
@@ -40,7 +41,7 @@ class ChessLibrary(ChessLibraryInterface):
 
         if result["score"].is_mate():
             pawn_score = float("inf")
-            mate_string = score_from_our_side
+            mate_string = f"Mate in {score_from_our_side.split('+')[1]}"
         else:
             pawn_score = int(score_from_our_side) / 100
             mate_string = None
@@ -57,7 +58,7 @@ class ChessLibrary(ChessLibraryInterface):
 
     def get_game_outcome(self) -> ChessResult:
         outcome = self._board.outcome()
-        assert outcome is not None
+        assert outcome is not None, "Game is not over"
 
         if outcome.winner == chess.WHITE:
             return (

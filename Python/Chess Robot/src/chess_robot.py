@@ -39,6 +39,8 @@ Possible improvements:
     immediately after we play - and program cannot recognize two moves
     happened at once
 - show the suggested moves on the screen in observer mode
+- utilize the image recognition as a way to get current position when we
+    "lose" ourselves
 
 DISCLAIMER:
 - this project was done only for educational purposes, author has no
@@ -55,7 +57,7 @@ from typing import TYPE_CHECKING
 from .api import ChessResult, Move, Square
 from .helpers import get_screenshot, save_screenshot, wait_for_keyboard_trigger
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from PIL import Image
 
     from .api import (
@@ -206,7 +208,6 @@ class ChessRobot:
         #   highlighted squares, and determining, which one of them is a valid move
         for candidate_move in possible_moves_from_highlight:
             if self._chess_library.is_valid_move(candidate_move):
-                print(f"New move on board - {self._format_move(candidate_move)}")
                 self._move_done_on_the_board = candidate_move
                 break
 
@@ -232,8 +233,6 @@ class ChessRobot:
         self._our_last_move = move
 
     def _do_the_move_on_screen_chessboard(self, move: Move) -> None:
-        print(f"I AM PLAYING {self._format_move(move)}")
-
         # Playing the move on the screen chessboard
         # TODO: could have a check that the move was really performed
         #   on the screen - and if not - try to do it again

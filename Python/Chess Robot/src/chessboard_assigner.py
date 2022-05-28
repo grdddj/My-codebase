@@ -6,7 +6,7 @@ from pynput import mouse
 
 from .api import ChessboardAssignerInterface
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .helpers import Pixel
 
 

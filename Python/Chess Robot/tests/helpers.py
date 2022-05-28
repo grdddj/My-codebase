@@ -5,6 +5,8 @@ import chess
 import chess.pgn
 import pyautogui
 
+from src.helpers import move_mouse_back
+
 pyautogui.PAUSE = 0.01
 
 
@@ -23,14 +25,9 @@ def sleep_and_click_at_coordinates(
     button: str = "left",
     sleep_time: float = 0.5,
 ) -> None:
-    # So we can return the cursor back where we started
-    initial_cursor_position = pyautogui.position()
-
-    time.sleep(sleep_time)
-    pyautogui.click(*coords, button=button)
-
-    pyautogui.moveTo(*initial_cursor_position)
-    pyautogui.click(*initial_cursor_position)
+    with move_mouse_back():
+        time.sleep(sleep_time)
+        pyautogui.click(*coords, button=button)
 
 
 def get_moves_from_game(pgn_game: str) -> list[str]:

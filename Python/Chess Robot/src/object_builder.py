@@ -6,6 +6,7 @@ Creating objects based on the user input.
 
 from __future__ import annotations
 
+import sys
 from typing import TYPE_CHECKING
 
 from .chess_library import ChessLibrary
@@ -14,19 +15,17 @@ from .chessboard_assigner import ChessboardAssigner
 from .chessboard_coordinates import ChessboardCoordinates
 from .chessboard_monitor import ChessboardMonitor, ChessboardMonitorKurnik
 from .chessboard_player import ChessboardPlayer
-from .helpers import save_new_boundaries_into_config
+from .config import Config
+from .helpers import check_for_option_in_cmdline, save_new_boundaries_into_config
 
 if TYPE_CHECKING:
-    from .config import Config
-    from .helpers import PieceColour, Pixel
+    from .helpers import PieceColour
 
 
 def get_robot(config: "Config", our_piece_colour: "PieceColour") -> ChessRobot:
-    boundaries = _get_boundaries_cached(config)
-
     chessboard_coordinates = ChessboardCoordinates(
-        left_top=boundaries[0],
-        right_bottom=boundaries[1],
+        left_top=config.chessboard_left_top_pixel,
+        right_bottom=config.chessboard_right_bottom_pixel,
         our_piece_colour=our_piece_colour,
     )
 
@@ -54,27 +53,38 @@ def get_robot(config: "Config", our_piece_colour: "PieceColour") -> ChessRobot:
     )
 
 
-# Caching so it is needed only at the first time
-LEFT_TOP: "Pixel" | None = None
-BOTTOM_RIGHT: "Pixel" | None = None
+def get_config() -> "Config":
+    observer_only_mode = _observer_only_mode()
+    if observer_only_mode:
+        print("Observer mode - not playing the moves")
 
+    force_boundaries_update = _force_boundaries_update()
+    if force_boundaries_update:
+        print("Forcing the boundaries update")
 
-def _get_boundaries_cached(config: "Config") -> tuple["Pixel", "Pixel"]:
-    global LEFT_TOP, BOTTOM_RIGHT
+    trigger_moves_manually = _trigger_moves_manually()
+    if trigger_moves_manually:
+        print("Will wait with moves for the trigger")
 
-    if LEFT_TOP is None and BOTTOM_RIGHT is None:
-        LEFT_TOP, BOTTOM_RIGHT = _get_boundaries(config)
+    website = _website()
+    mode = _mode()
 
-    assert LEFT_TOP is not None and BOTTOM_RIGHT is not None
-    return LEFT_TOP, BOTTOM_RIGHT
+    print(f"Loading config for website {website}, mode {mode}")
 
-
-def _get_boundaries(config: "Config") -> tuple["Pixel", "Pixel"]:
-    left_top = config.chessboard_left_top_pixel
-    right_bottom = config.chessboard_right_bottom_pixel
+    config = Config(
+        observer_only_mode=observer_only_mode,
+        force_boundaries_update=force_boundaries_update,
+        trigger_moves_manually=trigger_moves_manually,
+        website=website,
+        mode=mode,
+    )
 
     # Boundaries may, or may not be defined in config - and update can be forced
-    if config.force_boundaries_update or left_top is None or right_bottom is None:
+    if (
+        config.force_boundaries_update
+        or config.chessboard_left_top_pixel is None
+        or config.chessboard_right_bottom_pixel is None
+    ):
         chessboard_assigner = ChessboardAssigner()
         boundaries = (
             chessboard_assigner.get_left_top_and_right_bottom_chessboard_pixels()
@@ -88,4 +98,31 @@ def _get_boundaries(config: "Config") -> tuple["Pixel", "Pixel"]:
             website=config.website,
         )
 
-    return left_top, right_bottom
+        config.chessboard_left_top_pixel = left_top
+        config.chessboard_right_bottom_pixel = right_bottom
+
+    return config
+
+
+def _observer_only_mode() -> bool:
+    return "observe" in sys.argv
+
+
+def _force_boundaries_update() -> bool:
+    return "force" in sys.argv
+
+
+def _trigger_moves_manually() -> bool:
+    return "trigger" in sys.argv
+
+
+def _mode() -> str:
+    return check_for_option_in_cmdline(
+        ("superblitz", "blitz", "slow"), default="superblitz"
+    )
+
+
+def _website() -> str:
+    return check_for_option_in_cmdline(
+        ("lichess", "chess.com", "kurnik"), default="lichess"
+    )

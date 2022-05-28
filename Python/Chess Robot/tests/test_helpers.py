@@ -56,9 +56,11 @@ def test_are_there_colours_in_a_PIL_image():
     # are not there
     black = (0, 0, 0)
     white = (255, 255, 255)
+    red_almost = (255, 0, 0)
 
     assert not are_there_colours_in_a_PIL_image(img, (black,))
     assert not are_there_colours_in_a_PIL_image(img, (black, white))
+    assert not are_there_colours_in_a_PIL_image(img, (red_almost,))
     assert are_there_colours_in_a_PIL_image(img, (red,))
     assert are_there_colours_in_a_PIL_image(img, (green,))
     assert are_there_colours_in_a_PIL_image(img, (blue,))

@@ -1,4 +1,4 @@
-from src.config import (
+from src.object_builder import (
     _force_boundaries_update,
     _mode,
     _observer_only_mode,

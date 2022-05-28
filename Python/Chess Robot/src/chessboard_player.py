@@ -27,8 +27,9 @@ class ChessboardPlayer(ChessboardPlayingInterface):
 
         # If there is a promotion, presume we will have a queen, so click
         #   the to_square once again
-        if move.promotion:
+        if move.promotion is not None:
             time.sleep(0.5)  # need to wait for the promotion dialogue
+            # TODO: account for a specific piece (queen, rook, bishop, knight)
             self._click_on_square(move.to_square)
 
         pyautogui.moveTo(*initial_cursor_position)

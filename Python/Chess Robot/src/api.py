@@ -21,13 +21,13 @@ class Square:
 
     def __post_init__(self):
         """Validating the square's correctness"""
-        assert len(self.coordination) == 2
-        assert self.coordination[0] in "abcdefgh"
-        assert self.coordination[1] in "12345678"
+        assert len(self.coordination) == 2, "Square must be 2 characters long"
+        assert self.coordination[0] in "abcdefgh", "First coordinate must be a-h"
+        assert self.coordination[1] in "12345678", "Second coordinate must be 1-8"
 
     def __add__(self, other: Square) -> Move:
         """Adding two Squares together creates a Move - from one Square to another"""
-        assert isinstance(other, Square)
+        assert isinstance(other, Square), "Can only add two Squares together"
         return Move(self.coordination + other.coordination)
 
 
@@ -36,14 +36,25 @@ class Move:
     raw_move: str
     from_square: Square = field(init=False)
     to_square: Square = field(init=False)
-    promotion: bool = field(init=False)
+    promotion: str | None = field(init=False)
 
     def __post_init__(self):
         """Validating the move's correctness and calculating other fields"""
-        assert len(self.raw_move) in (4, 5)
+        assert len(self.raw_move) in (4, 5), "Move must have 4 or 5 characters"
         self.from_square = Square(self.raw_move[0:2])
         self.to_square = Square(self.raw_move[2:4])
-        self.promotion = len(self.raw_move) == 5
+        assert self.from_square != self.to_square, "Cannot move from a square to itself"
+        if len(self.raw_move) == 5:
+            assert self.to_square.coordination[1] in (
+                "1",
+                "8",
+            ), "Can only promote on first/last row"
+            self.promotion = self.raw_move[4].upper()
+            assert (
+                self.promotion in "QRBN"
+            ), f"Invalid promotion piece {self.promotion} - QRBN are valid"
+        else:
+            self.promotion = None
 
 
 class ChessResult(Enum):

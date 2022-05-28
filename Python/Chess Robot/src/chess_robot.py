@@ -50,26 +50,20 @@ DISCLAIMER:
 from __future__ import annotations
 
 import time
-from enum import Enum
 from typing import TYPE_CHECKING
 
 from .api import ChessResult, Move, Square
 from .helpers import get_screenshot, wait_for_keyboard_trigger
 
 if TYPE_CHECKING:
+    from PIL import Image
+
     from .api import (
         ChessboardMonitoringInterface,
         ChessboardPlayingInterface,
         ChessLibraryInterface,
         ConfigInterface,
     )
-
-
-class ChessPositionEvaluation(Enum):
-    Normal = 1
-    Winning = 2
-    Losing = 3
-    MateSoon = 4
 
 
 class NoNewMoveFoundOnTheChessboard(Exception):
@@ -126,7 +120,8 @@ class ChessRobot:
             if self.config.should_sleep:
                 time.sleep(self.config.sleep_interval_between_screenshots)
             try:
-                self._look_at_the_chessboard_and_react_on_new_moves()
+                whole_screen = get_screenshot()
+                self._look_at_the_chessboard_and_react_on_new_moves(whole_screen)
             except NoNewMoveFoundOnTheChessboard:
                 continue
             except TheGameHasFinished:
@@ -138,8 +133,10 @@ class ChessRobot:
             self._analyze_position_and_suggest_the_best_move()
             self._perform_the_best_move_on_the_screen_and_internally()
 
-    def _look_at_the_chessboard_and_react_on_new_moves(self) -> None:
-        self._get_currently_highlighted_squares()
+    def _look_at_the_chessboard_and_react_on_new_moves(
+        self, whole_screen: "Image.Image"
+    ) -> None:
+        self._get_currently_highlighted_squares(whole_screen)
         self._check_if_last_move_was_not_done_by_us()
 
         self._recognize_move_done_on_the_board()
@@ -154,9 +151,7 @@ class ChessRobot:
 
         self._check_if_the_game_did_not_finish()
 
-    def _get_currently_highlighted_squares(self) -> None:
-        whole_screen = get_screenshot()
-
+    def _get_currently_highlighted_squares(self, whole_screen: "Image.Image") -> None:
         # Quick check if the previously highlighted squares are still
         #   highlighted - having to check only 2 squares instead of 64
         if self.currently_highlighted_squares:

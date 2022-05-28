@@ -1,32 +1,16 @@
 import threading
-import time
-
-import pyautogui
 
 from src.chessboard_assigner import ChessboardAssigner
 
-
-def _sleep_and_click_at_coordinates(
-    coords: tuple[int, int],
-    button: str = "left",
-    sleep_time: float = 0.5,
-) -> None:
-    # So we can return the cursor back where we started
-    initial_cursor_position = pyautogui.position()
-
-    time.sleep(sleep_time)
-    pyautogui.click(*coords, button=button)
-
-    pyautogui.moveTo(*initial_cursor_position)
-    pyautogui.click(*initial_cursor_position)
+from .helpers import sleep_and_click_at_coordinates
 
 
 def test_assign_chessboard():
     assigner = ChessboardAssigner()
 
     def _assign_both_corners() -> None:
-        _sleep_and_click_at_coordinates((300, 300), "right", 0.1)
-        _sleep_and_click_at_coordinates((900, 900), "right", 0.1)
+        sleep_and_click_at_coordinates((300, 300), "right", 0.1)
+        sleep_and_click_at_coordinates((900, 900), "right", 0.1)
 
     threading.Thread(target=_assign_both_corners).start()
 

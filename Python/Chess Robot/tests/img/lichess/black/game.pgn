@@ -1,0 +1,18 @@
+[Event "Casual Bullet game"]
+[Site "https://lichess.org/IAedJEP3"]
+[Date "2022.05.28"]
+[White "lichess AI level 1"]
+[Black "Anonymous"]
+[Result "0-1"]
+[UTCDate "2022.05.28"]
+[UTCTime "13:06:01"]
+[WhiteElo "?"]
+[BlackElo "?"]
+[Variant "Standard"]
+[TimeControl "60+0"]
+[ECO "B50"]
+[Opening "Sicilian Defense: Modern Variations"]
+[Termination "Normal"]
+[Annotator "lichess.org"]
+
+1. e4 c5 2. Nf3 d6 { B50 Sicilian Defense: Modern Variations } 3. Nc3 e5 4. Ne2 Nf6 5. Ng3 Nc6 6. Bc4 Nxe4 7. b3 Nxg3 8. fxg3 e4 9. Kf2 d5 10. Qe1 Be7 11. Bb5 exf3 12. gxf3 O-O 13. h4 Bf6 14. Bxc6 Bxa1 15. Bxd5 Qxd5 16. Kg2 Bf5 17. c3 Rfe8 18. c4 Qd3 19. f4 Re2+ 20. Kf1 Qf3+ 21. Kg1 Qg2# { Black wins by checkmate. } 0-1

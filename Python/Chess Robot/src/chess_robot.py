@@ -23,7 +23,7 @@ Useful to know (features):
     thinking/evaluating to play faster
 
 Performance:
-- when waiting for a new move, with `self.config.should_sleep = False`,
+- when waiting for a new move, with `self._config.should_sleep = False`,
     it analyzes the board every 50 ms (90 % of the time is 
     taken by screenshotting the screen)
 - playing a move on the screen takes also around 50 ms
@@ -53,7 +53,7 @@ import time
 from typing import TYPE_CHECKING
 
 from .api import ChessResult, Move, Square
-from .helpers import get_screenshot, wait_for_keyboard_trigger
+from .helpers import get_screenshot, save_screenshot, wait_for_keyboard_trigger
 
 if TYPE_CHECKING:
     from PIL import Image
@@ -100,35 +100,37 @@ class ChessRobot:
         chess_library: "ChessLibraryInterface",
         config: "ConfigInterface",
     ) -> None:
-        self.chessboard_monitor = chessboard_monitor
-        self.chessboard_player = chessboard_player
-        self.chess_library = chess_library
-        self.config = config
+        self._chessboard_monitor = chessboard_monitor
+        self._chessboard_player = chessboard_player
+        self._chess_library = chess_library
+        self._config = config
 
-        self.currently_highlighted_squares: tuple[Square, Square] | None = None
-        self.our_last_move: Move | None = None
-        self.move_done_on_the_board: Move | None = None
+        self._currently_highlighted_squares: tuple[Square, Square] | None = None
+        self._our_last_move: Move | None = None
+        self._move_done_on_the_board: Move | None = None
 
-        self.analysis = self.chess_library.get_current_analysis_result(0.01)
+        self._analysis = self._chess_library.get_current_analysis_result(0.01)
 
     def start_the_game(self) -> None:
-        if not self.config.observer_only_mode:
+        if not self._config.observer_only_mode:
             self._play_first_move_as_white_if_necessary()
 
         print("Starting to observe the board")
         while True:
-            if self.config.should_sleep:
-                time.sleep(self.config.sleep_interval_between_screenshots)
+            if self._config.should_sleep:
+                time.sleep(self._config.sleep_interval_between_screenshots)
             try:
                 whole_screen = get_screenshot()
                 self._look_at_the_chessboard_and_react_on_new_moves(whole_screen)
             except NoNewMoveFoundOnTheChessboard:
                 continue
             except TheGameHasFinished:
+                if self._config.debug:
+                    save_screenshot()
                 break
 
     def _play_first_move_as_white_if_necessary(self) -> None:
-        if self.chess_library.should_start_as_white():
+        if self._chess_library.should_start_as_white():
             print("Kicking the game by playing first")
             self._analyze_position_and_suggest_the_best_move()
             self._perform_the_best_move_on_the_screen_and_internally()
@@ -142,11 +144,14 @@ class ChessRobot:
         self._recognize_move_done_on_the_board()
         self._play_the_move_from_the_board_on_internal_board()
 
+        if self._config.debug:
+            save_screenshot()
+
         self._check_if_the_game_did_not_finish()
 
         self._analyze_position_and_suggest_the_best_move()
 
-        if not self.config.observer_only_mode:
+        if not self._config.observer_only_mode:
             self._perform_the_best_move_on_the_screen_and_internally()
 
         self._check_if_the_game_did_not_finish()
@@ -154,75 +159,77 @@ class ChessRobot:
     def _get_currently_highlighted_squares(self, whole_screen: "Image.Image") -> None:
         # Quick check if the previously highlighted squares are still
         #   highlighted - having to check only 2 squares instead of 64
-        if self.currently_highlighted_squares:
-            if self.chessboard_monitor.check_if_squares_are_highlighted(
+        if self._currently_highlighted_squares:
+            if self._chessboard_monitor.check_if_squares_are_highlighted(
                 whole_screen=whole_screen,
-                squares_to_check=self.currently_highlighted_squares,
+                squares_to_check=self._currently_highlighted_squares,
             ):
                 raise NoNewMoveFoundOnTheChessboard("Same highlight as before")
 
         # Getting highlighted squares as a sign of previous move
-        highlighted_squares = self.chessboard_monitor.get_highlighted_squares(
+        highlighted_squares = self._chessboard_monitor.get_highlighted_squares(
             whole_screen
         )
         if len(highlighted_squares) != 2:
             raise NoNewMoveFoundOnTheChessboard("No highlight found")
 
-        self.currently_highlighted_squares = (
+        self._currently_highlighted_squares = (
             highlighted_squares[0],
             highlighted_squares[1],
         )
 
     def _check_if_last_move_was_not_done_by_us(self) -> None:
-        if not self.our_last_move or not self.currently_highlighted_squares:
+        if not self._our_last_move or not self._currently_highlighted_squares:
             return
 
         highlighted_move_is_ours = (
-            self.our_last_move.from_square in self.currently_highlighted_squares
-            and self.our_last_move.to_square in self.currently_highlighted_squares
+            self._our_last_move.from_square in self._currently_highlighted_squares
+            and self._our_last_move.to_square in self._currently_highlighted_squares
         )
         if highlighted_move_is_ours:
+            if self._config.debug:
+                save_screenshot()
             raise NoNewMoveFoundOnTheChessboard("Last move was ours")
 
     def _recognize_move_done_on_the_board(self) -> None:
-        self.move_done_on_the_board = None
+        self._move_done_on_the_board = None
 
-        assert self.currently_highlighted_squares
+        assert self._currently_highlighted_squares
         possible_moves_from_highlight = [
-            self.currently_highlighted_squares[0]
-            + self.currently_highlighted_squares[1],
-            self.currently_highlighted_squares[1]
-            + self.currently_highlighted_squares[0],
+            self._currently_highlighted_squares[0]
+            + self._currently_highlighted_squares[1],
+            self._currently_highlighted_squares[1]
+            + self._currently_highlighted_squares[0],
         ]
 
         # Looping through all (2) possibilities of movement between the two
         #   highlighted squares, and determining, which one of them is a valid move
         for candidate_move in possible_moves_from_highlight:
-            if self.chess_library.is_valid_move(candidate_move):
+            if self._chess_library.is_valid_move(candidate_move):
                 print(f"New move on board - {self._format_move(candidate_move)}")
-                self.move_done_on_the_board = candidate_move
+                self._move_done_on_the_board = candidate_move
                 break
 
         # In ideal condition this should never happen, but in practice
         #   can, when these is some inconsistency (it did not catch some move)
         # TODO: move this corner case elsewhere
-        if not self.move_done_on_the_board:
+        if not self._move_done_on_the_board:
             print("No move was done - please investigate, why")
             print("MOST PROBABLY THE MOVE WAS NOT DONE ON THE SCREEN BY PYAUTOGUI")
             print("possible_moves_from_highlight", possible_moves_from_highlight)
-            print("our_last_move", self.our_last_move)
-            print("highlighted_squares", self.currently_highlighted_squares)
+            print("our_last_move", self._our_last_move)
+            print("highlighted_squares", self._currently_highlighted_squares)
             raise NoNewMoveFoundOnTheChessboard("Something inconsistent happened")
 
     def _perform_the_best_move_on_the_screen_and_internally(self) -> None:
-        if self.config.trigger_moves_manually:
-            print(f"Waiting for trigger to play move: {self.config.keyboard_trigger}")
-            wait_for_keyboard_trigger(self.config.keyboard_trigger)
+        if self._config.trigger_moves_manually:
+            print(f"Waiting for trigger to play move: {self._config.keyboard_trigger}")
+            wait_for_keyboard_trigger(self._config.keyboard_trigger)
 
-        move = self.analysis.best_move
+        move = self._analysis.best_move
         self._do_the_move_on_screen_chessboard(move)
         self._play_move_on_our_internal_board(move)
-        self.our_last_move = move
+        self._our_last_move = move
 
     def _do_the_move_on_screen_chessboard(self, move: Move) -> None:
         print(f"I AM PLAYING {self._format_move(move)}")
@@ -230,48 +237,50 @@ class ChessRobot:
         # Playing the move on the screen chessboard
         # TODO: could have a check that the move was really performed
         #   on the screen - and if not - try to do it again
-        self.chessboard_player.play_move(move)
+        self._chessboard_player.play_move(move)
 
     def _play_the_move_from_the_board_on_internal_board(self) -> None:
-        if not self.move_done_on_the_board:
+        if not self._move_done_on_the_board:
             return
-        self._play_move_on_our_internal_board(self.move_done_on_the_board)
+        self._play_move_on_our_internal_board(self._move_done_on_the_board)
 
     def _play_move_on_our_internal_board(self, move: Move) -> None:
         # NOTE: we must first retrieve the move and only then push it one
         #   the board, otherwise the SAN representation would fail
         #   (it only takes valid moves in current situation)
         print(f"Playing move on our internal board: {self._format_move(move)}")
-        self.chess_library.play_move(move)
+        self._chess_library.play_move(move)
 
     def _analyze_position_and_suggest_the_best_move(self) -> None:
         time_to_think = self._get_time_to_think_according_to_last_position()
-        self.analysis = self.chess_library.get_current_analysis_result(time_to_think)
-        print(f"{40*' '}Score: {self.analysis.mate_string or self.analysis.pawn_score}")
-        if self.config.observer_only_mode:
-            print(f"{40*' '}I would play {self._format_move(self.analysis.best_move)}")
+        self._analysis = self._chess_library.get_current_analysis_result(time_to_think)
+        print(
+            f"{40*' '}Score: {self._analysis.mate_string or self._analysis.pawn_score}"
+        )
+        if self._config.observer_only_mode:
+            print(f"{40*' '}I would play {self._format_move(self._analysis.best_move)}")
 
     def _get_time_to_think_according_to_last_position(self) -> float:
         if (
-            self.analysis.mate_string
-            or self.analysis.pawn_score
-            > self.config.pawn_threshold_when_already_winning
+            self._analysis.mate_string
+            or self._analysis.pawn_score
+            > self._config.pawn_threshold_when_already_winning
         ):
-            return self.config.time_limit_to_think_when_already_winning
-        elif self.analysis.pawn_score < self.config.pawn_threshold_when_losing:
-            return self.config.time_limit_to_think_when_losing
+            return self._config.time_limit_to_think_when_already_winning
+        elif self._analysis.pawn_score < self._config.pawn_threshold_when_losing:
+            return self._config.time_limit_to_think_when_losing
         else:
-            return self.config.time_limit_to_think_normal
+            return self._config.time_limit_to_think_normal
 
     def _format_move(self, move: Move) -> str:
-        return self.chess_library.get_notation_from_move(move)
+        return self._chess_library.get_notation_from_move(move)
 
     def _check_if_the_game_did_not_finish(self) -> None:
-        if self.chess_library.is_game_over():
+        if self._chess_library.is_game_over():
             self._evaluate_winner_and_finish_the_game()
 
     def _evaluate_winner_and_finish_the_game(self) -> None:
-        outcome = self.chess_library.get_game_outcome()
+        outcome = self._chess_library.get_game_outcome()
 
         if outcome == ChessResult.Win:
             print("YOU HAVE WON, CONGRATULATIONS!!")

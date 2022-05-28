@@ -1,4 +1,5 @@
 from src.object_builder import (
+    _debug,
     _force_boundaries_update,
     _mode,
     _observer_only_mode,
@@ -12,16 +13,19 @@ def test_cmdline_parsing_defaults(monkeypatch):
     assert _website() == "lichess"
     assert _mode() == "superblitz"
     assert not _observer_only_mode()
+    assert not _debug()
     assert not _force_boundaries_update()
     assert not _trigger_moves_manually()
 
 
 def test_cmdline_parsing_user_values(monkeypatch):
     monkeypatch.setattr(
-        "sys.argv", ["main.py", "observe", "force", "trigger", "blitz", "kurnik"]
+        "sys.argv",
+        ["main.py", "observe", "force", "trigger", "debug", "blitz", "kurnik"],
     )
     assert _website() == "kurnik"
     assert _mode() == "blitz"
     assert _observer_only_mode()
+    assert _debug()
     assert _force_boundaries_update()
     assert _trigger_moves_manually()

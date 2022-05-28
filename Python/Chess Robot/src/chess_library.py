@@ -12,31 +12,31 @@ if TYPE_CHECKING:
 
 class ChessLibrary(ChessLibraryInterface):
     def __init__(self, our_piece_colour: "PieceColour", engine_location: str) -> None:
-        self.our_color = chess.WHITE if our_piece_colour == "white" else chess.BLACK
-        self.board = chess.Board()
+        self._our_color = chess.WHITE if our_piece_colour == "white" else chess.BLACK
+        self._board = chess.Board()
         try:
-            self.engine = chess.engine.SimpleEngine.popen_uci(engine_location)
+            self._engine = chess.engine.SimpleEngine.popen_uci(engine_location)
         except FileNotFoundError:
             raise FileNotFoundError(
                 f"Could not find engine at {engine_location}. Make sure the path is correct."
             ) from None
 
     def should_start_as_white(self) -> bool:
-        return self.our_color == chess.WHITE and self.board.fullmove_number == 1
+        return self._our_color == chess.WHITE and self._board.fullmove_number == 1
 
     def is_valid_move(self, move: Move) -> bool:
-        return chess.Move.from_uci(move.raw_move) in self.board.legal_moves
+        return chess.Move.from_uci(move.raw_move) in self._board.legal_moves
 
     def play_move(self, move: Move) -> None:
-        self.board.push(chess.Move.from_uci(move.raw_move))
+        self._board.push(chess.Move.from_uci(move.raw_move))
 
     def get_current_analysis_result(self, time_to_think: float) -> AnalysisResult:
-        result = self.engine.analyse(
-            board=self.board, limit=chess.engine.Limit(time=time_to_think)
+        result = self._engine.analyse(
+            board=self._board, limit=chess.engine.Limit(time=time_to_think)
         )
 
         assert "score" in result
-        score_from_our_side = str(result["score"].pov(self.our_color))
+        score_from_our_side = str(result["score"].pov(self._our_color))
 
         if result["score"].is_mate():
             pawn_score = float("inf")
@@ -53,22 +53,22 @@ class ChessLibrary(ChessLibraryInterface):
         )
 
     def is_game_over(self) -> bool:
-        return self.board.is_game_over()
+        return self._board.is_game_over()
 
     def get_game_outcome(self) -> ChessResult:
-        outcome = self.board.outcome()
+        outcome = self._board.outcome()
         assert outcome is not None
 
         if outcome.winner == chess.WHITE:
             return (
-                ChessResult.Win if self.our_color == chess.WHITE else ChessResult.Lost
+                ChessResult.Win if self._our_color == chess.WHITE else ChessResult.Lost
             )
         elif outcome.winner == chess.BLACK:
             return (
-                ChessResult.Win if self.our_color == chess.BLACK else ChessResult.Lost
+                ChessResult.Win if self._our_color == chess.BLACK else ChessResult.Lost
             )
         else:
             return ChessResult.Draw
 
     def get_notation_from_move(self, move: Move) -> str:
-        return self.board.san(chess.Move.from_uci(move.raw_move))
+        return self._board.san(chess.Move.from_uci(move.raw_move))

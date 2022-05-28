@@ -8,7 +8,7 @@ from .helpers import are_there_colours_in_a_PIL_image
 
 if TYPE_CHECKING:
     from .api import ChessboardCoordinatesInterface
-    from .helpers import ColorValue, Pixel
+    from .helpers import ColorValue
 
 # Making all pyautogui actions faster, default is 0.1 seconds
 pyautogui.PAUSE = 0.0001
@@ -20,22 +20,15 @@ class ChessboardMonitor(ChessboardMonitoringInterface):
         chessboard_coordinates: "ChessboardCoordinatesInterface",
         highlighted_colours: list["ColorValue"],
     ) -> None:
-        self.chessboard_coordinates = chessboard_coordinates
-        self.highlighted_colours = highlighted_colours
+        self._chessboard_coordinates = chessboard_coordinates
+        self._highlighted_colours = highlighted_colours
 
     def get_highlighted_squares(self, whole_screen: Image.Image) -> list[Square]:
         highlighted_squares: list[Square] = []
 
-        # TODO: should crop the image for just the chessboard area
-        #   so that it can save some time manipulating with smaller image
-
-        # Looping through all squares, and testing if they contain highlighted
-        #   colour
-        for square, center_coords in self.chessboard_coordinates.get_all_square_items():
-            is_highlighted = self._check_if_square_is_highlighted(
-                whole_screen=whole_screen, square_center_coords=center_coords
-            )
-            if is_highlighted:
+        # Looping through all squares, and testing if they contain highlighted colour
+        for square, _ in self._chessboard_coordinates.get_all_square_items():
+            if self._square_is_highlighted(whole_screen, square):
                 highlighted_squares.append(square)
 
             # Exiting when we have found two squares, there should not be more
@@ -44,10 +37,19 @@ class ChessboardMonitor(ChessboardMonitoringInterface):
 
         return highlighted_squares
 
-    def _check_if_square_is_highlighted(
-        self, whole_screen: Image.Image, square_center_coords: "Pixel"
+    def check_if_squares_are_highlighted(
+        self, whole_screen: Image.Image, squares_to_check: Sequence[Square]
     ) -> bool:
-        square_size = self.chessboard_coordinates.get_square_size()
+        return all(
+            self._square_is_highlighted(whole_screen, square)
+            for square in squares_to_check
+        )
+
+    def _square_is_highlighted(
+        self, whole_screen: Image.Image, square: "Square"
+    ) -> bool:
+        square_center_coords = self._chessboard_coordinates.get_square_center(square)
+        square_size = self._chessboard_coordinates.get_square_size()
 
         # Defining how big part of a square will be cut out to allow for some
         #   inaccuracies in square identification (so that the highlighted
@@ -64,25 +66,8 @@ class ChessboardMonitor(ChessboardMonitoringInterface):
             left_top_y_square + square_size - square_boundary_pixels,
         )
         square_image = whole_screen.crop(corners_of_current_square)
-        is_highlighted = are_there_colours_in_a_PIL_image(
-            PIL_image=square_image, colours_to_locate=self.highlighted_colours
-        )
 
-        return is_highlighted
-
-    def check_if_squares_are_highlighted(
-        self, whole_screen: Image.Image, squares_to_check: Sequence[Square]
-    ) -> bool:
-        square_centers_to_check = [
-            square_center_coords
-            for square, square_center_coords in self.chessboard_coordinates.get_all_square_items()
-            if square in squares_to_check
-        ]
-
-        return all(
-            self._check_if_square_is_highlighted(whole_screen, square_center_coords)
-            for square_center_coords in square_centers_to_check
-        )
+        return are_there_colours_in_a_PIL_image(square_image, self._highlighted_colours)
 
 
 class ChessboardMonitorKurnik(ChessboardMonitor):
@@ -95,11 +80,14 @@ class ChessboardMonitorKurnik(ChessboardMonitor):
     def get_highlighted_squares(self, whole_screen: Image.Image) -> list[Square]:
         highlighted_squares: list[Square] = []
 
-        square_size = self.chessboard_coordinates.get_square_size()
+        square_size = self._chessboard_coordinates.get_square_size()
 
         # Looping through all squares, and testing if they contain highlighted
         #   colour
-        for square, center_coords in self.chessboard_coordinates.get_all_square_items():
+        for (
+            square,
+            center_coords,
+        ) in self._chessboard_coordinates.get_all_square_items():
             left_top_x_square = center_coords[0] - square_size // 2
             left_top_y_square = center_coords[1] - square_size // 2
             corners_of_current_square = (
@@ -123,12 +111,10 @@ class ChessboardMonitorKurnik(ChessboardMonitor):
 
             found_in_corner = 0
             for smaller_square_corner in sub_squares_corners:
-                smaller_square_image = square_image.crop(smaller_square_corner)
-                are_there = are_there_colours_in_a_PIL_image(
-                    PIL_image=smaller_square_image,
-                    colours_to_locate=self.highlighted_colours,
-                )
-                if are_there:
+                if are_there_colours_in_a_PIL_image(
+                    square_image.crop(smaller_square_corner),
+                    self._highlighted_colours,
+                ):
                     found_in_corner += 1
 
             if found_in_corner > 2:

@@ -142,6 +142,7 @@ class ConfigInterface(Protocol):
     trigger_moves_manually: bool
     website: str
     mode: str
+    debug: bool
 
     engine_location: str
 

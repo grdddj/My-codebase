@@ -15,12 +15,14 @@ class Config(ConfigInterface):
         trigger_moves_manually: bool = False,
         website: str = "lichess",
         mode: str = "superblitz",
+        debug: bool = False,
     ) -> None:
         self.observer_only_mode = observer_only_mode
         self.force_boundaries_update = force_boundaries_update
         self.trigger_moves_manually = trigger_moves_manually
         self.website = website
         self.mode = mode
+        self.debug = debug
 
         # Stockfish engine downloaded at https://stockfishchess.org/download/
         self.engine_location = str(Path(root_dir / "engines" / "stockfish_15_x64_bmi2"))

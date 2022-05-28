@@ -16,7 +16,7 @@ class ChessboardPlayer(ChessboardPlayingInterface):
     def __init__(
         self, chessboard_coordinates: "ChessboardCoordinatesInterface"
     ) -> None:
-        self.chessboard_coordinates = chessboard_coordinates
+        self._chessboard_coordinates = chessboard_coordinates
 
     def play_move(self, move: "Move") -> None:
         # So we can return the cursor back where we started
@@ -36,4 +36,4 @@ class ChessboardPlayer(ChessboardPlayingInterface):
         pyautogui.click(*initial_cursor_position)
 
     def _click_on_square(self, square: "Square") -> None:
-        pyautogui.click(*self.chessboard_coordinates.get_square_center(square))
+        pyautogui.click(*self._chessboard_coordinates.get_square_center(square))

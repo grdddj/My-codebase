@@ -1,8 +1,6 @@
 import threading
-import time
 from pathlib import Path
 
-import pyautogui
 from PIL import Image
 
 from src.helpers import (
@@ -12,17 +10,9 @@ from src.helpers import (
     save_new_boundaries_into_config,
 )
 
+from .helpers import sleep_and_press_key
+
 HERE = Path(__file__).resolve().parent
-
-
-def _sleep_and_press_key(
-    key: str,
-    amount: int = 2,
-    sleep_time: float = 0.5,
-) -> None:
-    time.sleep(sleep_time)
-    for _ in range(amount):
-        pyautogui.press(key)
 
 
 def test_check_for_option_in_cmdline(monkeypatch):
@@ -33,14 +23,14 @@ def test_check_for_option_in_cmdline(monkeypatch):
 
 
 def test_get_piece_colour():
-    threading.Thread(target=_sleep_and_press_key, args=("b", 2, 0.1)).start()
+    threading.Thread(target=sleep_and_press_key, args=("b", 2, 0.1)).start()
     assert get_piece_colour() == "black"
 
-    threading.Thread(target=_sleep_and_press_key, args=("w", 2, 0.1)).start()
+    threading.Thread(target=sleep_and_press_key, args=("w", 2, 0.1)).start()
     assert get_piece_colour() == "white"
 
     # any other key than "b" gives white as well
-    threading.Thread(target=_sleep_and_press_key, args=("x", 2, 0.1)).start()
+    threading.Thread(target=sleep_and_press_key, args=("x", 2, 0.1)).start()
     assert get_piece_colour() == "white"
 
 

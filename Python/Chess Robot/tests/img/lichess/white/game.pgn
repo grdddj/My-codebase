@@ -1,0 +1,18 @@
+[Event "Casual Bullet game"]
+[Site "https://lichess.org/Ug1ORvpr"]
+[Date "2022.05.28"]
+[White "Anonymous"]
+[Black "lichess AI level 1"]
+[Result "1-0"]
+[UTCDate "2022.05.28"]
+[UTCTime "13:02:21"]
+[WhiteElo "?"]
+[BlackElo "?"]
+[Variant "Standard"]
+[TimeControl "60+0"]
+[ECO "B12"]
+[Opening "Caro-Kann Defense: Advance Variation"]
+[Termination "Normal"]
+[Annotator "lichess.org"]
+
+1. e4 c6 2. d4 d5 3. e5 { B12 Caro-Kann Defense: Advance Variation } Bf5 4. Be2 e6 5. Nf3 c5 6. O-O cxd4 7. Nxd4 Bg6 8. h4 Qc7 9. h5 Nc6 10. Nxc6 Qxc6 11. hxg6 fxg6 12. Nd2 Be7 13. c4 d4 14. Bf3 Qc7 15. Qa4+ Kd8 16. Ne4 Nh6 17. c5 Nf5 18. Nd6 Bf6 19. Nxb7+ Qxb7 20. Bxb7 Ne3 21. Qa5+ Ke7 22. Qc7+ Kf8 23. fxe3 Kg8 24. Bxa8 dxe3 25. exf6 e5 26. Qxg7# { White wins by checkmate. } 1-0

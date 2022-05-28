@@ -68,6 +68,10 @@ def get_config() -> "Config":
 
     website = _website()
     mode = _mode()
+    debug = _debug()
+
+    if debug:
+        print("Debug mode - will be saving all the unique screenshots")
 
     print(f"Loading config for website {website}, mode {mode}")
 
@@ -77,6 +81,7 @@ def get_config() -> "Config":
         trigger_moves_manually=trigger_moves_manually,
         website=website,
         mode=mode,
+        debug=debug,
     )
 
     # Boundaries may, or may not be defined in config - and update can be forced
@@ -114,6 +119,10 @@ def _force_boundaries_update() -> bool:
 
 def _trigger_moves_manually() -> bool:
     return "trigger" in sys.argv
+
+
+def _debug() -> bool:
+    return "debug" in sys.argv
 
 
 def _mode() -> str:

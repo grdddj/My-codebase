@@ -40,7 +40,7 @@ class Config(ConfigInterface):
             self.time_limit_to_think_normal = 1
             self.time_limit_to_think_when_already_winning = 0.5
             self.time_limit_to_think_when_losing = 5
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Invalid mode {self.mode}")
 
         # When to consider we are winning or losing (to adjust think time)
@@ -77,5 +77,5 @@ class Config(ConfigInterface):
             self.chessboard_right_bottom_pixel = (1107, 970)
             self.white_field_highlight_colour = (47, 66, 45)
             self.black_field_highlight_colour = (17, 53, 20)
-        else:
+        else:  # pragma: no cover
             raise ValueError(f"Unknown website: {self.website}")

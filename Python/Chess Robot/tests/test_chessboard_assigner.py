@@ -1,10 +1,13 @@
 import threading
 
+import pytest
+
 from src.chessboard_assigner import ChessboardAssigner
 
 from .helpers import sleep_and_click_at_coordinates
 
 
+@pytest.mark.timeout(1)
 def test_assign_chessboard():
     assigner = ChessboardAssigner()
 

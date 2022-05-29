@@ -4,7 +4,7 @@ from PIL import Image
 
 from src.api import Square
 from src.chessboard_coordinates import ChessboardCoordinates
-from src.chessboard_monitor import ChessboardMonitor
+from src.chessboard_monitor import ChessboardMonitor, ChessboardMonitorKurnik
 
 from .helpers import get_moves_from_game
 
@@ -22,9 +22,20 @@ COORDS_BLACK_LICHESS = ChessboardCoordinates(
     our_piece_colour="black",
 )
 
+COORDS_WHITE_KURNIK = ChessboardCoordinates(
+    left_top=(341, 205),
+    right_bottom=(1107, 970),
+    our_piece_colour="white",
+)
+
 highlighted_colours_lichess = [
     (205, 210, 106),
     (170, 162, 58),
+]
+
+highlighted_colours_kurnik = [
+    (47, 66, 45),
+    (17, 53, 20),
 ]
 
 MONITOR_WHITE_LICHESS = ChessboardMonitor(
@@ -32,6 +43,10 @@ MONITOR_WHITE_LICHESS = ChessboardMonitor(
 )
 MONITOR_BLACK_LICHESS = ChessboardMonitor(
     COORDS_BLACK_LICHESS, highlighted_colours_lichess
+)
+
+MONITOR_WHITE_KURNIK = ChessboardMonitorKurnik(
+    COORDS_WHITE_KURNIK, highlighted_colours_kurnik
 )
 
 
@@ -65,7 +80,7 @@ def _test_squares_are_highlighted(
     assert result == monitor.check_if_squares_are_highlighted(screen, squares)
 
 
-def test_check_if_squares_are_highlighted_white():
+def test_check_if_squares_are_highlighted_lichess_white():
     _test_squares_are_highlighted(
         img=IMG / "lichess" / "white" / "0001.png",
         squares=[Square("e2")],
@@ -99,7 +114,7 @@ def test_check_if_squares_are_highlighted_white():
     )
 
 
-def test_check_if_squares_are_highlighted_black():
+def test_check_if_squares_are_highlighted_lichess_black():
     _test_squares_are_highlighted(
         img=IMG / "lichess" / "black" / "0005.png",
         squares=[Square("b1")],
@@ -125,3 +140,24 @@ def test_check_if_squares_are_highlighted_black():
         monitor=MONITOR_BLACK_LICHESS,
         result=False,
     )
+
+
+def test_check_if_squares_are_highlighted_kurnik_white():
+    _test_squares_are_highlighted(
+        img=IMG / "kurnik" / "white" / "0021.png",
+        squares=[Square("a4"), Square("b5")],
+        monitor=MONITOR_WHITE_KURNIK,
+        result=True,
+    )
+
+    _test_squares_are_highlighted(
+        img=IMG / "kurnik" / "white" / "0021.png",
+        squares=[Square("b4")],
+        monitor=MONITOR_WHITE_KURNIK,
+        result=False,
+    )
+
+
+def test_highlight_kurnik_white():
+    folder = IMG / "kurnik" / "white"
+    _test_highlight_monitor(folder, MONITOR_WHITE_KURNIK)

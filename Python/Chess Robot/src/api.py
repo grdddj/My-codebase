@@ -76,20 +76,20 @@ class ChessboardAssignerInterface(Protocol):
     def get_left_top_and_right_bottom_chessboard_pixels(
         self,
     ) -> tuple["Pixel", "Pixel"]:
-        ...
+        ...  # pragma: no cover
 
 
 class ChessboardCoordinatesInterface(Protocol):
     """Holding information about chessboard fields"""
 
     def get_square_center(self, square: Square) -> "Pixel":
-        ...
+        ...  # pragma: no cover
 
     def get_all_square_items(self) -> Iterable[tuple[Square, "Pixel"]]:
-        ...
+        ...  # pragma: no cover
 
     def get_square_size(self) -> int:
-        ...
+        ...  # pragma: no cover
 
 
 class ChessboardMonitoringInterface(Protocol):
@@ -98,42 +98,42 @@ class ChessboardMonitoringInterface(Protocol):
     def check_if_squares_are_highlighted(
         self, whole_screen: "Image.Image", squares_to_check: Sequence[Square]
     ) -> bool:
-        ...
+        ...  # pragma: no cover
 
     def get_highlighted_squares(self, whole_screen: "Image.Image") -> list[Square]:
-        ...
+        ...  # pragma: no cover
 
 
 class ChessboardPlayingInterface(Protocol):
     """Playing the moves on the screen"""
 
     def play_move(self, move: Move) -> None:
-        ...
+        ...  # pragma: no cover
 
 
 class ChessLibraryInterface(Protocol):
     """Keeps track of the position on the chessboard and suggests best moves"""
 
     def should_start_as_white(self) -> bool:
-        ...
+        ...  # pragma: no cover
 
     def is_valid_move(self, move: Move) -> bool:
-        ...
+        ...  # pragma: no cover
 
     def play_move(self, move: Move) -> None:
-        ...
+        ...  # pragma: no cover
 
     def get_current_analysis_result(self, time_to_think: float) -> AnalysisResult:
-        ...
+        ...  # pragma: no cover
 
     def is_game_over(self) -> bool:
-        ...
+        ...  # pragma: no cover
 
     def get_game_outcome(self) -> ChessResult:
-        ...
+        ...  # pragma: no cover
 
     def get_notation_from_move(self, move: Move) -> str:
-        ...
+        ...  # pragma: no cover
 
 
 class ConfigInterface(Protocol):

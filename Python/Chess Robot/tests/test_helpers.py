@@ -1,13 +1,18 @@
 import threading
+import time
 from pathlib import Path
 
+import pytest
 from PIL import Image
 
 from src.helpers import (
     are_there_colours_in_a_PIL_image,
     check_for_option_in_cmdline,
     get_piece_colour,
+    get_screenshot,
     save_new_boundaries_into_config,
+    save_screenshot,
+    wait_to_trigger_the_game,
 )
 
 from .helpers import sleep_and_press_key
@@ -22,6 +27,18 @@ def test_check_for_option_in_cmdline(monkeypatch):
     assert check_for_option_in_cmdline(("roo", "bar", "baz"), "def") == "def"
 
 
+@pytest.mark.timeout(1)
+def test_wait_to_trigger_the_game():
+    start = time.perf_counter()
+    threading.Thread(target=sleep_and_press_key, args=("a", 1, 0.1)).start()
+    threading.Thread(target=sleep_and_press_key, args=("b", 1, 0.2)).start()
+    threading.Thread(target=sleep_and_press_key, args=("ctrlright", 1, 0.5)).start()
+    wait_to_trigger_the_game()
+    end = time.perf_counter()
+    assert end - start > 0.5
+
+
+@pytest.mark.timeout(1)
 def test_get_piece_colour():
     threading.Thread(target=sleep_and_press_key, args=("b", 2, 0.1)).start()
     assert get_piece_colour() == "black"
@@ -32,6 +49,17 @@ def test_get_piece_colour():
     # any other key than "b" gives white as well
     threading.Thread(target=sleep_and_press_key, args=("x", 2, 0.1)).start()
     assert get_piece_colour() == "white"
+
+
+def test_get_screenshot():
+    screenshot = get_screenshot()
+    assert isinstance(screenshot, Image.Image)
+
+
+def test_save_screenshot():
+    screenshot = save_screenshot()
+    assert Path(screenshot).exists()
+    Path(screenshot).unlink()
 
 
 def test_are_there_colours_in_a_PIL_image():

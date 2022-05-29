@@ -3,3 +3,4 @@ pynput
 pyautogui
 pytest
 pytest-cov
+pytest-timeout

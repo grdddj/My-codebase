@@ -53,13 +53,14 @@ def get_screenshot() -> Image.Image:
     return pyautogui.screenshot()
 
 
-def save_screenshot() -> None:
+def save_screenshot() -> str:
     """Saves the current screen as a screenshot into our folder"""
     folder = ROOT / "screens"
     file_amount = len(list(folder.glob("*.png")))
     location = ROOT / "screens" / f"screenshot_{file_amount:04}.png"
     print("location", location)
     pyautogui.screenshot(location)
+    return str(location)
 
 
 def wait_to_trigger_the_game() -> None:

@@ -4,6 +4,8 @@ Do you also like chess, and do you also hate cheaters? However, it can be benefi
 
 This project is creating a chess robot that is performing moves on a "physical screen" chessboard, as a response to opponents moves.
 
+[See video](https://raw.githubusercontent.com/grdddj/My-codebase/master/Python/Chess%20Robot/ChessRobot_in_action.mp4)
+
 ---
 
 ## Architecture

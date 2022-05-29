@@ -60,6 +60,17 @@ def _test_highlight_monitor(folder: Path, monitor: ChessboardMonitor):
             highlighted_squares[0].coordination + highlighted_squares[1].coordination,
             highlighted_squares[1].coordination + highlighted_squares[0].coordination,
         ]
+
+        # Accounting for different castling moves
+        if "e1h1" in possible_square_moves:
+            possible_square_moves.append("e1g1")
+        elif "e8h8" in possible_square_moves:
+            possible_square_moves.append("e8g8")
+        elif "e1a1" in possible_square_moves:
+            possible_square_moves.append("e1ac")
+        elif "e8a8" in possible_square_moves:
+            possible_square_moves.append("e8c8")
+
         assert move in possible_square_moves
 
 

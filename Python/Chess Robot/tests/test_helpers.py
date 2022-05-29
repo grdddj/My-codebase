@@ -15,7 +15,7 @@ from src.helpers import (
     wait_to_trigger_the_game,
 )
 
-from .helpers import sleep_and_press_key
+from .helpers import get_moves_from_game, sleep_and_press_key
 
 HERE = Path(__file__).resolve().parent
 
@@ -30,6 +30,7 @@ def test_check_for_option_in_cmdline(monkeypatch):
 @pytest.mark.timeout(1)
 def test_wait_to_trigger_the_game():
     start = time.perf_counter()
+    # First two should not trigger
     threading.Thread(target=sleep_and_press_key, args=("a", 1, 0.1)).start()
     threading.Thread(target=sleep_and_press_key, args=("b", 1, 0.2)).start()
     threading.Thread(target=sleep_and_press_key, args=("ctrlright", 1, 0.5)).start()
@@ -60,6 +61,7 @@ def test_save_screenshot():
     screenshot = save_screenshot()
     assert Path(screenshot).exists()
     Path(screenshot).unlink()
+    assert not Path(screenshot).exists()
 
 
 def test_are_there_colours_in_a_PIL_image():
@@ -138,3 +140,23 @@ def test_save_new_boundaries_into_config(tmp_path):
 """
 
     assert config_file.read_text() == new_content
+
+
+def test_get_moves_from_game():
+    game = "1. d4 Nf6 2. c4 e6 3. Nc3 Be7 4. e4 O-O"
+    moves = get_moves_from_game(game)
+    assert moves == ["d2d4", "g8f6", "c2c4", "e7e6", "b1c3", "f8e7", "e2e4", "e8g8"]
+
+    game = "1. d3 c6 2. Bf4 b6 3. Nc3 d6 4. Qd2 Nd7 5. O-O-O"
+    moves = get_moves_from_game(game)
+    assert moves == [
+        "d2d3",
+        "c7c6",
+        "c1f4",
+        "b7b6",
+        "b1c3",
+        "d7d6",
+        "d1d2",
+        "b8d7",
+        "e1c1",
+    ]

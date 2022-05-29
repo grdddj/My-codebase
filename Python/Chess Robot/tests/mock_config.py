@@ -2,13 +2,13 @@ from pathlib import Path
 
 from pynput import keyboard
 
-from .api import ConfigInterface
+from src.api import ConfigInterface
 
 HERE = Path(__file__).resolve().parent
 ROOT_DIR = HERE.parent
 
 
-class Config(ConfigInterface):
+class MockConfig(ConfigInterface):
     def __init__(
         self,
         observer_only_mode: bool = False,
@@ -49,7 +49,7 @@ class Config(ConfigInterface):
         self.pawn_threshold_when_losing = -0.5
 
         # How long to pause between watching again at the chessboard
-        self.should_sleep = False
+        self.should_sleep = True
         self.sleep_interval_between_screenshots = 0.01
 
         # Allowing for keyboard-triggered moves (instead of automatic)

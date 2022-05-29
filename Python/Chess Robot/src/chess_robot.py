@@ -114,22 +114,26 @@ class ChessRobot:
         self._analysis = self._chess_library.get_current_analysis_result(0.01)
 
     def start_the_game(self) -> None:
-        if not self._config.observer_only_mode:
-            self._play_first_move_as_white_if_necessary()
+        try:
+            if not self._config.observer_only_mode:
+                self._play_first_move_as_white_if_necessary()
 
-        print("Starting to observe the board")
-        while True:
-            if self._config.should_sleep:
-                time.sleep(self._config.sleep_interval_between_screenshots)
-            try:
-                whole_screen = get_screenshot()
-                self._look_at_the_chessboard_and_react_on_new_moves(whole_screen)
-            except NoNewMoveFoundOnTheChessboard:
-                continue
-            except TheGameHasFinished:
-                if self._config.debug:
-                    save_screenshot()
-                break
+            print("Starting to observe the board")
+            while True:
+                if self._config.should_sleep:
+                    time.sleep(self._config.sleep_interval_between_screenshots)
+                try:
+                    whole_screen = get_screenshot()
+                    self._look_at_the_chessboard_and_react_on_new_moves(whole_screen)
+                except NoNewMoveFoundOnTheChessboard:
+                    continue
+                except TheGameHasFinished:
+                    if self._config.debug:
+                        save_screenshot()
+                    break
+        except Exception:
+            self._print_debug_info()
+            raise
 
     def _play_first_move_as_white_if_necessary(self) -> None:
         if self._chess_library.should_start_as_white():
@@ -196,7 +200,7 @@ class ChessRobot:
     def _recognize_move_done_on_the_board(self) -> None:
         self._move_done_on_the_board = None
 
-        assert self._currently_highlighted_squares
+        assert self._currently_highlighted_squares, "No highlighted squares"
         possible_moves_from_highlight = [
             self._currently_highlighted_squares[0]
             + self._currently_highlighted_squares[1],
@@ -217,9 +221,7 @@ class ChessRobot:
         if not self._move_done_on_the_board:
             print("No move was done - please investigate, why")
             print("MOST PROBABLY THE MOVE WAS NOT DONE ON THE SCREEN BY PYAUTOGUI")
-            print("possible_moves_from_highlight", possible_moves_from_highlight)
-            print("our_last_move", self._our_last_move)
-            print("highlighted_squares", self._currently_highlighted_squares)
+            self._print_debug_info()
             raise NoNewMoveFoundOnTheChessboard("Something inconsistent happened")
 
     def _perform_the_best_move_on_the_screen_and_internally(self) -> None:
@@ -227,7 +229,7 @@ class ChessRobot:
             print(f"Waiting for trigger to play move: {self._config.keyboard_trigger}")
             wait_for_keyboard_trigger(self._config.keyboard_trigger)
 
-        move = self._analysis.best_move
+        move = self._best_move()
         self._do_the_move_on_screen_chessboard(move)
         self._play_move_on_our_internal_board(move)
         self._our_last_move = move
@@ -239,9 +241,8 @@ class ChessRobot:
         self._chessboard_player.play_move(move)
 
     def _play_the_move_from_the_board_on_internal_board(self) -> None:
-        if not self._move_done_on_the_board:
-            return
-        self._play_move_on_our_internal_board(self._move_done_on_the_board)
+        if self._move_done_on_the_board:
+            self._play_move_on_our_internal_board(self._move_done_on_the_board)
 
     def _play_move_on_our_internal_board(self, move: Move) -> None:
         # NOTE: we must first retrieve the move and only then push it one
@@ -257,7 +258,10 @@ class ChessRobot:
             f"{40*' '}Score: {self._analysis.mate_string or self._analysis.pawn_score}"
         )
         if self._config.observer_only_mode:
-            print(f"{40*' '}I would play {self._format_move(self._analysis.best_move)}")
+            print(f"{40*' '}I would play {self._format_move(self._best_move())}")
+
+    def _best_move(self) -> Move:
+        return self._analysis.best_move
 
     def _get_time_to_think_according_to_last_position(self) -> float:
         if (
@@ -272,6 +276,8 @@ class ChessRobot:
             return self._config.time_limit_to_think_normal
 
     def _format_move(self, move: Move) -> str:
+        if not self._chess_library.is_valid_move(move):
+            raise ValueError(f"Invalid move: {move}")
         return self._chess_library.get_notation_from_move(move)
 
     def _check_if_the_game_did_not_finish(self) -> None:
@@ -290,3 +296,16 @@ class ChessRobot:
         else:
             print("DRAW - WHAT A GAME!!")
             raise TheGameHasFinished("Draw!")
+
+    def _print_debug_info(self) -> None:
+        print("ChessRobot debug info:")
+        print(
+            "\tself._currently_highlighted_squares", self._currently_highlighted_squares
+        )
+        print("\tself._our_last_move", self._our_last_move)
+        print("\tself._move_done_on_the_board", self._move_done_on_the_board)
+        print("\tself._analysis", self._analysis)
+        print(
+            "\tself._chess_library.get_game_moves()",
+            self._chess_library.get_game_moves(),
+        )

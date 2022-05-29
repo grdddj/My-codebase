@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Literal, Sequence
@@ -55,12 +56,18 @@ def get_screenshot() -> Image.Image:
 
 def save_screenshot() -> str:
     """Saves the current screen as a screenshot into our folder"""
+    time.sleep(0.1)  # wait for screen to stabilize
     folder = ROOT / "screens"
     file_amount = len(list(folder.glob("*.png")))
     location = ROOT / "screens" / f"screenshot_{file_amount:04}.png"
-    print("location", location)
-    pyautogui.screenshot(location)
+    print("Taking debug screenshot", location)
+    save_screenshot_to_location(location)
     return str(location)
+
+
+def save_screenshot_to_location(location: str | Path) -> None:
+    """Saves the current screen as a screenshot into specified place"""
+    pyautogui.screenshot(location)
 
 
 def wait_to_trigger_the_game() -> None:

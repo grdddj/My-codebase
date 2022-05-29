@@ -23,12 +23,14 @@ class ChessLibrary(ChessLibraryInterface):
             ) from None
 
     def should_start_as_white(self) -> bool:
-        return self._our_color == chess.WHITE and self._board.fullmove_number == 1
+        return self._our_color == chess.WHITE and len(self._board.move_stack) == 0
 
     def is_valid_move(self, move: Move) -> bool:
         return chess.Move.from_uci(move.raw_move) in self._board.legal_moves
 
     def play_move(self, move: Move) -> None:
+        if not self.is_valid_move(move):
+            raise ValueError("Invalid move")
         self._board.push(chess.Move.from_uci(move.raw_move))
 
     def get_current_analysis_result(self, time_to_think: float) -> AnalysisResult:
@@ -58,7 +60,8 @@ class ChessLibrary(ChessLibraryInterface):
 
     def get_game_outcome(self) -> ChessResult:
         outcome = self._board.outcome()
-        assert outcome is not None, "Game is not over"
+        if outcome is None:
+            raise ValueError("Game is not over")
 
         if outcome.winner == chess.WHITE:
             return (
@@ -73,3 +76,6 @@ class ChessLibrary(ChessLibraryInterface):
 
     def get_notation_from_move(self, move: Move) -> str:
         return self._board.san(chess.Move.from_uci(move.raw_move))
+
+    def get_game_moves(self) -> list[Move]:
+        return [Move(str(move)) for move in self._board.move_stack]

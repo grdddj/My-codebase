@@ -36,6 +36,8 @@ def test_unexisting_engine():
 def test_should_start_as_white():
     chess = get_chess("white")
     assert chess.should_start_as_white()
+    chess.play_move(Move("e2e4"))
+    assert not chess.should_start_as_white()
 
     chess = get_chess("black")
     assert not chess.should_start_as_white()
@@ -65,13 +67,25 @@ def test_is_valid_move_whole_game():
 
 def test_play_move():
     chess = get_chess("white")
-    assert chess._board.fullmove_number == 1
+    assert len(chess.get_game_moves()) == 0
 
     chess.play_move(Move("e2e4"))
-    assert chess._board.fullmove_number == 1
+    assert len(chess.get_game_moves()) == 1
+    assert chess.get_game_moves()[0] == Move("e2e4")
 
     chess.play_move(Move("e7e5"))
-    assert chess._board.fullmove_number == 2
+    assert len(chess.get_game_moves()) == 2
+    assert chess.get_game_moves()[1] == Move("e7e5")
+
+    with pytest.raises(ValueError, match="Invalid move"):
+        chess.play_move(Move("e2e4"))
+
+    chess.play_move(Move("g1f3"))
+    chess.play_move(Move("d7d6"))
+    chess.play_move(Move("f1c4"))
+    chess.play_move(Move("f8e7"))
+    chess.play_move(Move("e1h1"))  # Castling
+    assert len(chess.get_game_moves()) == 7
 
 
 def test_is_game_over():
@@ -87,7 +101,7 @@ def test_is_game_over():
 
 def test_get_game_outcome():
     chess = get_chess("white")
-    with pytest.raises(AssertionError, match="Game is not over"):
+    with pytest.raises(ValueError, match="Game is not over"):
         chess.get_game_outcome()
 
     chess = get_chess("white")
@@ -133,10 +147,18 @@ def test_get_current_analysis_result():
     analysis = chess.get_current_analysis_result(0.01)
     assert -1 < analysis.pawn_score < 1
     assert analysis.mate_string is None
-
     chess.play_move(Move("e7e6"))
     chess.play_move(Move("g2g4"))
     analysis = chess.get_current_analysis_result(0.01)
     assert analysis.best_move == Move("d8h4")
     assert analysis.pawn_score > 10
     assert analysis.mate_string == "Mate in 1"
+
+    chess = get_chess("white")
+    chess.play_move(Move("e2e3"))
+    chess.play_move(Move("c7c6"))
+    chess.play_move(Move("f1b5"))
+    analysis = chess.get_current_analysis_result(0.01)
+    assert analysis.best_move == Move("c6b5")
+    assert analysis.pawn_score < -3
+    assert analysis.mate_string is None

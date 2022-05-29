@@ -56,6 +56,12 @@ class Move:
         else:
             self.promotion = None
 
+    def __str__(self) -> str:
+        return self.raw_move
+
+    def __repr__(self) -> str:
+        return self.raw_move
+
 
 class ChessResult(Enum):
     Win = 1
@@ -133,6 +139,9 @@ class ChessLibraryInterface(Protocol):
         ...  # pragma: no cover
 
     def get_notation_from_move(self, move: Move) -> str:
+        ...  # pragma: no cover
+
+    def get_game_moves(self) -> list[Move]:
         ...  # pragma: no cover
 
 

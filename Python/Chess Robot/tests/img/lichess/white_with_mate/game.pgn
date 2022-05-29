@@ -1,0 +1,18 @@
+[Event "Casual Bullet game"]
+[Site "https://lichess.org/IH1ChoM9"]
+[Date "2022.05.29"]
+[White "Anonymous"]
+[Black "lichess AI level 1"]
+[Result "1-0"]
+[UTCDate "2022.05.29"]
+[UTCTime "14:11:21"]
+[WhiteElo "?"]
+[BlackElo "?"]
+[Variant "Standard"]
+[TimeControl "60+0"]
+[ECO "C66"]
+[Opening "Ruy Lopez: Berlin Defense, Improved Steinitz Defense"]
+[Termination "Normal"]
+[Annotator "lichess.org"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bb5 d6 4. O-O Nf6 { C66 Ruy Lopez: Berlin Defense, Improved Steinitz Defense } 5. d4 Ng4 6. h3 h5 7. Ba4 Nh6 8. d5 Qd7 9. Qd3 f6 10. Qc4 g6 11. dxc6 f5 12. cxd7+ Ke7 13. Bg5# { White wins by checkmate. } 1-0

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width"> <!-- setting the view on multiple devices -->
+    <meta name="description" content="Word connector">
+    <meta name="keywords" content="words connecting">
+    <meta name="author" content="Jiří Musil">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script type="text/javascript" src="words.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="words.css">
+</head>
+
+<body>
+    <div class="container center">
+        <h2>Spoj slova</h2>
+
+        <hr>
+
+        Slovo
+        <input id="word" placeholder="(karel, milan, zadek...)">
+
+        <br>
+
+        Zakázaná slova
+        <input id="word_exceptions" placeholder="(slovo, slo*, *ovo, ...)">
+
+        <br>
+        <br>
+
+        <button id="show_words" type="button" class="btn btn-primary green">Ukaž mi slova!</button>
+
+        <button id="show_best" type="button" class="btn btn-primary blue">Ukaž ty nejlepší!</button>
+
+        <hr>
+
+        <div id="loading" hidden>
+            Slova se nahrávají...
+        </div>
+
+        <div id="words_results" hidden>
+            <p>
+                Ignorovaná slova: <span id="ignored_words"></span>
+            </p>
+            <p>
+                Počet kombinací: <span id="combo_amount"></span>
+            </p>
+
+            <button id="randomize_words" type="button" class="btn btn-primary red">Randomizuj!</button>
+
+            <div id="words_results_paragraph">
+            </div>
+        </div>
+
+        <div id="best_words_results" hidden>
+            <p>
+                Počet kombinací: <span id="best_combo_amount"></span>
+            </p>
+
+            <div id="best_words_results_paragraph">
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>
